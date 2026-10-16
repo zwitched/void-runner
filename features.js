@@ -121,20 +121,20 @@ function keepLvl0(k){return k;}
 {const _sb=spawnBoss;spawnBoss=function(){if(G&&G.endless){const R=FT.run;R.cyc++;if(R.cyc%3===0){const d=Math.min(4,1+Math.floor(R.cyc/3));G.L=LV[SPACE_LV[d-1]];_sb();return;}endlessWaves();return;}_sb();};}
 function endlessWaves(){const R=FT.run,d=Math.min(5,1+Math.floor(R.cyc/2));G.d=d+Math.floor(R.cyc/6);G.waves=makeWaves({d:Math.min(4,d),final:0});G.t=0;G.cycle=R.cyc;toast('Wave '+(R.cyc+1)+' incoming','#ffa03a');}
 {const _lc=levelClear;levelClear=function(){if(G&&G.endless){G.boss=null;G.endT=0;emit('kill',{x:W/2,y:80,k:'boss'});endlessWaves();state='space';return;}_lc();};}
-{const _fl=failLevel;failLevel=function(){if(FT.run){const R=FT.run,s=(R.score||0)+(sc()?sc().score:0);R.final=s;R.rank=hsAdd(R.mode,s,{t:Math.round(T-R.t0),w:R.cyc||R.i});emit('runover',R);state='runover';stT=0;return;}_fl();};}
+{const _fl=failLevel;failLevel=function(){if(FT.run){const R=FT.run,s=(R.score||0)+(sc()?sc().score:0);R.final=s;R.rank=R.mode==='daily'?-1:hsAdd(R.mode,s,{t:Math.round(T-R.t0),w:R.cyc||R.i});emit('runover',R);state='runover';stT=0;return;}_fl();};}
 HOOKS.push((n,dt)=>{if(n!=='draw:runover')return;stT+=dt;if(G)drawMode(0);BTN=[];ctx.fillStyle='rgba(0,0,10,0.72)';ctx.fillRect(0,0,W,H);const R=FT.run||{};const s=R.final!==undefined?R.final:R.score;
  panel(20,100,W-40,300,'#ffa03a');txt(R.mode==='rush'?(R.done?'RUSH COMPLETE':'RUSH OVER'):R.mode==='daily'?'DAILY RUN OVER':'RUN OVER',W/2,116,'#ffa03a',14);txt('SCORE '+s,W/2,140,'#fff',10);
  if(R.rank>=0)txt(R.rank===0?'New best!':'Rank '+(R.rank+1)+' on this table',W/2,156,'#9aff5a',8);hsTable(R.mode==='daily'?'daily:'+today():R.mode,40,176);
  btn('AGAIN',40,334,90,26,()=>{R.mode==='rush'?startRush():R.mode==='daily'?FT.startDaily():startEndless();},'#9aff5a');btn('MODES',140,334,90,26,()=>{clearRun();state='modes';},'#5ab0ff');defaultAct=()=>{clearRun();state='modes';};});
-function hsTable(k,x,y){const t=(S.hs&&S.hs[k])||[];txt('LOCAL BEST',x,y,'#8aa0d0',7,'left');for(let i=0;i<5;i++){const e=t[i];txt((i+1)+'.',x,y+14+i*12,'#56607e',7,'left');txt(e?String(e.s):'---',x+70,y+14+i*12,e?'#dfe8ff':'#3a4466',7,'right');if(e)txt(e.d,x+150,y+14+i*12,'#56607e',7,'right');if(e&&e.w!==undefined)txt((k==='rush'?'B':'W')+e.w,x+186,y+14+i*12,'#56607e',7,'right');}}
+function hsTable(k,x,y){const t=(S.hs&&S.hs[k])||[];txt('LOCAL BEST',x,y,'#8aa0d0',7,'left');for(let i=0;i<5;i++){const e=t[i];txt((i+1)+'.',x,y+14+i*11,'#56607e',7,'left');txt(e?String(e.s):'---',x+70,y+14+i*11,e?'#dfe8ff':'#3a4466',7,'right');if(e)txt(e.d,x+150,y+14+i*11,'#56607e',7,'right');if(e&&e.w!==undefined)txt((k==='rush'?'B':'W')+e.w,x+186,y+14+i*11,'#56607e',7,'right');}}
 FT.unlocked=()=>!!S.done||!!S.dbg;
 FT.menu.push(['MODES',()=>{state='modes';},'#ffa03a']);
 HOOKS.push((n,dt)=>{if(n!=='draw:modes')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,1);txt('EXTRA MODES',W/2,14,'#ffa03a',14);const ok=FT.unlocked();
- const card=(y,title,desc,k,go)=>{panel(8,y,W-16,128,ok?'#ffa03a':'#2a3a6a');txt(title,18,y+8,ok?'#ffa03a':'#56607e',10,'left');wrap(desc,W-110,7).forEach((l,j)=>txt(l,18,y+22+j*9,'#8aa0d0',7,'left'));hsTable(k,18,y+54);if(ok)btn('PLAY',W-80,y+6,64,22,go,'#9aff5a');};
- card(36,'BOSS RUSH','Every space boss back to back. A little hull comes back between fights.','rush',startRush);
- card(170,'ENDLESS','Waves keep coming and keep getting meaner. A boss shows up every third wave.','endless',startEndless);
- if(!ok){txt('Finish the campaign to unlock these.',W/2,306,'#ffd23a',8);}
+ const card=(y,title,desc,k,go,open)=>{panel(8,y,W-16,122,open?'#ffa03a':'#2a3a6a');txt(title,18,y+8,open?'#ffa03a':'#56607e',10,'left');wrap(desc,W-110,7).forEach((l,j)=>txt(l,18,y+22+j*9,'#8aa0d0',7,'left'));hsTable(k,18,y+50);if(open)btn('PLAY',W-80,y+6,64,22,go,'#9aff5a');else txt('LOCKED',W-48,y+13,'#56607e',8);};
+ card(34,'BOSS RUSH','Every space boss back to back. A little hull comes back between fights.','rush',startRush,ok);
+ card(160,'ENDLESS','Waves keep coming and keep getting meaner. A boss shows up every third wave.','endless',startEndless,ok);
  if(FT.modesExtra)FT.modesExtra();
+ if(!ok)txt('Rush and Endless open up once the campaign is done.',W/2,420,'#ffd23a',7);
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
 VR.unlock=()=>{S.dbg=1;save();};VR.rush=()=>startRush();VR.endless=()=>startEndless();VR.run=()=>FT.run&&Object.assign({},FT.run);VR.hs=()=>S.hs||{};
 window.FT=FT;
@@ -200,3 +200,66 @@ HOOKS.push((n,dt)=>{if(n!=='overlay'||state!=='evade'||!G||G.mode!=='evade'||!G.
  if(left&&!H.unlocked&&H.lockT<0.01)txt('FIND THE KEYCARDS',EOX+EW*ETS,EOY+EH*ETS+2,(H.t*3|0)%2?'#ffd23a':'#ff9ab0',7,'right');});
 VR.s5={garbage:h=>hGarbage(G,h),H:()=>G,spc:()=>Object.assign({},G.spc||{}),setSp:(i,k)=>{G.p.sp={i,k};},noGarbage:v=>{G.noGarbage=v;},
  kc:()=>G.kc&&G.kc.map(k=>({x:k.x,y:k.y,got:!!k.got})),cr:()=>JSON.parse(JSON.stringify(G.cr||{})),wall:i=>G.g[i],mazeOK:i=>{const [tx,ty]=etile(G.p);return mazeOK(G,tx,ty,i);}};
+// ================= 6a. DIFFICULTY =================
+const DIFF=[{n:'EASY',dmg:0.5,hp:0.75,spd:0.85,time:1.3,score:0.75,col:'#9aff5a'},{n:'NORMAL',dmg:1,hp:1,spd:1,time:1,score:1,col:'#5ab0ff'},{n:'HARD',dmg:2,hp:1.35,spd:1.15,time:0.8,score:1.5,col:'#ff5a5a'}];
+function diffIdx(){if(FT.run&&FT.run.mode==='daily')return 1;return S.diff===undefined?1:S.diff;}
+FT.diff=()=>DIFF[diffIdx()];
+{const _h=hurt;hurt=function(){if(!G||!G.p){_h();return;}const p=G.p,h0=p.hp;_h();if(p.hp<h0){const k=FT.diff();
+  if(k.dmg>1&&p.hp>0){p.hp-=1;if(p.hp<=0){G.dead=1.4;if(G.mode==='space')boom(p.x,p.y,40,FIRE);SFX.big();}}
+  else if(k.dmg<1){G.ezHit=(G.ezHit||0)+1;if(G.ezHit%2===0&&p.hp>0)p.hp+=1;}}};}
+HOOKS.push((n,a)=>{const k=FT.diff();if(n==='spawn'&&a&&a.hp){a.hp=Math.max(1,Math.round(a.hp*k.hp));}
+ else if(n==='start'&&G){if(G.mode==='plat')for(const e of G.ens)e.hp=Math.max(1,Math.round(e.hp*k.hp));
+  if(G.mode==='hack'){G.trace=Math.round(G.trace*k.time);G.traceMax=G.trace;}
+  if(G.mode==='evade'){G.lockT=Math.round(G.lockT/k.time);G.lockMax=G.lockT;}G.diffN=DIFF.indexOf(k);}
+ else if(n==='overlay'&&G&&G.eb&&(state==='space'||state==='plat')&&k.spd!==1)for(const b of G.eb)if(!b._ds){b._ds=1;if(b.vx!==undefined){b.vx*=k.spd;b.vy*=k.spd;}}});
+{const _sb=spawnBoss;spawnBoss=function(){_sb();if(G.boss&&!G.boss._ds){const k=FT.diff();G.boss._ds=1;G.boss.hp=Math.round(G.boss.hp*k.hp);G.boss.mhp=G.boss.hp;}};}
+{const _hg=hgrav;hgrav=function(H){return _hg(H)/FT.diff().spd;};}
+{const _em=emove;emove=function(H,m,dt,spd,ch){_em(H,m,dt,m===H.p?spd:spd*FT.diff().spd,ch);};}
+FT.titleExtra=y=>{const d=FT.diff();btn('DIFFICULTY: '+d.n,30,y,210,22,()=>{S.diff=(diffIdx()+1)%3;save();SFX.buy();},d.col);};
+// ================= 6b. DAILY CHALLENGE =================
+const RAND0=Math.random;
+function dateHash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)>>>0;}return h;}
+function dailyLv(d){const pool=LV.map((L,i)=>L.final?-1:i).filter(i=>i>=0);return pool[dateHash(d||today())%pool.length];}
+{const _cr=clearRun;clearRun=function(){Math.random=RAND0;_cr();};}
+FT.startDaily=function(){clearRun();const d=today(),lv=dailyLv(d);FT.run={mode:'daily',key:'daily:'+d,lv,t0:T,date:d};FT.noSave=true;Math.random=rng(dateHash(d)^0x5eed);
+ FT.title='DAILY DONE';FT.afterClear=()=>{const R=FT.run;R.score=FT.last?FT.last.score:0;R.final=R.score;R.done=1;R.rank=hsAdd(R.key,R.score,{t:Math.round(T-R.t0),r:FT.last&&FT.last.rank});Math.random=RAND0;emit('dailydone',R);state='runover';stT=0;};
+ const keep=S.lvl;startLevel(lv);S.lvl=keep;emit('modestart','daily');};
+FT.modesExtra=()=>{const d=today(),L=LV[dailyLv(d)],y=286;panel(8,y,W-16,122,'#9aff5a');txt('DAILY CHALLENGE',18,y+8,'#9aff5a',10,'left');
+ wrap('New chapter every day, always on Normal. Today: '+L.name+'.',W-110,7).forEach((l,j)=>txt(l,18,y+22+j*9,'#8aa0d0',7,'left'));hsTable("daily:"+d,18,y+50);btn('PLAY',W-80,y+6,64,22,FT.startDaily,'#9aff5a');};
+FT.menu.push(['DAILY',()=>FT.startDaily(),'#9aff5a']);
+// ================= 6c. ACHIEVEMENTS =================
+const ACH=[
+ ['first','FIRST CONTACT','Destroy your first enemy.'],['chain10','ON A ROLL','Build a 10 chain.'],['chain25','UNSTOPPABLE','Build a 25 chain.'],
+ ['rankS','TOP MARKS','Get an S rank on any chapter.'],['rankA5','STEADY HANDS','Get A or better on five chapters.'],['clean','UNTOUCHED','Clear a chapter without getting hit.'],
+ ['quad','FOUR AT ONCE','Burn four rows in one go.'],['freeze','COLD TRACE','Freeze the trace with a special cell.'],['column','STRAIGHT DOWN','Wipe a column with a special cell.'],
+ ['keys','KEY HOLDER','Pick up every keycard in a maze.'],['dash','QUICK FEET','Dash 20 times.'],['wall','WALL RUNNER','Wall jump 10 times.'],
+ ['secret','NOSY','Find a hidden room.'],['sec10','BIG RED BUTTON','Use your secondary 10 times.'],['ships','TEST PILOT','Clear a chapter with each ship.'],
+ ['done','LANTERN LIT','Finish the campaign.'],['rush','GAUNTLET','Finish a boss rush.'],['wave5','STILL HERE','Reach wave 5 in endless.'],
+ ['daily','DAILY DRIVER','Finish a daily challenge.'],['hard','HARD WAY','Clear a chapter on Hard.'],['rich','SAVINGS','Have 2000 credits at once.'],['upg','FULLY KITTED','Max out your secondary.']];
+function unlockA(id){S.ach=S.ach||{};if(S.ach[id])return false;S.ach[id]=Date.now();save();const a=ACH.find(q=>q[0]===id);toast('UNLOCKED: '+(a?a[1]:id),'#ffd23a');tone(784,784,.08,'square',.05);tone(1175,1175,.12,'square',.05,.08);return true;}
+function stat(k,n=1){S.st=S.st||{};S.st[k]=(S.st[k]||0)+n;return S.st[k];}
+HOOKS.push((n,a)=>{switch(n){
+ case 'kill':unlockA('first');break;
+ case 'score':if(a.combo>=10)unlockA('chain10');if(a.combo>=25)unlockA('chain25');break;
+ case 'lines':if(a>=4)unlockA('quad');break;
+ case 'special':unlockA(a==='F'?'freeze':'column');break;
+ case 'keycard':if(a===0)unlockA('keys');break;
+ case 'dash':if(stat('dash')>=20)unlockA('dash');break;
+ case 'walljump':if(stat('wj')>=10)unlockA('wall');break;
+ case 'secret':unlockA('secret');break;
+ case 'secondary':if(stat('sec')>=10)unlockA('sec10');break;
+ case 'rushdone':unlockA('rush');break;
+ case 'dailydone':unlockA('daily');break;
+ case 'clear':{const r=FT.last;if(!r)break;if(r.rank==='S')unlockA('rankS');if(r.dmg===0)unlockA('clean');if(diffIdx()===2&&!(FT.run&&FT.run.mode==='daily'))unlockA('hard');
+  S.shipsUsed=(S.shipsUsed||0)|(1<<(S.ship|0));if(S.shipsUsed===7)unlockA('ships');
+  const nA=Object.values(S.best||{}).filter(b=>b.r==='S'||b.r==='A').length;if(nA>=5)unlockA('rankA5');if(S.done)unlockA('done');break;}
+ case 'overlay':if(S.cr>=2000)unlockA('rich');if((S.secLv||0)>=3)unlockA('upg');if(FT.run&&FT.run.mode==='endless'&&FT.run.cyc>=4)unlockA('wave5');break;}});
+let achPage=0;FT.menu.push(['AWARDS',()=>{achPage=0;state='achievements';},'#ffd23a']);
+HOOKS.push((n,dt)=>{if(n!=='draw:achievements')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,0.3);const got=S.ach||{},nGot=ACH.filter(a=>got[a[0]]).length;
+ txt('AWARDS',W/2,12,'#ffd23a',14);txt(nGot+' / '+ACH.length+' UNLOCKED',W/2,32,'#8aa0d0',7);const per=11,pages=Math.ceil(ACH.length/per);
+ ACH.slice(achPage*per,achPage*per+per).forEach((a,i)=>{const y=44+i*34,ok=!!got[a[0]];panel(8,y,W-16,30,ok?'#ffd23a':'#2a3a6a');
+  ctx.fillStyle=ok?'#ffd23a':'#1a2040';ctx.fillRect(16,y+8,14,14);ctx.fillStyle=ok?'#fff6c0':'#2a3458';ctx.fillRect(19,y+11,8,8);if(ok){ctx.fillStyle='#8a5a10';ctx.fillRect(21,y+13,4,4);}
+  txt(a[1],38,y+6,ok?'#ffd23a':'#8aa0d0',8,'left');txt(a[2],38,y+18,ok?'#dfe8ff':'#56607e',7,'left');});
+ if(pages>1){btn('<',W-130,440,40,26,()=>{achPage=(achPage+pages-1)%pages;},'#5ab0ff');txt((achPage+1)+'/'+pages,W-70,449,'#8aa0d0',8);btn('>',W-50,440,40,26,()=>{achPage=(achPage+1)%pages;},'#5ab0ff');}
+ btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
+VR.ach=()=>Object.assign({},S.ach||{});VR.ACH=()=>ACH.map(a=>a[0]);VR.unlockA=id=>unlockA(id);VR.diff=()=>FT.diff();VR.daily=()=>FT.startDaily();VR.dailyLv=d=>dailyLv(d);VR.today=()=>today();
