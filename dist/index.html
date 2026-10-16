@@ -1093,13 +1093,14 @@ function drawStory(dt){const L=LV[curLvl];ctx.fillStyle='#03040a';ctx.fillRect(0
  txt(L.t==='space'?'[ SPACE FLIGHT ]':L.t==='hack'?'[ HACKING ]':L.t==='evade'?'[ EVASION - NO WEAPONS ]':'[ ON FOOT ]',W/2,72,'#56607e',7);
  panel(8,92,W-16,338,'#2a3a6a');let chars=Math.floor(stT*45),all=true;const blocks=[];
  for(const para of L.story){if(chars<=0){all=false;break;}const m=para.match(/^([A-Z ]+?)( \([^)]*\))?: (.*)$/),who=m?m[1]+(m[2]||''):'',body=m?m[3]:para,k=m?m[1]:null,ind=k?48:0;
-  const lines=[],src=wrap(body,W-40-ind,9);for(const ln of src){if(chars<=0){all=false;break;}lines.push(ln.slice(0,chars));chars-=ln.length;if(chars<0)all=false;}
+  const lines=[],src=wrap(body,W-46-ind,9);for(const ln of src){if(chars<=0){all=false;break;}lines.push(ln.slice(0,chars));chars-=ln.length;if(chars<0)all=false;}
   blocks.push({who,k,lines,ind,h:Math.max(k?42:0,(who?12:0)+lines.length*12)+8});if(chars<=0&&!all)break;}
- const top=102,bot=424;let tot=blocks.reduce((a,b)=>a+b.h,0),y=top-Math.max(0,tot-(bot-top));
- ctx.save();ctx.beginPath();ctx.rect(10,top-4,W-20,bot-top+6);ctx.clip();
+ const CT=99,CB=424,top=CT+7,bot=CB-6;let tot=blocks.reduce((a,b)=>a+b.h,0),sc=Math.max(0,tot-(bot-top)),y=top-sc;
+ ctx.save();ctx.beginPath();ctx.rect(13,CT,W-26,CB-CT);ctx.clip();
  blocks.forEach((b,bi)=>{if(y+b.h>top-10){if(b.k)portrait(b.k,16,y,T);const x=18+b.ind;let yy=y;if(b.who){txt(b.who,x,yy,SPK[b.k]||'#ffd23a',8,'left');yy+=12;}
   for(const ln of b.lines){txt(ln,x,yy,b.who?'#dfe8ff':'#9aa8c8',9,'left');yy+=12;}if(bi===blocks.length-1&&!all&&(T*4|0)%2){ctx.fillStyle='#dfe8ff';ctx.fillRect(x+tw(b.lines[b.lines.length-1]||'',9)+2,yy-12,4,7);}}y+=b.h;});
- ctx.restore();if(tot>bot-top){ctx.fillStyle='#2a3a6a';ctx.fillRect(W-14,top,2,(bot-top)*(bot-top)/tot);}
+ if(sc>0){const fg=ctx.createLinearGradient(0,CT,0,CT+14);fg.addColorStop(0,'rgba(10,15,34,1)');fg.addColorStop(1,'rgba(10,15,34,0)');ctx.fillStyle=fg;ctx.fillRect(13,CT,W-26,14);}
+ ctx.restore();if(tot>bot-top){const th=(bot-top)*(bot-top)/tot;ctx.fillStyle='#16203e';ctx.fillRect(W-17,top,2,bot-top);ctx.fillStyle='#4a6ab0';ctx.fillRect(W-17,top+(bot-top-th)*(sc/(tot-(bot-top))),2,th);}
  if(all&&(T*2|0)%2)txt(hasTouch?'TAP TO LAUNCH':'PRESS ENTER',W/2,440,'#9aff5a',9);
  const go=()=>{if(!all)stT=999;else startLevel(curLvl);};anyTap=go;defaultAct=go;}
 function drawShop(dt){ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);ctx.fillStyle='#0c1228';for(let y=0;y<H;y+=8)ctx.fillRect(0,y,W,1);
