@@ -13,8 +13,8 @@ async def main():
       res[k]=g
       if k=='homing':await pg.screenshot(path='screenshots/09_powerup_space.png')
     await E("VR.G().pu.t=0.2");await pg.wait_for_timeout(500);res['space_expired']=await E('VR.G().pu')
-    await E("(()=>{const G=VR.G();G.coins.push({x:20,y:200,k:'pu',w:'laser',life:0.5,vx:0,vy:0,v:0})})()");await pg.wait_for_timeout(1000)
-    res['despawn']=await E("VR.G().coins.filter(c=>c.k==='pu').length")
+    await E("(()=>{const G=VR.G();G.coins.push({x:20,y:200,k:'pu',w:'laser',life:0.5,vx:0,vy:0,v:0,tag:1})})()");await pg.wait_for_timeout(1000)
+    res['despawn']=await E("VR.G().coins.filter(c=>c.tag).length")
     for k in ['shotgun','prapid','plasma']:
       await E('VR.start(1)');await pg.wait_for_timeout(1200);await E(f"VR.drop('{k}')")
       await pg.keyboard.down('ArrowRight');await pg.keyboard.down('KeyX');await pg.wait_for_timeout(500);await pg.keyboard.up('ArrowRight');await pg.wait_for_timeout(300)
