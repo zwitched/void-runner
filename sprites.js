@@ -283,9 +283,12 @@ const CH=[
   if(!fr&&cap(x,y,0,7,0,11,1.4))return'k2';return 0;}];
 
 // ================= PICKUPS, COINS, EXPLOSIONS =================
-function pickup(col,glyph){const M=MAT({bz:['#3a4260'],bz2:['#232842'],gm:[col],sy:['#ffffff',{e:1}]});return paint(24,24,(x,y)=>{
- const gx=Math.floor((x-4.5)/3),gy=Math.floor((y-4.5)/3);if(gx>=0&&gy>=0&&gx<5&&gy<5&&glyph[gy][gx]!=='.')return'sy';
- if(rr(x,y,3,3,21,21,4))return'gm';if(rr(x,y,1,1,23,23,5))return(x+y)<22?'bz':'bz2';return 0;},M,{R:3,rim:'#ffffff',ol:'#05060c'});}
+// 4-frame badge: a light sheen sweeps across the gem, a bezel light runs round the corners, the glyph pulses.
+function pickup(col,glyph){const M=MAT({bz:['#3a4260'],bz2:['#232842'],gm:[col],sy:['#ffffff',{e:1}],lt:['#e8f4ff',{e:1}]});const fr=[];
+ for(let f=0;f<4;f++){const sw=-10+f*10,pul=[0,0.12,0.2,0.12][f],cn=[[4,4],[20,4],[20,20],[4,20]][f];fr.push(paint(24,24,(x,y)=>{
+ const gx=Math.floor((x-4.5)/3),gy=Math.floor((y-4.5)/3);if(gx>=0&&gy>=0&&gx<5&&gy<5&&glyph[gy][gx]!=='.')return['sy',pul];
+ if(rr(x,y,3,3,21,21,4)){const d=(x-y)-sw;if(Math.abs(d)<1.6)return['gm',0.45];if(Math.abs(d-4)<0.8)return['gm',0.25];return'gm';}
+ if(rr(x,y,1,1,23,23,5)){if(Math.hypot(x-cn[0],y-cn[1])<1.6)return'lt';return(x+y)<22?'bz':'bz2';}return 0;},M,{R:3,rim:'#ffffff',ol:'#05060c'}));}return fr;}
 function hpPick(){const M=MAT({g:['#8aff5a'],w:['#ffffff',{e:1}],bz:['#2a5a2a']});return paint(20,20,(x,y)=>{if((Math.abs(x-10)<1.5&&Math.abs(y-10)<5)||(Math.abs(y-10)<1.5&&Math.abs(x-10)<5))return'w';
  if((Math.abs(x-10)<3.5&&Math.abs(y-10)<8)||(Math.abs(y-10)<3.5&&Math.abs(x-10)<8))return'g';if(rr(x,y,1,1,19,19,5))return'bz';return 0;},M,{R:3,rim:'#e0ffe0'});}
 function coins(){const M=MAT({au:['#ffc21a',{sh:'#a86a00',li:'#fff4b0'}],au2:['#e09a10',{sh:'#a06400',li:'#ffe070'}],edge:['#c88a10',{sh:'#a06a00',li:'#ffd860'}]});const fr=[];
