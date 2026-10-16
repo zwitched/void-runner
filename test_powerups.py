@@ -8,7 +8,7 @@ async def main():
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(300)
     E=pg.evaluate
     for k in ['spread','rapid','laser','homing']:
-      await E('VR.god=true;VR.start(3)');await pg.wait_for_timeout(200);await E(f"VR.drop('{k}')");await pg.wait_for_timeout(1500)
+      await E('VR.god=true;VR.start(4)');await pg.wait_for_timeout(200);await E(f"VR.drop('{k}')");await pg.wait_for_timeout(1500)
       g=await E("(()=>{const G=VR.G();return {pu:G.pu&&G.pu.k,n:G.bul.length,pierce:G.bul.some(u=>u.pierce),home:G.bul.some(u=>u.home)}})()")
       res[k]=g
       if k=='homing':await pg.screenshot(path='screenshots/09_powerup_space.png')

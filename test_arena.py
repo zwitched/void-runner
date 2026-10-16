@@ -8,7 +8,7 @@ async def main():
     pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(300)
     E=pg.evaluate
-    for lvl in (2,4,9):
+    for lvl in (2,5,11):
       await E(f'VR.god=true;VR.start({lvl})');await pg.wait_for_timeout(200)
       gaps=await E("""(()=>{const G=VR.G(),A=VR.arena(),TS=16,R=22,bad=[];for(let X=Math.floor(A.x0/TS)-4;X<G.cols-1;X++){for(let Y=A.gy;Y<R;Y++)if(G.map[Y*G.cols+X]!==1){bad.push(X);break;}if(G.map[(A.gy-1)*G.cols+X]!==0&&X<G.cols-1)bad.push('blk'+X);}return bad})()""")
       if gaps:bad.append((lvl,'arena gaps',gaps))

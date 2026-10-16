@@ -10,3 +10,4 @@ All sprites drawn in code; chiptune SFX/music via WebAudio. Progress saved in lo
 - Multi-touch: `python3 test_multitouch.py` (per-finger tracking, jump buffer/coyote).
 - Palette separation: `python3 test_palette.py` (enemy shots red/magenta only; coins/pickups never).
 - Hacking mode: `python3 test_hack.py` (rotation/kicks, collisions, clears, win/lose, gestures, keys, campaign).
+- Evasion maze: `python3 test_evasion.py`.

@@ -19,8 +19,8 @@ async def main():
     async def fresh(i=1,k='T'):
       await E(f"VR.start({i})");await pg.wait_for_timeout(100);await E(f"(()=>{{const G=VR.hk.H();G.b=G.b.map(()=>0);G.trace=999;VR.hk.spawn('{k}');G.gT=-999;}})()")
     # campaign order
-    order=await E("(()=>{const o=[];for(let i=0;i<11;i++){VR.start(i);o.push(VR.G().mode)}return o})()")
-    chk('chapter types',order==['space','hack','plat','space','plat','hack','space','space','hack','plat','space'],order)
+    order=await E("(()=>{const o=[];for(let i=0;i<13;i++){VR.start(i);o.push(VR.G().mode)}return o})()")
+    chk('chapter types',order==['space','hack','plat','evade','space','plat','hack','space','space','hack','evade','plat','space'],order)
     # 1) rotation: 4 CW rotations return to start; CW then CCW returns
     await fresh();c0=await E('VR.hk.cells()')
     for _ in range(4):await E('VR.hk.rot(1)')
@@ -85,7 +85,7 @@ async def main():
     # gravity speeds up with level; Decrypter slows it
     g=await E("(()=>{const G=VR.hk.H(),o=[];for(const l of [1,3,6]){G.lvl=l;G.dec=0;o.push(hgrav(G))}G.lvl=1;G.dec=2;o.push(hgrav(G));return o})()")
     chk('gravity scaling',g[0]>g[1]>g[2] and g[3]>g[0],g)
-    tg=await E("[1,5,8].map(i=>{VR.start(i);return VR.G().target})");chk('targets scale',tg==sorted(tg) and tg[0]>=8 and tg[-1]<=20,tg)
+    tg=await E("[1,6,9].map(i=>{VR.start(i);return VR.G().target})");chk('targets scale',tg==sorted(tg) and tg[0]>=8 and tg[-1]<=20,tg)
     # campaign flow: new game -> ch1 space (shortcut clear) -> shop -> ch2 hack -> real play clear -> shop shows ch3 on foot
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(600);await E(TT)
     box=await pg.locator('canvas').bounding_box();tap=lambda x,y:pg.touchscreen.tap(box['x']+x*box['width']/270,box['y']+y*box['height']/480)
@@ -101,7 +101,7 @@ async def main():
     await tap(135,300);await pg.wait_for_timeout(1000);s5=await E('VR.state()')
     chk('campaign flow',[s1,s2,s3,mode,s4,lv,s5]==['clear','shop','hack','hack','clear',2,'shop'],[s1,s2,s3,mode,s4,lv,s5])
     # screenshot
-    await E("VR.S().dec=2;VR.start(5)");await pg.wait_for_timeout(200)
+    await E("VR.S().dec=2;VR.start(6)");await pg.wait_for_timeout(200)
     await E("""(()=>{const G=VR.hk.H(),ks='JLSZTOI';for(let y=13;y<20;y++)for(let x=0;x<10;x++)G.b[y*10+x]=(x===(y*3)%10||(y<15&&x>6))?0:ks[(x+y)%7];G.hold='T';G.lines=5;G.trace=133;VR.hk.spawn('L');G.p.x=6;G.p.y=4;G.gT=-999;})()""")
     await pg.wait_for_timeout(300);await pg.screenshot(path='screenshots/13_hack.png')
     await b.close()
