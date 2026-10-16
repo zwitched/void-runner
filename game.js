@@ -200,7 +200,7 @@ function goStory(i){state='story';curLvl=i;stT=0;const L=LV[i];if(L&&L.t==='spac
 function startLevel(i){curLvl=i;runCr=0;const L=LV[i];if(L.t==='space')initSpace(L);else if(L.t==='hack')initHack(L);else if(L.t==='evade')initEvade(L);else initPlat(L);stT=0;emit('start',L);}
 function pause(){if(state!=='space'&&state!=='plat'&&state!=='hack'&&state!=='evade')return;G.prev=state;state='pause';}
 function resume(){state=G.prev;}
-function levelClear(){const L=LV[curLvl];const bonus=40*L.d+(S.ng?20:0);S.cr+=runCr+bonus;clearInfo={got:runCr,bonus};S.lvl=Math.max(S.lvl,curLvl+1);emit('clear',L);save();SFX.win();state='clear';stT=0;}
+function levelClear(){const L=LV[curLvl];const bonus=40*L.d+(S.ng?20:0);S.cr+=runCr+bonus;clearInfo={got:runCr,bonus};if(!(window.FT&&FT.noSave))S.lvl=Math.max(S.lvl,curLvl+1);emit('clear',L);save();SFX.win();state='clear';stT=0;}
 function failLevel(){state='over';stT=0;}
 
 // ---------- SPACE ----------

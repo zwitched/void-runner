@@ -108,3 +108,33 @@ HOOKS.push((n,dt)=>{if(n!=='draw:loadout')return;ctx.fillStyle='#060814';ctx.fil
  btn('BACK',10,440,80,26,()=>{state='shop';},'#8aa0d0');defaultAct=()=>{state='shop';};});
 VR.loadout=()=>({ship:S.ship|0,sec:S.sec||'bomb',lv:S.secLv||0,cd:G&&G.secT,mh:G&&G.p&&G.p.mhp});VR.fireSec=()=>fireSec();
 VR.setS=o=>{Object.assign(S,o);save();};
+// ================= 4. BOSS RUSH + ENDLESS (unlocked after the campaign) =================
+const SPACE_LV=LV.map((L,i)=>L.t==='space'?i:-1).filter(i=>i>=0);
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hsAdd(k,s,extra){S.hs=S.hs||{};const t=S.hs[k]=S.hs[k]||[];t.push(Object.assign({s,d:today()},extra||{}));t.sort((a,b)=>b.s-a.s);t.length=Math.min(t.length,5);save();return t.findIndex(e=>e.s===s);}
+function clearRun(){FT.run=null;FT.noSave=false;FT.afterClear=null;FT.title=null;}
+{const _gs=goStory;goStory=function(i){clearRun();_gs(i);};const _ng=newGame;newGame=function(){clearRun();_ng();};}
+function rushStage(){const R=FT.run,i=SPACE_LV[R.i];const keepLvl=S.lvl;startLevel(i);S.lvl=keepLvl;G.waves.list=[];G.t=G.waves.len+1;G.en=[];if(R.i>0){G.p.hp=Math.min(G.p.mhp,R.hp+1);}FT.title='BOSS '+(R.i+1)+' OF '+SPACE_LV.length+' DOWN';}
+function startRush(){clearRun();FT.run={mode:'rush',i:0,score:0,t0:T};FT.noSave=true;FT.afterClear=()=>{const R=FT.run;R.score+=FT.last?FT.last.score:0;R.hp=G.p.hp;R.i++;if(R.i>=SPACE_LV.length){R.done=1;R.rank=hsAdd('rush',R.score,{t:Math.round(T-R.t0)});emit('rushdone',R);state='runover';stT=0;}else rushStage();};rushStage();emit('modestart','rush');}
+function startEndless(){clearRun();FT.run={mode:'endless',cyc:0,t0:T};FT.noSave=true;const keep=S.lvl;startLevel(0);S.lvl=keepLvl0(keep);G.endless=1;emit('modestart','endless');}
+function keepLvl0(k){return k;}
+{const _sb=spawnBoss;spawnBoss=function(){if(G&&G.endless){const R=FT.run;R.cyc++;if(R.cyc%3===0){const d=Math.min(4,1+Math.floor(R.cyc/3));G.L=LV[SPACE_LV[d-1]];_sb();return;}endlessWaves();return;}_sb();};}
+function endlessWaves(){const R=FT.run,d=Math.min(5,1+Math.floor(R.cyc/2));G.d=d+Math.floor(R.cyc/6);G.waves=makeWaves({d:Math.min(4,d),final:0});G.t=0;G.cycle=R.cyc;toast('Wave '+(R.cyc+1)+' incoming','#ffa03a');}
+{const _lc=levelClear;levelClear=function(){if(G&&G.endless){G.boss=null;G.endT=0;emit('kill',{x:W/2,y:80,k:'boss'});endlessWaves();state='space';return;}_lc();};}
+{const _fl=failLevel;failLevel=function(){if(FT.run){const R=FT.run,s=(R.score||0)+(sc()?sc().score:0);R.final=s;R.rank=hsAdd(R.mode,s,{t:Math.round(T-R.t0),w:R.cyc||R.i});emit('runover',R);state='runover';stT=0;return;}_fl();};}
+HOOKS.push((n,dt)=>{if(n!=='draw:runover')return;stT+=dt;if(G)drawMode(0);BTN=[];ctx.fillStyle='rgba(0,0,10,0.72)';ctx.fillRect(0,0,W,H);const R=FT.run||{};const s=R.final!==undefined?R.final:R.score;
+ panel(20,100,W-40,300,'#ffa03a');txt(R.mode==='rush'?(R.done?'RUSH COMPLETE':'RUSH OVER'):R.mode==='daily'?'DAILY RUN OVER':'RUN OVER',W/2,116,'#ffa03a',14);txt('SCORE '+s,W/2,140,'#fff',10);
+ if(R.rank>=0)txt(R.rank===0?'New best!':'Rank '+(R.rank+1)+' on this table',W/2,156,'#9aff5a',8);hsTable(R.mode==='daily'?'daily:'+today():R.mode,40,176);
+ btn('AGAIN',40,334,90,26,()=>{R.mode==='rush'?startRush():R.mode==='daily'?FT.startDaily():startEndless();},'#9aff5a');btn('MODES',140,334,90,26,()=>{clearRun();state='modes';},'#5ab0ff');defaultAct=()=>{clearRun();state='modes';};});
+function hsTable(k,x,y){const t=(S.hs&&S.hs[k])||[];txt('LOCAL BEST',x,y,'#8aa0d0',7,'left');for(let i=0;i<5;i++){const e=t[i];txt((i+1)+'.',x,y+14+i*12,'#56607e',7,'left');txt(e?String(e.s):'---',x+70,y+14+i*12,e?'#dfe8ff':'#3a4466',7,'right');if(e)txt(e.d,x+150,y+14+i*12,'#56607e',7,'right');if(e&&e.w!==undefined)txt((k==='rush'?'B':'W')+e.w,x+186,y+14+i*12,'#56607e',7,'right');}}
+FT.unlocked=()=>!!S.done||!!S.dbg;
+FT.menu.push(['MODES',()=>{state='modes';},'#ffa03a']);
+HOOKS.push((n,dt)=>{if(n!=='draw:modes')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,1);txt('EXTRA MODES',W/2,14,'#ffa03a',14);const ok=FT.unlocked();
+ const card=(y,title,desc,k,go)=>{panel(8,y,W-16,128,ok?'#ffa03a':'#2a3a6a');txt(title,18,y+8,ok?'#ffa03a':'#56607e',10,'left');wrap(desc,W-110,7).forEach((l,j)=>txt(l,18,y+22+j*9,'#8aa0d0',7,'left'));hsTable(k,18,y+54);if(ok)btn('PLAY',W-80,y+6,64,22,go,'#9aff5a');};
+ card(36,'BOSS RUSH','Every space boss back to back. A little hull comes back between fights.','rush',startRush);
+ card(170,'ENDLESS','Waves keep coming and keep getting meaner. A boss shows up every third wave.','endless',startEndless);
+ if(!ok){txt('Finish the campaign to unlock these.',W/2,306,'#ffd23a',8);}
+ if(FT.modesExtra)FT.modesExtra();
+ btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
+VR.unlock=()=>{S.dbg=1;save();};VR.rush=()=>startRush();VR.endless=()=>startEndless();VR.run=()=>FT.run&&Object.assign({},FT.run);VR.hs=()=>S.hs||{};
+window.FT=FT;
