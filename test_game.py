@@ -36,7 +36,9 @@ async def main():
         # hold FIRE touch button region via keyboard X facing right
         await pg.keyboard.down('KeyX'); await pg.wait_for_timeout(1500); await pg.keyboard.up('KeyX')
         await pg.evaluate("(()=>{const G=VR.G();if(G.brute.dead){G.p.x=G.door.x+5;G.p.y=G.door.y+10;}})()")
-      await pg.wait_for_timeout(3500)
+      for _ in range(24):
+        await pg.wait_for_timeout(250)
+        if await pg.evaluate('VR.state()')!=st: break
       res.append((i,st,await pg.evaluate('VR.state()')))
     # touch platformer buttons check
     await pg.evaluate('VR.start(2)'); await pg.wait_for_timeout(500)
