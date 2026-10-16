@@ -271,6 +271,30 @@ function bgSet(d,pal,bg,H,r){const P0=hx(pal[0]),P1=hx(pal[1]),P2=hx(pal[2]),B0=
   const sac=(x+50)%140;if(y>H-70&&eld(sac,y,70,H-36,20,30)<1){const e=eld(sac,y,70,H-36,20,30);return e<0.45?mix([150,80,190],[230,160,255],0.5-e).map(Math.round):sh(P0,0.85+(sac<70?0.15:0));}return 0;});
  const near=scene(H,r,(x,y,th)=>{for(let k=0;k<2;k++){const c=(x+k*90)%180,ry=H-6-64*Math.sqrt(Math.max(0,1-((c-90)/90)**2))*(0.6+k*0.3);if(Math.abs(y-ry)<2.4&&c>4&&c<176)return[16,8,24];}if(y>H-14+6*fb1(x,5,4))return[12,6,20];return 0;});
  return{far,mid,near,v:[0.12,0.28,0.55]};}
+
+// ================= EVASION MAZE WALLS: 16 neighbour masks x 3 variants, 32x32 art per 16px cell =================
+// mask bits: 1 N, 2 E, 4 S, 8 W set when that neighbour is also wall. Exposed sides get a bevel; an exposed
+// south side shows a brick front face so the maze reads as raised blocks.
+function mazeWall(pal,m,v){const A0=hx(pal[0]),A1=hx(pal[1]),A2=hx(pal[2]),c=mk(32,32,2),x=c.getContext('2d'),im=x.createImageData(32,32),d=im.data;
+ const N=!(m&1),E=!(m&2),S=!(m&4),Wx=!(m&8),FH=S?7:0;
+ for(let py=0;py<32;py++)for(let px=0;px<32;px++){let col,th=BY[(py&3)*4+(px&3)]/16;
+  const dn=N?py:99,de=E?31-px:99,dw=Wx?px:99,ds=S?31-py:99;
+  if(S&&py>=32-FH){const fy=py-(32-FH),row=Math.floor(fy/3.5),bx=(px+(row&1)*5)%10;col=mix(A1,[0,0,0],0.25+fy*0.04);
+   if(fy%3.5<1||bx<1)col=mix(col,[0,0,0],0.4);else if(fy%3.5<2)col=mix(col,A0,0.2);if(py===31)col=[6,6,14];if(dw<1||de<1)col=[6,6,14];}
+  else{const ty=py;let k=0.86+vnoise(px/6+v*9,py/6,4)*0.14;
+   const pl=(Math.abs(px-15.5)>13||Math.abs(ty-15.5)>13);
+   if(dn<1||dw<1||de<1)col=[6,6,14];else{
+    if(dn<3||dw<3)k+=0.32;if(de<3)k-=0.22;if(S&&ty>=32-FH-2)k-=0.18;
+    col=mix(A1,A0,cl(k-0.25,0,1.3)).map(v2=>v2);if(k>1.05)col=mix(col,A2,(k-1.05)*1.4);
+    const ix=px-16,iy=ty-16+(S?-3:0);
+    if(v===0&&(Math.abs(ix)===6||Math.abs(iy)===6)&&Math.abs(ix)<=6&&Math.abs(iy)<=6)col=mix(col,[0,0,0],0.35);
+    if(v===0&&Math.abs(ix+0.5)<2&&Math.abs(iy+0.5)<2)col=mix(A2,[255,255,255],0.3);
+    if(v===1&&((Math.abs(ix+iy)<1&&Math.abs(ix)<7)||(Math.abs(iy-7)<1&&ix>=0&&ix<9)))col=mix(A2,[255,255,255],0.15);
+    if(v===2){const g=(px+py)%6;if(g===0&&th>0.3)col=mix(col,[0,0,0],0.25);}
+    for(const[rx,ry]of[[5,5],[26,5],[5,26-FH],[26,26-FH]])if(Math.hypot(px+0.5-rx,ty+0.5-ry)<1.3)col=px+py<rx+ry?mix(A2,[255,255,255],0.4):mix(A1,[0,0,0],0.3);
+    if(pl&&th>0.82)col=mix(col,[0,0,0],0.12);}}
+  const i=(py*32+px)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255;}
+ x.putImageData(im,0,0);return c;}
 // ================= EVASION top-down: 32x32 art (16 logical), 4 dirs x 4 frames =================
 const VM=MAT({arm:['#e4eaf6'],suit:['#4a80ea'],helm:['#e8eef8'],vis:['#62f0ff',{e:1}],boot:['#2c2c3c'],scarf:['#ff8c3a'],pack:['#5c6274'],
  h1:['#d0405e'],h2:['#8a2040'],d1:['#ff8a3a'],d2:['#a04a1a'],dm:['#d8dce8'],i1:['#5ae08a'],i2:['#2a8a4a'],k1:['#a068f0'],k2:['#5a2aa0'],ey:['#ffe07a',{e:1}]});
@@ -399,4 +423,5 @@ const BS={};A.boss=(d,fin)=>{const k=fin?'f':d;return BS[k]||(BS[k]=boss(d,fin))
 const TL={};A.tiles=(pal,ceil,seed)=>{const k=pal.join()+ceil;return TL[k]||(TL[k]=tiles(pal,ceil,seed));};
 const HB={};A.hack=(col,k)=>HB[k]||(HB[k]=hackBlock(col,k));
 const BGS={};A.bg=(d,pal,bg,H,r)=>{const k=d+pal.join()+r;return BGS[k]||(BGS[k]=bgSet(d,pal,bg,H,r));};
+const MW={};A.wall=(pal,m,v)=>{const k=pal.join()+m+'_'+v;return MW[k]||(MW[k]=mazeWall(pal,m,v));};
 A.white=white;return A;})();

@@ -554,7 +554,7 @@ function drawEvade(dt){const H=G,L=H.L;ctx.fillStyle='#04040c';ctx.fillRect(0,0,
  ctx.save();shakeT(H.shake);
  const wa=eWallArt(L);ctx.fillStyle='#0b0d1c';ctx.fillRect(EOX,EOY,EW*ETS,EH*ETS);
  for(let y=0;y<EH;y++)for(let x=0;x<EW;x++){const sx=EOX+x*ETS,sy=EOY+y*ETS;if(x===EDOOR[0]&&y===EDOOR[1]){const op=H.unlocked,fl=!op&&H.lockT<3&&(H.t*8|0)%2;ctx.fillStyle='#10141f';ctx.fillRect(sx,sy,ETS,ETS);ctx.fillStyle=op?'#9aff5a':fl?'#ffffff':'#ff3a6a';if(op){ctx.globalAlpha=0.5+0.3*Math.sin(H.t*6);ctx.fillRect(sx+2,sy+2,ETS-4,ETS-4);ctx.globalAlpha=1;}else for(let i=2;i<ETS;i+=4)ctx.fillRect(sx+i,sy+1,2,ETS-2);continue;}
-  if(H.g[y*EW+x])blit(wa,sx,sy,ETS,ETS);else{ctx.fillStyle=((x+y)%2)?'#0d1022':'#0f1326';ctx.fillRect(sx,sy,ETS,ETS);}}
+  if(H.g[y*EW+x]){const wl=(i,j)=>i<0||j<0||i>=EW||j>=EH||!!H.g[j*EW+i],m=(wl(x,y-1)?1:0)|(wl(x+1,y)?2:0)|(wl(x,y+1)?4:0)|(wl(x-1,y)?8:0),hv=((x*7349)^(y*1931))%7;blit(ART.wall(L.pal,m,hv<4?2:hv<6?0:1),sx,sy,ETS,ETS);}else{ctx.fillStyle=((x+y)%2)?'#0d1022':'#0f1326';ctx.fillRect(sx,sy,ETS,ETS);}}
  // damper field
  const cx=EOX+EW*ETS/2,cy=EOY+EH*ETS/2;for(let i=0;i<3;i++){const r=((H.t*30+i*60)%180);ctx.strokeStyle=`rgba(192,90,255,${0.25*(1-r/180)})`;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();}
  ctx.fillStyle='rgba(160,80,255,0.05)';for(let y=EOY+((H.t*20)|0)%8;y<EOY+EH*ETS;y+=8)ctx.fillRect(EOX,y,EW*ETS,2);
