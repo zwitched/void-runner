@@ -283,7 +283,16 @@ function updSpace(dt){const p=G.p;G.t+=dt;G.shake=Math.max(0,G.shake-dt);
 function bossMask(art){if(art.mask)return art.mask;const c=art.rest||art.frames[0][0],w=c.width>>1,h=c.height>>1,d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,m=new Uint8Array(w*h);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let a=0;for(let j=0;j<2;j++)for(let i=0;i<2;i++)a+=d[((y*2+j)*c.width+x*2+i)*4+3]>0;m[y*w+x]=a>=2;}
 return art.mask={m,w,h};}
-function bossHit(b,x,y){const M=bossMask(b.art),lx=Math.floor(x-(b.x-M.w/2)),ly=Math.floor(y-(b.y-M.h/2));return lx>=0&&ly>=0&&lx<M.w&&ly<M.h&&M.m[ly*M.w+lx]===1;}
+function cmask(c){const w=c.width>>1,h=c.height>>1,d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,m=new Uint8Array(w*h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){let a=0;for(let j=0;j<2;j++)for(let i=0;i<2;i++)a+=d[((y*2+j)*c.width+x*2+i)*4+3]>0;m[y*w+x]=a>=2;}return{m,w,h};}
+const mhit=(M,lx,ly)=>{lx=Math.floor(lx);ly=Math.floor(ly);return lx>=0&&ly>=0&&lx<M.w&&ly<M.h&&M.m[ly*M.w+lx]===1;};
+// Hit test follows the animated pose: body mask plus each moving part's mask, transformed by that part's current motion.
+function bossHit(b,x,y){const a=b.art;if(!a.parts){const M=bossMask(a);return mhit(M,x-(b.x-M.w/2),y-(b.y-M.h/2));}
+ const B=a.bmask||(a.bmask=cmask(a.frames[0][0]));if(mhit(B,x-(b.x-B.w/2),y-(b.y-B.h/2)))return true;const p0=G.p;
+ for(const P of a.parts){P.mk=P.mk||{R:cmask(P.imgs[0].R),L:P.imgs[0].L?cmask(P.imgs[0].L):null};for(const s of P.center?[1]:[1,-1]){
+  const X=b.x+((a.cx+(P.center?0:s*P.ax))-a.W/2)/2,Y0=b.y+(P.ay-a.H/2)/2,aim=clamp(Math.atan2(p0.y-Y0,p0.x-X)-Math.PI/2,-1.2,1.2),m=P.mo(G.t,s,aim),Y=Y0+(m.dy||0);
+  const dx=x-X,dy=y-Y,ca=Math.cos(-(m.a||0)),sa=Math.sin(-(m.a||0)),pvx=s<0?P.w-P.pvx:P.pvx;
+  if(mhit(s<0?P.mk.L:P.mk.R,dx*ca-dy*sa+pvx/2,dx*sa+dy*ca+P.pvy/2))return true;}}return false;}
 function bossCore(b,x,y){const a=b.art;return Math.hypot(x-(b.x+(a.cx/2-a.W/4)),y-(b.y+(a.cy/2-a.H/4)))<9;}
 function bossTouch(b,p){for(let k=0;k<8;k++){const a=k*Math.PI/4;if(bossHit(b,p.x+Math.cos(a)*6,p.y+Math.sin(a)*6))return true;}return bossHit(b,p.x,p.y);}
 function bossDm(b){return b.hp>b.mhp*0.66?0:b.hp>b.mhp*0.33?1:2;}
