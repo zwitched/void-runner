@@ -1399,4 +1399,66 @@ HOOKS.push((n,dt)=>{if(n!=='draw:modes')return;ctx.fillStyle='#060814';ctx.fillR
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
 VR.unlock=()=>{S.dbg=1;save();};VR.rush=()=>startRush();VR.endless=()=>startEndless();VR.run=()=>FT.run&&Object.assign({},FT.run);VR.hs=()=>S.hs||{};
 window.FT=FT;
+// ================= 5. HACK + MAZE VARIETY =================
+// Hack: the Hollow fights back by shoving garbage rows in from the bottom, and some fragments carry a
+// special cell. Clear a row with a FREEZE cell to stop the trace for a while, or a COLUMN cell to wipe its column.
+HCOL.G='#5a6078';
+const GB_GAP=d=>Math.max(9,16-2*d);
+function hGarbage(H,hole){if(!H||H.mode!=='hack'||H.dead||H.won)return false;
+ for(let x=0;x<HW;x++)if(H.b[x]){hfail(H,'STACK OVERFLOW');return false;}
+ if(hole===undefined)hole=Math.floor(Math.random()*HW);
+ H.b=H.b.slice(HW).concat(Array.from({length:HW},(_,x)=>x===hole?0:'G'));
+ const sp={};for(const i in H.spc){const j=+i-HW;if(j>=0)sp[j]=H.spc[i];}H.spc=sp;
+ const p=H.p;if(p){let n=0;while(!hfits(H,p.k,p.r,p.x,p.y)&&n++<3)p.y--;}
+ H.shake=0.2;H.gbN=(H.gbN||0)+1;tone(110,70,.18,'sawtooth',.05);noise(.12,.08,900);emit('garbage',hole);return true;}
+{const _hs=hspawn;hspawn=function(H,k){_hs(H,k);if(H.p&&!H.dead){H.spawnN=(H.spawnN||0)+1;if(H.spawnN%6===0&&!H.noSpecial)H.p.sp={i:Math.floor(Math.random()*4),k:H.spawnN%12===0?'X':'F'};}};}
+{const _hl=hlock;hlock=function(H){const p=H.p;if(p&&p.sp){const c=hcells(p)[p.sp.i];if(c&&c[1]>=0){H.spc=H.spc||{};H.spc[c[1]*HW+c[0]]=p.sp.k;}}_hl(H);};}
+{const _hf=hfinishClear;hfinishClear=function(H){const rows=H.clearing.rows.slice(),sp=H.spc||{},cols=[];let fr=0;
+ for(const i in sp){const y=Math.floor(i/HW);if(rows.includes(y)){if(sp[i]==='F')fr++;else cols.push(i%HW);delete sp[i];}}
+ const moved={};for(const i in sp){const y=Math.floor(i/HW),x=i%HW,dn=rows.filter(r=>r>y).length;moved[(y+dn)*HW+x]=sp[i];}H.spc=moved;
+ _hf(H);
+ if(fr){H.freeze=(H.freeze||0)+6*fr;toast('TRACE FROZEN','#5ad0ff');tone(1200,300,.3,'triangle',.06);emit('special','F');}
+ for(const x of cols){let n=0;for(let y=0;y<HH;y++){if(H.b[y*HW+x]){n++;for(let i=0;i<3;i++)H.fx.push({x:HX+x*HC+6,y:HY+y*HC+6,vx:rnd(-30,30),vy:rnd(-90,-20),l:.5,c:'#ffd23a',s:2});}H.b[y*HW+x]=0;delete H.spc[y*HW+x];}runCr+=n;toast('COLUMN WIPED','#ffd23a');noise(.2,.1,3000);emit('special','X');}};}
+{const _uh=updHack;updHack=function(dt){const H=G;if(H.freeze>0&&!H.dead&&!H.won){H.freeze=Math.max(0,H.freeze-dt);H.trace+=dt;}
+ if(H.gbT===undefined)H.gbT=GB_GAP(H.d)+6;
+ if(!H.dead&&!H.won&&!H.clearing&&H.p&&!H.noGarbage){H.gbT-=dt;if(H.gbT<=0){H.gbT=GB_GAP(H.d);hGarbage(H);}}
+ _uh(dt);};}
+function spIcon(k,x,y){if(k==='F'){ctx.fillStyle='#e8fbff';ctx.fillRect(x+5,y+2,2,8);ctx.fillRect(x+2,y+5,8,2);ctx.fillStyle='#5ad0ff';ctx.fillRect(x+3,y+3,2,2);ctx.fillRect(x+7,y+7,2,2);ctx.fillRect(x+7,y+3,2,2);ctx.fillRect(x+3,y+7,2,2);}
+ else{ctx.fillStyle='#ffd23a';ctx.fillRect(x+5,y+1,2,10);ctx.fillRect(x+3,y+2,6,2);ctx.fillRect(x+3,y+8,6,2);ctx.fillStyle='#fff6c0';ctx.fillRect(x+5,y+5,2,2);}}
+HOOKS.push((n,dt)=>{if(n!=='overlay'||state!=='hack'||!G||G.mode!=='hack')return;const H=G,pul=(H.t*4|0)%2;
+ for(const i in (H.spc||{})){const x=i%HW,y=Math.floor(i/HW);if(H.clearing&&H.clearing.rows.includes(y))continue;spIcon(H.spc[i],HX+x*HC,HY+y*HC);}
+ if(H.p&&H.p.sp){const c=hcells(H.p)[H.p.sp.i];if(c&&c[1]>=0){spIcon(H.p.sp.k,HX+c[0]*HC,HY+c[1]*HC);if(pul){ctx.strokeStyle='#fff';ctx.strokeRect(HX+c[0]*HC+.5,HY+c[1]*HC+.5,HC-1,HC-1);}}}
+ const RX=HX+HW*HC+14,RW=W-RX-6,gt=Math.max(0,H.gbT||0),warn=gt<3;
+ txt('HOLLOW',RX+8,HY+224,warn&&pul?'#ffffff':'#c05aff',7,'left');txt(Math.ceil(gt)+'s',RX+RW-8,HY+224,'#c05aff',7,'right');bar(RX+8,HY+233,RW-16,3,1-gt/GB_GAP(H.d),'#c05aff','#1a0a2a');
+ if(warn&&!H.dead&&!H.won){ctx.fillStyle=pul?'rgba(192,90,255,0.35)':'rgba(192,90,255,0.15)';ctx.fillRect(HX,HY+HH*HC-3,HW*HC,3);}
+ if(H.freeze>0)txt('FROZEN '+H.freeze.toFixed(1),RX+RW-8,HY+196,'#5ad0ff',7,'right');});
+// Maze: keycards must be picked up before the door will open, and some floor tiles give way once you've walked over them.
+const KEYCOL=['#ffd23a','#5ad0ff','#ff5ae0'];
+function mazeOK(H,tx,ty,extraWall){const save=H.g[extraWall];H.g[extraWall]=1;const d=ebfs(H,tx,ty,true);H.g[extraWall]=save;
+ if(d[EDOOR[1]*EW+EDOOR[0]]<0)return false;for(const k of H.kc)if(!k.got&&d[k.y*EW+k.x]<0)return false;
+ for(const e of H.en){if(e.tx+e.ty*EW===extraWall||e.nx+e.ny*EW===extraWall)return false;if(d[e.ty*EW+e.tx]<0)return false;}return true;}
+{const _ie=initEvade;initEvade=function(L){_ie(L);const H=G,r=rng(4242+L.d*13),dist=ebfs(H,ESTART[0],ESTART[1],false),nk=Math.min(3,1+H.d);H.kc=[];H.cr={};
+ const far=[];for(let y=1;y<EH-1;y++)for(let x=1;x<EW-1;x++)if(!H.g[y*EW+x]&&dist[y*EW+x]>=6)far.push([x,y]);
+ for(let i=0;i<nk&&far.length;i++){let bi=0,bs=-1;for(let j=0;j<far.length;j++){const [x,y]=far[j];let m=99;for(const k of H.kc)m=Math.min(m,Math.abs(k.x-x)+Math.abs(k.y-y));const s=(H.kc.length?m:dist[y*EW+x])+r()*3;if(s>bs){bs=s;bi=j;}}
+  const [x,y]=far.splice(bi,1)[0];H.kc.push({x,y,i});H.items=H.items.filter(it=>it.x!==x||it.y!==y);}
+ const cand=[];for(let y=1;y<EH-1;y++)for(let x=1;x<EW-1;x++){if(H.g[y*EW+x]||dist[y*EW+x]<3)continue;if(H.kc.some(k=>k.x===x&&k.y===y))continue;if(Math.abs(x-EDOOR[0])+Math.abs(y-EDOOR[1])<3)continue;if(H.en.some(e=>e.hx===x&&e.hy===y))continue;cand.push(y*EW+x);}
+ const nc=4+2*H.d;for(let i=0;i<nc&&cand.length;i++){const idx=cand.splice(Math.floor(r()*cand.length),1)[0];H.cr[idx]={s:0,t:0};}};}
+{const _ue=updEvade;updEvade=function(dt){const H=G,p=H.p;if(H.kc&&!H.dead&&!H.won){const [tx,ty]=etile(p);
+  for(const k of H.kc)if(!k.got&&k.x===tx&&k.y===ty){k.got=1;H.keysGot=(H.keysGot||0)+1;[660,990,1320].forEach((f,i)=>tone(f,f,.07,'square',.05,i*.05));const left=H.kc.filter(q=>!q.got).length;toast(left?'KEYCARD ('+(H.kc.length-left)+'/'+H.kc.length+')':'ALL KEYCARDS','#ffd23a');emit('keycard',left);}
+  const need=H.kc.some(k=>!k.got);if(need&&!H.unlocked&&H.lockT-dt<=0)H.lockT=dt+0.0001;
+  const here=ty*EW+tx;for(const i in H.cr){const c=H.cr[i];
+   if(c.s===0&&+i===here)c.s=1;else if(c.s===1&&+i!==here){c.s=2;c.t=1.1;tone(180,120,.06,'square',.03);}
+   else if(c.s===2){c.t-=dt;if(c.t<=0){const busy=+i===here||(p.moving&&p.ny*EW+p.nx===+i);if(!busy&&mazeOK(H,tx,ty,+i)){H.g[+i]=1;c.s=3;H.shake=0.12;noise(.15,.08,600);emit('collapse',+i);}else if(!busy&&!mazeOK(H,tx,ty,+i)){c.s=4;}else c.t=0.2;}}}}
+ _ue(dt);};}
+HOOKS.push((n,dt)=>{if(n!=='overlay'||state!=='evade'||!G||G.mode!=='evade'||!G.kc)return;const H=G;
+ for(const i in H.cr){const c=H.cr[i],x=EOX+(i%EW)*ETS,y=EOY+Math.floor(i/EW)*ETS;
+  if(c.s===3){ctx.fillStyle='#000';ctx.fillRect(x,y,ETS,ETS);ctx.fillStyle='#1a1d30';ctx.fillRect(x,y,ETS,2);ctx.fillRect(x,y,2,ETS);ctx.fillStyle='#06060c';ctx.fillRect(x+3,y+3,ETS-6,ETS-6);continue;}
+  const sh=c.s===2&&(H.t*20|0)%2?1:0;ctx.fillStyle=c.s>=2?'#4a3a5a':'#262a44';ctx.fillRect(x+3+sh,y+4,4,1);ctx.fillRect(x+6+sh,y+5,1,4);ctx.fillRect(x+7+sh,y+9,5,1);ctx.fillRect(x+11+sh,y+3,1,4);ctx.fillRect(x+3,y+11,3,1);
+  if(c.s===2){ctx.fillStyle='rgba(255,60,90,'+(0.25+0.2*Math.sin(H.t*30))+')';ctx.fillRect(x+1,y+1,ETS-2,ETS-2);}}
+ for(const k of H.kc){if(k.got)continue;const x=EOX+k.x*ETS+3,y=EOY+k.y*ETS+4+Math.round(Math.sin(H.t*3+k.i));glow(x+5,y+4,6,KEYCOL[k.i],0.25);ctx.fillStyle='#0a0c18';ctx.fillRect(x-1,y-1,12,10);ctx.fillStyle=KEYCOL[k.i];ctx.fillRect(x,y,10,8);ctx.fillStyle='#0a0c18';ctx.fillRect(x+1,y+2,4,3);ctx.fillStyle='#fff';ctx.fillRect(x+6,y+1,3,1);ctx.fillRect(x+6,y+5,3,1);}
+ const left=H.kc.filter(k=>!k.got).length;
+ txt('KEYCARDS',EOX,EOY+EH*ETS+2,left?'#ffd23a':'#9aff5a',7,'left');H.kc.forEach((k,j)=>{ctx.fillStyle=k.got?KEYCOL[k.i]:'#262a44';ctx.fillRect(EOX+60+j*14,EOY+EH*ETS+3,10,7);});
+ if(left&&!H.unlocked&&H.lockT<0.01)txt('FIND THE KEYCARDS',EOX+EW*ETS,EOY+EH*ETS+2,(H.t*3|0)%2?'#ffd23a':'#ff9ab0',7,'right');});
+VR.s5={garbage:h=>hGarbage(G,h),H:()=>G,spc:()=>Object.assign({},G.spc||{}),setSp:(i,k)=>{G.p.sp={i,k};},noGarbage:v=>{G.noGarbage=v;},
+ kc:()=>G.kc&&G.kc.map(k=>({x:k.x,y:k.y,got:!!k.got})),cr:()=>JSON.parse(JSON.stringify(G.cr||{})),wall:i=>G.g[i],mazeOK:i=>{const [tx,ty]=etile(G.p);return mazeOK(G,tx,ty,i);}};
 </script></body></html>

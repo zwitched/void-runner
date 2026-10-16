@@ -61,13 +61,13 @@ async def main():
     box=await pg.locator('canvas').bounding_box();tap=lambda x,y:pg.touchscreen.tap(box['x']+x*box['width']/270,box['y']+y*box['height']/480)
     await tap(135,245);await pg.wait_for_timeout(200);chk('RETRY restarts evasion',await E('VR.state()')=='evade' and await E('VR.ev.H().p.hp')==await E('VR.ev.H().p.mhp'))
     # 6) door unlocks at timer, reaching it clears
-    await fresh(3,[]);await E("VR.ev.H().lockT=0.05");await pg.wait_for_timeout(150);chk('door unlocks at 0',await E('VR.ev.H().unlocked'))
+    await fresh(3,[]);await E("VR.ev.H().kc.forEach(k=>k.got=1);VR.ev.H().lockT=0.05");await pg.wait_for_timeout(150);chk('door unlocks at 0',await E('VR.ev.H().unlocked'))
     await E("VR.ev.place(7,1,null)");await pg.keyboard.press('ArrowUp');await pg.wait_for_timeout(1500);chk('reaching door clears',await E('VR.state()')=='clear')
     await fresh(3,[]);await E("VR.ev.place(7,1,null)");await pg.keyboard.press('ArrowUp');await pg.wait_for_timeout(500);chk('locked door blocks',await E('VR.state()')=='evade' and await E('VR.ev.tile(VR.ev.H().p)')==[7,1])
     # 7) campaign flow: shop -> launch ch4 -> story -> evasion -> door -> cleared -> shop next = ch5
     await E("localStorage.clear();VR.S().lvl=3;VR.S().cr=0;VR.shop()");await pg.wait_for_timeout(200)
     await tap(135,368);await pg.wait_for_timeout(200);s1=await E('VR.state()');await tap(135,300);await pg.wait_for_timeout(100);await tap(135,300);await pg.wait_for_timeout(200)
-    s2=await E('VR.state()');await E("(()=>{const G=VR.ev.H();G.en=[];G.lockT=0.01})()");await pg.wait_for_timeout(100);await E("VR.ev.place(7,1,null)");await pg.keyboard.press('ArrowUp');await pg.wait_for_timeout(1500)
+    s2=await E('VR.state()');await E("(()=>{const G=VR.ev.H();G.en=[];G.kc.forEach(k=>k.got=1);G.lockT=0.01})()");await pg.wait_for_timeout(100);await E("VR.ev.place(7,1,null)");await pg.keyboard.press('ArrowUp');await pg.wait_for_timeout(1500)
     s3=await E('VR.state()');await pg.wait_for_timeout(900);await tap(135,300);await pg.wait_for_timeout(300);s4=await E('VR.state()');lv=await E('VR.S().lvl')
     chk('campaign flow through evasion',[s1,s2,s3,s4,lv]==['story','evade','clear','shop',4],[s1,s2,s3,s4,lv])
     # screenshot
