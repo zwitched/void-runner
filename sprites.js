@@ -187,34 +187,38 @@ function maraSet(){const S={idle:[],run:[],rise:[],fall:[],land:[],hit:null,deat
 // ================= PLATFORMER ENEMIES =================
 const PM=MAT({sh:['#d0405e'],sh2:['#8a2040'],leg:['#3a1a2a'],ey:['#ffe07a',{e:1}],tm:['#8a92a8'],tm2:['#5a6078'],tb:['#3a3e52'],tl:['#ff6a5a',{e:1}],
  fw:['#b080f0'],fb:['#6a3ab0'],fg:['#ff9aff',{e:1}]});
-function crawler(f){const st=f/4*Math.PI*2;return paint(40,22,(x,y)=>{
- if(el(x,y,30,10,2,2))return'ey';if(el(x,y,25.5,10.5,1.6,1.6))return'ey';
+function crawler(f,hit){const st=f/4*Math.PI*2;return paint(40,22,(X,Y)=>{let x=X,y=Y;
+ if(hit){y=Y+1.5-(X-20)*0.12;
+  if(sd(X,Y,28,8,32,12)<0.8||sd(X,Y,32,8,28,12)<0.8)return'tm';if(sd(X,Y,23.5,9,27,12)<0.7||sd(X,Y,27,9,23.5,12)<0.7)return'tm';
+  if(el(x,y,19,11,15,8.5)&&y<15&&Math.abs(x-16+(y-6)*0.8)<0.6&&y<12)return'leg';
+  if(!(el(x,y,19,11,15,8.5)&&y<15)&&!el(x,y,30,12,6,5)){for(let k=0;k<3;k++){const bx=10+k*8,ang=-0.6+k*0.6;if(cap(X,Y,bx,15,bx+Math.sin(ang)*7,21,1.2))return'leg';}return 0;}}
+ if(!hit){if(el(x,y,30,10,2,2))return'ey';if(el(x,y,25.5,10.5,1.6,1.6))return'ey';}
  if(el(x,y,19,11,15,8.5)&&y<15){const t=eld(x,y,19,11,15,8.5);if(Math.abs(x-12)<0.6||Math.abs(x-20)<0.6)return'sh2';return t>0.8&&y<9?['sh',0.15]:'sh';}
  if(el(x,y,30,12,6,5))return'sh2';
  for(let k=0;k<3;k++){const bx=10+k*8,ph=st+k*2.1,lx=bx+Math.sin(ph)*3,ly=21-Math.max(0,Math.cos(ph))*2;if(cap(x,y,bx,13,bx+1.5+Math.sin(ph)*1.5,17,1.2)||cap(x,y,bx+1.5+Math.sin(ph)*1.5,17,lx,ly,1.1))return'leg';}
  return 0;},PM,{R:4,rim:'#ffc0d0'});}
-function turret(a){return paint(36,30,(x,y)=>{const cx=18,cy=13,dx=Math.cos(a),dy=Math.sin(a);
- if(cap(x,y,cx+dx*4,cy+dy*4,cx+dx*14,cy+dy*14,2))return sd(x,y,cx+dx*13,cy+dy*13,cx+dx*14,cy+dy*14)<2?'tb':'tm';
- const ed=eld(x,y,cx,cy,8,7);if(ed<1&&y<=cy+3){if(ed<0.35)return'tl';return Math.abs(y-cy+2)<0.6?'tm2':'tm';}
+function turret(a,hit){const rl=hit?9:14;return paint(36,30,(x,y)=>{const cx=18,cy=13+(hit?1:0),dx=Math.cos(a),dy=Math.sin(a);
+ if(cap(x,y,cx+dx*4,cy+dy*4,cx+dx*rl,cy+dy*rl,2))return sd(x,y,cx+dx*(rl-1),cy+dy*(rl-1),cx+dx*rl,cy+dy*rl)<2?'tb':'tm';
+ const ed=eld(x,y,cx,cy,8,7);if(ed<1&&y<=cy+3){if(hit&&(Math.abs(x-cx-(y-cy)*0.7)<0.6||Math.abs(x-cx+2+(y-cy)*-0.9)<0.5))return'tb';if(ed<0.35)return hit?'tb':'tl';return Math.abs(y-cy+2)<0.6?'tm2':'tm';}
  if(rr(x,y,4,cy+2,32,29,2)){if(y<cy+5)return'tm2';if(Math.abs(x-cx)<6&&y>cy+8&&y<cy+12)return(Math.floor(x)%2)?'tl':'tb';return(y>26)?'tb':'tm';}return 0;},PM,{R:4,rim:'#d8e8ff'});}
-function flyer(f){const fl=[1,0.4,-0.4,0.4][f];return paint(36,28,(x,y)=>{const ax=Math.abs(x-18);if(el(ax,y,2.2,13,1.6,1.8))return'fg';
+function flyer(f,hit){const fl=hit?1.9:[1,0.4,-0.4,0.4][f];return paint(36,28,(X,Y)=>{const x=hit?18+(X-18)*0.97+(Y-14)*0.25:X,y=hit?Y+2:Y;const ax=Math.abs(x-18);if(el(ax,y,2.2,13,1.6,1.8))return hit?(sd(ax,y,1,12,3.4,14)<0.6?'fb':0)||'fw':'fg';
  if(el(ax,y,0,13,4.5,6))return'fb';if(el(ax,y,0,20,2.6,4))return['fg',-0.2];const wy=10-fl*7;if(sd(ax,y,4,12,16,wy)<4.6-ax*0.16){return Math.abs(sd(ax,y,4,12,16,wy)-1.6)<0.45?'fb':'fw';}return 0;},PM,{R:3,rim:'#f0d8ff'});}
 const BRP=[{a:'#e06a34',b:'#9a3a1e',c:'#ffd23a'},{a:'#c8a064',b:'#7a5a30',c:'#9aff5a'},{a:'#a060e0',b:'#5a2aa0',c:'#ff8aff'}];
-function brute(d,f,atk){const P=BRP[d-1],M=MAT({a:[P.a],b:[P.b],c:[P.c,{e:1,li:'#ffffff'}],m:['#7a8090'],dk:['#2a2030']});const ph=f/4*Math.PI*2;
- return paint(104,92,(x,y)=>{const cx=52,bob=Math.abs(Math.sin(ph))*1.5,sx=0;
+function brute(d,f,atk,hit){const P=BRP[d-1],M=MAT({a:[P.a],b:[P.b],c:[P.c,{e:1,li:'#ffffff'}],m:['#7a8090'],dk:['#2a2030']});const ph=f/4*Math.PI*2;
+ return paint(104,92,(X,y)=>{const x=hit?X+(84-y)*0.16:X,cx=52,bob=Math.abs(Math.sin(ph))*1.5,sx=0;
   const ex=atk?-26:0;
   // front arm
-  const sA=[66,34+bob],hA=atk?[78,10]:[74+Math.sin(ph)*5,64+bob];if(cap(x,y,sA[0],sA[1],hA[0],hA[1],7))return'a';if(el(x,y,hA[0],hA[1],9,8))return'm';
+  const sA=[66,34+bob],hA=hit?[84,28]:atk?[78,10]:[74+Math.sin(ph)*5,64+bob];if(cap(x,y,sA[0],sA[1],hA[0],hA[1],7))return'a';if(el(x,y,hA[0],hA[1],9,8))return'm';
   if(el(x,y,66,32+bob,10,8))return Math.abs(eld(x,y,66,32+bob,10,8)-0.7)<0.1?'dk':'m';if(el(x,y,36,33+bob,8,7))return['m',-0.15];
   if(cap(x,y,52,13+bob,46,4+bob,2.2)||cap(x,y,63,13+bob,69,4+bob,2.2))return'm';
   // head
-  if(el(x,y,58,20+bob,10,9)){if(el(x,y,63,21+bob,2.6,2))return'c';if(el(x,y,54,21+bob,2.2,1.8))return'c';return y>24+bob?'b':'a';}
+  if(el(x,y,58,20+bob,10,9)){if(hit){if(sd(x,y,60,21+bob,66,21+bob)<0.9||sd(x,y,52,21+bob,56,21+bob)<0.9)return'dk';if(el(x,y,60,26+bob,3,2))return'dk';}else{if(el(x,y,63,21+bob,2.6,2))return'c';if(el(x,y,54,21+bob,2.2,1.8))return'c';}return y>24+bob?'b':'a';}
   // torso
   if(el(x,y,50,44+bob,26,22)){const ed=eld(x,y,52,46+bob,9,8);if(ed<1)return atk?['c',0.2]:(ed<0.6?'c':'b');if(Math.abs(x-52)<0.8||Math.abs(y-(56+bob))<0.8)return'dk';if(y>58+bob)return['b',0.05];if(y<34+bob&&Math.sin(x*0.4)>0.3)return'b';return'a';}
   // legs
   const lg=(hx,ph2,dark)=>{const lift=Math.max(0,Math.sin(ph2))*5,fx=hx+Math.cos(ph2)*6;if(el(x,y,(hx+fx)/2,74+bob-lift/2,6,4))return'm';if(cap(x,y,hx,62+bob,fx,86-lift,7))return dark?'b':'a';if(rr(x,y,fx-8,84-lift,fx+10,91-lift,2))return'dk';return 0;};
   let v=lg(56,ph,false);if(v)return v;
-  const sB=[34,36+bob],hB=atk?[22,12]:[26-Math.sin(ph)*5,66+bob];if(cap(x,y,sB[0],sB[1],hB[0],hB[1],6.5))return'b';if(el(x,y,hB[0],hB[1],8,7))return['m',-0.15];
+  const sB=[34,36+bob],hB=hit?[18,28]:atk?[22,12]:[26-Math.sin(ph)*5,66+bob];if(cap(x,y,sB[0],sB[1],hB[0],hB[1],6.5))return'b';if(el(x,y,hB[0],hB[1],8,7))return['m',-0.15];
   v=lg(42,ph+Math.PI,true);if(v)return v;return 0;},M,{R:7,r:6,rim:'#ffe8c8'});}
 
 // ================= EVASION top-down: 32x32 art (16 logical), 4 dirs x 4 frames =================
@@ -295,8 +299,8 @@ A.ship=[-2,-1,0,1,2].map(shipFrame);A.shipW=white(A.ship[2]);A.flame=[0,1,2,3].m
 A.en={drone:[0,1,2,3].map(drone),weaver:[0,1,2,3].map(weaver),gun:[0,1,2,3].map(gunship),kami:[0,1,2,3].map(kami)};A.enW={};for(const k in A.en)A.enW[k]=white(A.en[k][0]);
 A.rock=[];for(let f=0;f<8;f++)A.rock.push(rockF(f,2.3));A.rockW=white(A.rock[0]);
 A.mara=maraSet();
-A.pe={crawler:[0,1,2,3].map(crawler),turret:[],flyer:[0,1,2,3].map(flyer)};for(let i=0;i<8;i++)A.pe.turret.push(turret(i/8*Math.PI*2));A.peW={};for(const k in A.pe)A.peW[k]=white(A.pe[k][0]);
-const BR={};A.brute=d=>{if(BR[d])return BR[d];const walk=[0,1,2,3].map(f=>brute(d,f,false)),atk=[brute(d,0,true),brute(d,1,true)];return BR[d]={walk,atk,W:white(walk[0])};};
+A.pe={crawler:[0,1,2,3].map(f=>crawler(f)),turret:[],flyer:[0,1,2,3].map(f=>flyer(f))};A.peH={crawler:crawler(0,1),flyer:flyer(0,1),turret:[]};for(let i=0;i<8;i++){A.pe.turret.push(turret(i/8*Math.PI*2));A.peH.turret.push(turret(i/8*Math.PI*2,1));}A.peW={};for(const k in A.pe)A.peW[k]=white(A.pe[k][0]);
+const BR={};A.brute=d=>{if(BR[d])return BR[d];const walk=[0,1,2,3].map(f=>brute(d,f,false)),atk=[brute(d,0,true),brute(d,1,true)];return BR[d]={walk,atk,hit:brute(d,1,false,true),W:white(walk[0])};};
 A.td={mara:[0,1,2,3].map(dir=>[0,1,2,3].map(f=>topdown(maraTD,dir,f))),ch:CH.map(fn=>[0,1,2,3].map(dir=>[0,1,2,3].map(f=>topdown(fn,dir,f))))};
 A.tdW=A.td.ch.map(c=>white(c[0][0]));
 A.coin=coins();A.hp=hpPick();A.pickup=pickup;
