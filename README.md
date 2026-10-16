@@ -7,3 +7,4 @@ All sprites drawn in code; chiptune SFX/music via WebAudio. Progress saved in lo
 - Reachability: `python3 test_reach.py` (geometry vs jump physics, base suit, 75% margin).
 - Aiming: `python3 test_aim.py` (keyboard + touch aim pad, power-ups, hits).
 - Arena/boss failsafe: `python3 test_arena.py`.
+- Multi-touch: `python3 test_multitouch.py` (per-finger tracking, jump buffer/coyote).

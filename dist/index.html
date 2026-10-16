@@ -91,13 +91,28 @@ const ENDING=["The Lantern fires, and the rift folds shut.","OTT: Rift's closed.
 const SPK={MARA:'#5ab0ff',OTT:'#9aff5a',FENN:'#ffa03a',VOICE:'#ff3a6a'};
 // ---------- input ----------
 const keys={};const ptrs={};let taps=[];
-addEventListener('keydown',e=>{initAudio();if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!keys[e.code])onKey(e.code);keys[e.code]=true;});
+addEventListener('keydown',e=>{initAudio();if(!e.repeat&&['Space','KeyZ','KeyK'].includes(e.code))jumpPressAt=now();if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(!keys[e.code])onKey(e.code);keys[e.code]=true;});
 addEventListener('keyup',e=>{keys[e.code]=false;});
 function lp(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
-addEventListener('pointerdown',e=>{e.preventDefault();initAudio();const p=lp(e);ptrs[e.pointerId]={x:p.x,y:p.y,px:p.x,py:p.y,sx:p.x,sy:p.y};taps.push(p);},{passive:false});
-addEventListener('pointermove',e=>{const q=ptrs[e.pointerId];if(!q)return;e.preventDefault();const p=lp(e);q.x=p.x;q.y=p.y;},{passive:false});
-const pup=e=>{delete ptrs[e.pointerId];};addEventListener('pointerup',pup);addEventListener('pointercancel',pup);
-['touchstart','touchmove','touchend','gesturestart','dblclick','contextmenu'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+// Input: touch events tracked per identifier via changedTouches; pointer events only for mouse/pen
+// (so a touch is never double-counted or dropped by a pointercancel). Each finger maps to a control zone
+// by its current position, and jump presses are latched at touch time so taps between frames still count.
+const now=()=>performance.now()/1000;let jumpPressAt=-9;
+function zoneOf(q){if(state!=='plat'||q.y<PH-24)return null;const f=PB.F;if(q.sx>=f[0]-6&&q.sx<f[0]+f[2]+3&&q.sy>=PH-24)return 'F';return q.x<67?'L':q.x<137?'R':q.x<203?'F2':'J';}
+function ptrDown(id,e){initAudio();const p=lp(e),q={x:p.x,y:p.y,px:p.x,py:p.y,sx:p.x,sy:p.y,z:null};ptrs[id]=q;taps.push(p);q.z=zoneOf(q);if(q.z==='J')jumpPressAt=now();}
+function ptrMove(id,e){const q=ptrs[id];if(!q)return;const p=lp(e);q.x=p.x;q.y=p.y;const z=zoneOf(q);if(z==='J'&&q.z!=='J')jumpPressAt=now();q.z=z;}
+function ptrUp(id){delete ptrs[id];}
+const TOUCH_OPT={passive:false};
+addEventListener('touchstart',e=>{e.preventDefault();for(const t of e.changedTouches)ptrDown('t'+t.identifier,t);},TOUCH_OPT);
+addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)ptrMove('t'+t.identifier,t);},TOUCH_OPT);
+addEventListener('touchend',e=>{e.preventDefault();for(const t of e.changedTouches)ptrUp('t'+t.identifier);},TOUCH_OPT);
+addEventListener('touchcancel',e=>{for(const t of e.changedTouches)ptrUp('t'+t.identifier);},TOUCH_OPT);
+const isMousePtr=e=>e.pointerType==='mouse'||e.pointerType==='pen'&&!('ontouchstart' in window);
+addEventListener('pointerdown',e=>{if(!isMousePtr(e))return;e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch(_){}ptrDown('p'+e.pointerId,e);},TOUCH_OPT);
+addEventListener('pointermove',e=>{if(!isMousePtr(e))return;ptrMove('p'+e.pointerId,e);},TOUCH_OPT);
+addEventListener('pointerup',e=>{if(isMousePtr(e))ptrUp('p'+e.pointerId);});addEventListener('pointercancel',e=>{if(isMousePtr(e))ptrUp('p'+e.pointerId);});
+addEventListener('blur',()=>{for(const k in ptrs)delete ptrs[k];for(const k in keys)keys[k]=false;});
+['gesturestart','gesturechange','gestureend','dblclick','contextmenu','selectstart'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),TOUCH_OPT));
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state==='space'||state==='plat'))pause();});
 let defaultAct=null,anyTap=null,BTN=[];
 function onKey(c){if(c==='KeyM'){S.sound=S.sound?0:1;save();return;}
@@ -227,7 +242,7 @@ function pauseBtn(){ctx.fillStyle='#0c1430';ctx.fillRect(244,2,22,18);ctx.stroke
 
 // ---------- PLATFORMER ----------
 const TS=16,ROWS=22,PH=ROWS*TS;
-const PHYS={g:900,jv:380,run:115,cut:-140};const JUMP_H=PHYS.jv*PHYS.jv/(2*PHYS.g);// ~80.2px with base suit
+const JUMP_BUF=0.1,COYOTE=0.08;const PHYS={g:900,jv:380,run:115,cut:-140};const JUMP_H=PHYS.jv*PHYS.jv/(2*PHYS.g);// ~80.2px with base suit
 const MAX_RISE=2,MAX_GAP=3,PLAT_UP=3;// tiles; kept <=75% of physics limits (checked by test_reach.py)
 function initPlat(L){const d=L.d,r=rng(500+d*31),cols=90+d*30,map=new Uint8Array(cols*ROWS),ens=[],coins=[];let gy=17,x=0,lastGap=true;
  const set=(X,Y,v)=>{if(X>=0&&X<cols&&Y>=0&&Y<ROWS)map[Y*cols+X]=v;};const ground=new Int16Array(cols).fill(-1);
@@ -263,7 +278,7 @@ function moveBody(o,dt){o.x+=o.vx*dt;let hit=false;const y0=Math.floor(o.y/TS),y
  return hit;}
 const PB={L:[6,392,58,58],R:[70,392,58,58],F:[144,392,56,58],J:[206,392,58,58]};
 const AIM_D=14,AIM_UP=36;
-function touchBtns(){const r={L:0,R:0,F:0,J:0,aim:null};for(const id in ptrs){const q=ptrs[id],f=PB.F;if(q.sx>=f[0]-4&&q.sx<=f[0]+f[2]+4&&q.sy>=f[1]-20&&q.sy<=f[1]+f[3]+10){r.F=1;const dy=q.y-q.sy;r.aim=dy<=-AIM_UP?-2:dy<=-AIM_D?-1:dy>=AIM_D?1:0;continue;}for(const k in PB){if(k==='F')continue;const b=PB[k];if(q.x>=b[0]-4&&q.x<=b[0]+b[2]+4&&q.y>=b[1]-20&&q.y<=b[1]+b[3]+10)r[k]=1;}}return r;}
+function touchBtns(){const r={L:0,R:0,F:0,J:0,aim:null};for(const id in ptrs){const q=ptrs[id],z=zoneOf(q);q.z=z;if(z==='F'){r.F=1;const dy=q.y-q.sy;r.aim=dy<=-AIM_UP?-2:dy<=-AIM_D?-1:dy>=AIM_D?1:0;}else if(z==='F2')r.F=1;else if(z)r[z]=1;}return r;}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 function pdrop(x,y,n){for(let i=0;i<n;i++)G.coins.push({x:x+rnd(-8,8),y:y+rnd(-6,4),k:'c',v:2});if(Math.random()<0.08)G.coins.push({x,y:y-6,k:'hp',v:0});}
 function pboom(x,y,n,c){G.fx.push({x,y,ring:1,l:0.4,R:n*2+20});for(let i=0;i<n;i++){const a=rnd(0,7),s=rnd(20,120);G.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(.3,.7),c:c[ri(0,c.length-1)]});}}
@@ -273,16 +288,18 @@ function updPlat(dt){const p=G.p,d=G.d;G.t+=dt;G.shake=Math.max(0,G.shake-dt);
  const tb=touchBtns();const L=keys.ArrowLeft||keys.KeyA||tb.L,R=keys.ArrowRight||keys.KeyD||tb.R,J=keys.Space||keys.KeyZ||keys.KeyK||tb.J,F=keys.KeyX||keys.KeyJ||keys.KeyF||tb.F;
  const kU=keys.ArrowUp||keys.KeyW,kD=keys.ArrowDown||keys.KeyS;p.aim=tb.aim!==null?tb.aim:kU?((keys.ArrowLeft||keys.KeyA||keys.ArrowRight||keys.KeyD)?-1:-2):kD?1:0;
  G.tb=tb;const ax=(R?1:0)-(L?1:0);p.vx=ax*PHYS.run;if(ax)p.face=ax;
- if(p.on){p.co=0.1;p.fuel=0.35+S.jet*0.35;}else p.co-=dt;
- if(J&&!p.jh&&p.co>0){p.vy=-PHYS.jv;p.co=0;SFX.jump();}
- if(!J&&p.vy<PHYS.cut)p.vy=PHYS.cut;
+ if(p.on){p.co=COYOTE;p.fuel=0.35+S.jet*0.35;}else p.co-=dt;
+ if(J&&!p.jh)jumpPressAt=Math.max(jumpPressAt,now()-dt);
+ if(now()-jumpPressAt<=JUMP_BUF&&p.co>0){p.vy=-PHYS.jv;p.co=0;jumpPressAt=-9;p.jumps=(p.jumps||0)+1;p.jt=0.15;SFX.jump();}
+ if(p.jt>0)p.jt-=dt;
+ if(!J&&p.vy<PHYS.cut&&!(p.jt>0))p.vy=PHYS.cut;
  p.jet=false;if(J&&!p.on&&S.jet>0&&p.vy>-60&&p.fuel>0&&p.co<=0){p.vy=Math.max(-110,p.vy-1500*dt);p.fuel-=dt;p.jet=true;if(Math.random()<.6)G.fx.push({x:p.x+5-p.face*4,y:p.y+18,vx:rnd(-10,10),vy:rnd(40,80),l:.25,c:FIRE[ri(1,3)]});}
  p.jh=J;p.vy=Math.min(p.vy+PHYS.g*dt,500);moveBody(p,dt);
  if(p.on&&tile(Math.floor((p.x+5)/TS),Math.floor((p.y+p.h+1)/TS))===1){p.cx=p.x;p.cy=p.y;}
  p.inv=Math.max(0,p.inv-dt);p.ft-=dt;
  if(F&&p.ft<=0){const g=S.fg,pu=G.pu&&G.pu.k;p.ft=[0,.3,.25,.2,.17,.13][g]*(pu==='prapid'?0.45:pu==='shotgun'?1.3:1);const dm=g>=4?2:1,a0=aimAngle(p),bx=p.x+5+Math.cos(a0)*8,byy=p.y+9+Math.sin(a0)*8;
   const B=(off,o={})=>{const sp=o.sp||300,a=a0+off;G.bul.push(Object.assign({x:bx,y:byy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dm,l:0.8,c:pu==='prapid'?'#5ad0ff':'#bfffcf',hits:[]},o));};
-  B(0);if(g>=3)B(-0.23);if(g>=5)B(0.23);
+  p.shots=(p.shots||0)+1;B(0);if(g>=3)B(-0.23);if(g>=5)B(0.23);
   if(pu==='shotgun'){for(const v of[-0.38,-0.2,0.2,0.38])B(v,{l:0.35,c:'#ffa03a'});noise(.08,.12,3000);}
   else if(pu==='plasma'){B(0,{dm:3,pierce:1,big:1,sp:240,l:1.2,c:'#c05aff'});tone(400,150,.12,'sawtooth',.04);}else SFX.pshoot();}
  // spikes & pits
