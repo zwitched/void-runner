@@ -68,3 +68,10 @@ function diffK(){return FT.diff?FT.diff():{score:1};}
 // test hooks
 VR.score=()=>{const s=sc();return s&&{score:s.score,combo:s.combo,best:s.best,dmg:s.dmg,pot:s.pot,kills:s.kills};};
 VR.last=()=>FT.last;VR.best=()=>S.best||{};VR.rankOf=r=>rankOf(r);VR.go=s=>{state=s;};
+FT.secrets=[];HOOKS.push((n,a)=>{if(n==='secret')FT.secrets.push(a);if(n==='start')FT.secrets=[];});
+VR.secrets=()=>FT.secrets;VR.upgr=()=>({sg:S.sg,hull:S.hull,fg:S.fg,armor:S.armor,speed:S.speed,shield:S.shield,jet:S.jet});
+// ================= TOASTS =================
+FT.toasts=[];function toast(msg,col='#9aff5a',icon){FT.toasts.push({msg,col,icon,t:2.8});}
+HOOKS.push((n,a)=>{if(n==='toast')toast(a);else if(n==='overlay'){const q=FT.toasts[0];if(!q)return;q.t-=a||0.016;const k=Math.min(1,q.t*3,(2.8-q.t)*4),y=Math.round(-26+k*56);
+ const w=Math.min(W-20,tw(q.msg,7)+28);panel(W/2-w/2,y,w,22,q.col);txt(q.msg,W/2,y+8,q.col,7);if(q.t<=0)FT.toasts.shift();}});
+VR.toasts=()=>FT.toasts.map(t=>t.msg);
