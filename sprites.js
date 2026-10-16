@@ -224,26 +224,63 @@ function brute(d,f,atk,hit){const P=BRP[d-1],M=MAT({a:[P.a],b:[P.b],c:[P.c,{e:1,
 // ================= EVASION top-down: 32x32 art (16 logical), 4 dirs x 4 frames =================
 const VM=MAT({arm:['#e4eaf6'],suit:['#4a80ea'],helm:['#e8eef8'],vis:['#62f0ff',{e:1}],boot:['#2c2c3c'],scarf:['#ff8c3a'],pack:['#5c6274'],
  h1:['#d0405e'],h2:['#8a2040'],d1:['#ff8a3a'],d2:['#a04a1a'],dm:['#d8dce8'],i1:['#5ae08a'],i2:['#2a8a4a'],k1:['#a068f0'],k2:['#5a2aa0'],ey:['#ffe07a',{e:1}]});
-function topdown(local,dir,f){const fn=(gx,gy)=>{const x=gx-16,y=gy-16;let lx,ly;if(dir===0){lx=x;ly=y;}else if(dir===1){lx=y;ly=-x;}else if(dir===2){lx=-x;ly=-y;}else{lx=-y;ly=x;}return local(lx,ly,f);};
- return paint(32,32,fn,VM,{R:4,r:2,rim:'#c8e0ff'});}
-const maraTD=(x,y,f)=>{const s=[1,0,-1,0][f]*3.2;
- if(el(x,y,0,-3,4.8,4.8)){if(el(x,y,0,-6,3.6,2.1))return'vis';if(Math.abs(x)<0.9)return'suit';return'helm';}
- if(rr(x,y,-3.4,3,3.4,8.5,1.5))return'pack';
- if(el(x,y,0,1,7.4,3.6))return Math.abs(x)>4.5?'arm':'suit';
- if(cap(x,y,-6,1,-7+s*0.3,-3-s*0.4,1.7)||cap(x,y,6,1,7-s*0.3,-3+s*0.4,1.7))return'arm';
- if(cap(x,y,-2.6,4,-2.6,6-s,1.8))return y>5-s?'boot':'suit';if(cap(x,y,2.6,4,2.6,6+s,1.8))return y>5+s?'boot':'suit';
- if(cap(x,y,0,7,Math.sin(f*1.6)*2,12,1.3))return'scarf';return 0;};
-const CH=[(x,y,f)=>{const p=[1,0,-1,0][f];// stalker: tissue beast with 4 legs
-  if(el(Math.abs(x),y,2.4,-7,1.3,1.3))return'ey';if(el(x,y,0,-5,5,4))return'h2';if(el(x,y,0,2,6.6,7.4))return Math.abs(x)<0.8?'h2':'h1';
-  for(const[s,o]of[[-1,p],[1,-p]]){if(cap(x,y,s*5,-2,s*10,-6+o*3,1.6)||cap(x,y,s*5,5,s*10,9-o*3,1.6))return'h2';}return 0;},
- (x,y,f)=>{const a=f/4*Math.PI/2;// cutter: spinning blade disc
-  if(el(x,y,0,0,3,3))return'ey';if(el(x,y,0,0,6,6))return'd1';const r=Math.hypot(x,y),t=Math.atan2(y,x)+a;if(r<11&&(t%(Math.PI/2)+Math.PI*2)%(Math.PI/2)<0.5+((11-r)/11)*0.6)return r>8?'dm':'d2';return 0;},
- (x,y,f)=>{const p=Math.sin(f/4*Math.PI*2);// drifter: jelly with trailing tentacles
-  if(el(Math.abs(x),y,2.2,-3,1.2,1.4))return'ey';if(el(x,y,0,-2,8+p*0.8,7-p*0.6))return eld(x,y,0,-2,8,7)>0.7?'i2':'i1';
-  for(let k=-2;k<=2;k++)if(cap(x,y,k*3,4,k*3+Math.sin(f*1.5+k)*1.6,12,1))return'i2';return 0;},
- (x,y,f)=>{const p=[1,0,-1,0][f];// pincer: armoured bug with claws
-  if(el(Math.abs(x),y,2,-5,1.1,1.1))return'ey';if(el(x,y,0,1,5,8))return Math.abs(y-2)<0.6||Math.abs(y+2)<0.6?'k2':'k1';
-  for(const s of[-1,1]){if(cap(x,y,s*4,-5,s*7,-10+p*s,1.8))return'k1';if(cap(x,y,s*7,-10+p*s,s*3,-14,1.3))return'k2';if(cap(x,y,s*4,3,s*9,5+p*s*2,1))return'k2';}return 0;}];
+// Each character has its own drawing for the up view (back), down view (front) and side view (profile,
+// mirrored for left). v: 'u' | 'd' | 's'. Side views face +x.
+function topdown(local,dir,f){const v=dir===0?'u':dir===2?'d':'s',m=dir===3?-1:1;
+ return paint(32,32,(gx,gy)=>local((gx-16)*m,gy-16,f,v),VM,{R:4,r:2,rim:'#c8e0ff'});}
+const maraTD=(x,y,f,v)=>{const s=[1,0,-1,0][f]*2.6;
+ if(v==='s'){
+  if(el(x,y,0.6,-7,4.6,4.4)){if(el(x,y,3.4,-6.6,1.9,2.3))return'vis';if(y>-3.4)return'suit';return'helm';}
+  if(cap(x,y,-2.5,-2.2,-8,-3.4+Math.sin(f*1.6)*1.4,1.2))return'scarf';
+  if(rr(x,y,-5.6,-2.4,-2.2,3.6,1.2))return'pack';
+  if(cap(x,y,0.3,-1,-s*0.9,4.5,1.5))return'arm';
+  if(rr(x,y,-2.4,-2.6,2.6,4.4,1.6))return Math.abs(y-1.6)<0.5?'pack':'suit';
+  if(cap(x,y,0,4,s*1.3,9.6,1.7))return y>8.2?'boot':'suit';if(cap(x,y,0,4,-s*1.3,9.6,1.7))return y>8.2?['boot',-0.2]:['suit',-0.25];return 0;}
+ const back=v==='u';
+ if(cap(x,y,-2.2,4,-2.2,9.6-s,1.8))return y>8.4-s?'boot':'suit';if(cap(x,y,2.2,4,2.2,9.6+s,1.8))return y>8.4+s?'boot':'suit';
+ if(el(x,y,0,-7,5,4.5)){if(!back&&el(x,y,0,-6.2,3.6,2.3))return'vis';if(back&&Math.abs(x)<0.7&&y<-4)return'suit';return'helm';}
+ if(back&&cap(x,y,0.6,-2,0.6+Math.sin(f*1.6)*1.6,6,1.1))return'scarf';
+ if(!back&&el(x,y,0,-2.2,4.2,1.4))return'scarf';
+ if(back&&rr(x,y,-3.4,-1.6,3.4,4.4,1.4))return Math.abs(y-1.4)<0.5?'boot':'pack';
+ if(cap(x,y,-5,-0.6,-5.8,4.4-s*0.7,1.5)||cap(x,y,5,-0.6,5.8,4.4+s*0.7,1.5))return'arm';
+ if(rr(x,y,-4,-2,4,4.6,1.6)){if(!back&&Math.abs(x)<0.6)return'pack';if(!back&&el(x,y,0,3.6,1.2,0.8))return'vis';return'suit';}return 0;};
+const CH=[
+ (x,y,f,v)=>{const p=[1,0,-1,0][f];// stalker: four-legged tissue beast
+  if(v==='s'){if(el(x,y,8.6,-2.4,1.2,1.2))return'ey';if(el(x,y,7,-1,4.4,3.6))return y>0.6&&x>8?'h2':'h1';
+   if(cap(x,y,-7,-1,-12,-4+p*1.5,1.2))return'h2';
+   if(el(x,y,-1,0,8,4.6))return Math.abs(Math.sin(x*1.1))<0.25&&y<-1?'h2':'h1';
+   for(const[lx,o,dk]of[[4,p,0],[-5,-p,0],[2,-p,1],[-3,p,1]])if(cap(x,y,lx,2,lx+o*2.2,8.5,1.4))return dk?['h2',-0.25]:'h2';return 0;}
+  const fr=v==='d';const hy=fr?5:-7;
+  if(fr&&el(Math.abs(x),y,2.2,5.6,1.2,1.2))return'ey';
+  if(el(x,y,0,hy,4.4,3.8))return fr&&y>7?'h2':'h1';
+  if(!fr&&(cap(x,y,-2.4,-9.5,-3.6,-12,0.9)||cap(x,y,2.4,-9.5,3.6,-12,0.9)))return'h2';
+  if(!fr&&cap(x,y,0,6,Math.sin(f*1.6)*2.5,12,1.2))return'h2';
+  if(el(x,y,0,fr?-1:0,6,7))return Math.abs(x)<0.8||(Math.abs(Math.sin(y*1.1))<0.22&&Math.abs(x)<3)?'h2':'h1';
+  for(const[sx,o]of[[-1,p],[1,-p]]){if(cap(x,y,sx*5,-3,sx*9.5,-6+o*3,1.5)||cap(x,y,sx*5,4,sx*9.5,8-o*3,1.5))return'h2';}return 0;},
+ (x,y,f,v)=>{const a=f/4*Math.PI/2;// cutter: blade disc, seen face-on from front/back, edge-on from the side
+  if(v==='s'){const rx=4.2,ry=11;if(el(x,y,3.4,0,1.6,2.2))return'ey';if(el(x,y,0,0,2.2,5))return'd1';
+   if(el(x,y,0,0,rx,ry)){const band=((y/ry*3+f*0.75)%1+1)%1;if(eld(x,y,0,0,rx,ry)>0.75)return'dm';return band<0.35?'d2':'d1';}
+   if(cap(x,y,-4,0,-9,Math.sin(f*1.6)*1.5,0.8)&&(Math.floor(x)%2))return'd2';return 0;}
+  const fr=v==='d',r=Math.hypot(x,y),t=Math.atan2(y,x)+(fr?a:-a);
+  if(fr&&el(x,y,0,1,2.4,1.8))return'ey';if(!fr&&el(x,y,0,0,2.2,2.2))return'dm';
+  if(el(x,y,0,0,6,6))return !fr&&(Math.abs(x)<0.6||Math.abs(y)<0.6)?'d2':'d1';
+  if(r<11&&(t%(Math.PI/2)+Math.PI*2)%(Math.PI/2)<0.5+((11-r)/11)*0.6)return r>8?'dm':'d2';return 0;},
+ (x,y,f,v)=>{const p=Math.sin(f/4*Math.PI*2);// drifter: jelly with trailing tentacles
+  if(v==='s'){if(el(x,y,5,-3,1.2,1.5))return'ey';if(el(x,y,2,-2,6.4+p*0.6,6-p*0.5))return eld(x,y,2,-2,6.4,6)>0.72||(x<0&&Math.abs(y+2)<0.5)?'i2':'i1';
+   for(let k=0;k<4;k++){const yy=-3+k*2.4;if(cap(x,y,-3,yy,-12,yy+Math.sin(f*1.5+k)*2,0.9))return'i2';}return 0;}
+  const fr=v==='d';
+  if(fr&&el(Math.abs(x),y,2.4,-1.4,1.2,1.5))return'ey';
+  if(el(x,y,0,fr?-1:1,8+p*0.8,7-p*0.6)){const e=eld(x,y,0,fr?-1:1,8,7);if(!fr&&(el(Math.abs(x),y,3.4,0,1.3,1.3)||el(x,y,0,4,1.4,1.2)))return'i2';return e>0.72?'i2':'i1';}
+  for(let k=-2;k<=2;k++){const y0=fr?-6:6,y1=fr?-13:12;if(cap(x,y,k*3,y0,k*3+Math.sin(f*1.5+k)*1.6,y1,1))return'i2';}return 0;},
+ (x,y,f,v)=>{const p=[1,0,-1,0][f];// pincer: armoured bug with claws
+  if(v==='s'){if(el(x,y,6,-2.4,1.1,1.1))return'ey';if(el(x,y,-1,0,8,4.4))return Math.abs(x+3)<0.5||Math.abs(x-2)<0.5?'k2':'k1';
+   if(cap(x,y,5,1,11,-1+p,1.8))return'k1';if(cap(x,y,11,-1+p,13,-4,1.2)||cap(x,y,11,0+p,13.5,1.5,1))return'k2';
+   for(const[lx,o]of[[-5,p],[-1,-p],[3,p]])if(cap(x,y,lx,3,lx+o*1.6,8,0.9))return'k2';return 0;}
+  const fr=v==='d',fy=fr?1:-1;
+  if(fr&&el(Math.abs(x),y,2,4.4,1.1,1.1))return'ey';
+  if(el(x,y,0,-fy*0.5,5,8))return Math.abs(y+fy*1.5)<0.6||Math.abs(y-fy*2.5)<0.6||(!fr&&Math.abs(x)<0.5)?'k2':'k1';
+  for(const s of[-1,1]){if(cap(x,y,s*4,fy*4,s*7,fy*(9-p*s),fr?1.8:1.4))return'k1';if(cap(x,y,s*7,fy*(9-p*s),s*3,fy*13,fr?1.3:1))return'k2';if(cap(x,y,s*4,-fy*2,s*9,-fy*(4+p*s*2),1))return'k2';}
+  if(!fr&&cap(x,y,0,7,0,11,1.4))return'k2';return 0;}];
 
 // ================= PICKUPS, COINS, EXPLOSIONS =================
 function pickup(col,glyph){const M=MAT({bz:['#3a4260'],bz2:['#232842'],gm:[col],sy:['#ffffff',{e:1}]});return paint(24,24,(x,y)=>{
