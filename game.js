@@ -192,7 +192,7 @@ const SCAN=(()=>{const c=document.createElement('canvas');c.width=W*RQ;c.height=
 function postFX(dt){if(state!==prevState){if(!(state==='pause'||prevState==='pause'||state==='clear'||state==='over'))fadeT=1;prevState=state;}
  if(RQ>1||S.crt)blit(VIG,0,0,W,H);if(S.crt){ctx.drawImage(SCAN,0,0,W,H);ctx.fillStyle='rgba(90,176,255,0.03)';ctx.fillRect(0,0,W,H);}
  if(fadeT>0){fadeT=Math.max(0,fadeT-dt*3.5);ctx.fillStyle='rgba(3,4,10,'+fadeT.toFixed(3)+')';ctx.fillRect(0,0,W,H);}}
-function goStory(i){state='story';curLvl=i;stT=0;const L=LV[i];if(L&&L.t==='space')setTimeout(()=>ART.boss(L.d,!!L.final),60);}
+function goStory(i){state='story';curLvl=i;stT=0;const L=LV[i];if(L&&L.t==='space')setTimeout(()=>{ART.boss(L.d,!!L.final);setTimeout(()=>ART.space(Math.min(5,L.final?5:L.d),RQ),60);},60);}
 function startLevel(i){curLvl=i;runCr=0;const L=LV[i];if(L.t==='space')initSpace(L);else if(L.t==='hack')initHack(L);else if(L.t==='evade')initEvade(L);else initPlat(L);stT=0;}
 function pause(){if(state!=='space'&&state!=='plat'&&state!=='hack'&&state!=='evade')return;G.prev=state;state='pause';}
 function resume(){state=G.prev;}
