@@ -6,3 +6,4 @@ All sprites drawn in code; chiptune SFX/music via WebAudio. Progress saved in lo
 - Power-ups: `python3 test_powerups.py`. Temporary 12s weapon boosts drop from enemies (space: spread/rapid/laser/homing; foot: shotgun/rapid/plasma).
 - Reachability: `python3 test_reach.py` (geometry vs jump physics, base suit, 75% margin).
 - Aiming: `python3 test_aim.py` (keyboard + touch aim pad, power-ups, hits).
+- Arena/boss failsafe: `python3 test_arena.py`.

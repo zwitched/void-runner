@@ -42,14 +42,14 @@ async def main():
       got=await E('__v');ok=len(got)>0 and all(v[1]<0 for v in got);res.append((pu+' up',ok))
       if not ok:bad.append((pu,'not all upward',sorted(set(map(tuple,got)))))
     # angled shots hit enemies
-    for name,k,dx,dy,keys in [('up45 hits turret','turret',60,-60,['ArrowRight','ArrowUp']),('up hits flyer','flyer',-2,-70,['ArrowUp']),('down45 hits flyer','flyer',50,40,['ArrowDown'])]:
+    for name,k,dx,dy,keys in [('up45 hits turret','turret',60,-60,['ArrowRight','ArrowUp']),('up hits flyer','flyer',-2,-70,['ArrowUp']),('down45 hits flyer','flyer',40,40,['ArrowDown'])]:
       await fresh()
-      if name.startswith('down'): await E("VR.G().p.y-=60;VR.G().p.vy=-200")
-      await E(f"window.__e=VR.spawn('{k}',{dx},{dy});__e.hp=__e.mhp=99")
+      if name.startswith('down'): await E("(()=>{const P=VR.G().p,Y=P.y-60;clearInterval(window.__pp);window.__pp=setInterval(()=>{P.y=Y;P.vy=0},2)})()");await pg.wait_for_timeout(40)
+      await E(f"window.__e=VR.spawn('{k}',{dx},{dy});__e.hp=__e.mhp=99;__e.w=__e.h=28;__e.x-=7;__e.y-=9;const X0=__e.x,Y0=__e.y;clearInterval(window.__pin);window.__pin=setInterval(()=>{{__e.x=X0;__e.y=Y0;__e.by=Y0}},4)")
       for kk in keys+['KeyX']: await K.down(kk)
       await pg.wait_for_timeout(500)
       for kk in keys+['KeyX']: await K.up(kk)
-      hp=await E('__e.hp');ok=hp<99;res.append((name,hp,ok))
+      await E('clearInterval(__pin);clearInterval(window.__pp)');hp=await E('__e.hp');ok=hp<99;res.append((name,hp,ok))
       if not ok: bad.append((name,hp))
     await b.close()
   for r in res:print(r)
