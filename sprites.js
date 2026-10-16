@@ -99,23 +99,20 @@ function boss(d,fin){const P=BOSSPAL[fin?4:d-1];const M=MAT({a:[P.a],b:[P.b],m:[
   const body=(x,y)=>{const ax=Math.abs(x-cx);
    if(kind===0){// Hollow Reaver: carapace with two crescent claws
     if(el(ax,y,0,cy,46,42))return Math.abs(eld(ax,y,0,cy,46,42)-0.72)<0.04?'b':(y<cy-20&&Math.sin(ax*0.25)>0.6?'b':'a');
-    const t=eld(ax,y,62,cy+18,62,44);if(t<1&&t>0.66&&y>cy-10)return y>cy+40&&ax>90?'m':'a';
     if(el(ax,y,40,cy-14,26,14))return'b';if(poly(ax,y,[[18,cy+36],[26,cy+66],[30,cy+38]]))return'm';return 0;}
    if(kind===1){// Cinder Maw: wide furnace jaw with teeth
-    if(poly(ax,y,[[0,6],[60,14],[120,42],[136,72],[110,100],[70,96],[0,120]])){if(y>cy+30&&ax<70&&Math.sin(ax*0.35)>0)return y>cy+44?'em':'m';if(Math.abs(y-cy+22)<1.5||Math.abs(ax-60)<1.2)return'b';return'a';}
+    if(poly(ax,y,[[0,6],[60,14],[120,42],[136,72],[110,100],[70,96],[0,120]])){if(y>cy+30&&ax<66)return['em',(y-cy-30)*-0.02];if(Math.abs(y-cy+22)<1.5||Math.abs(ax-60)<1.2)return'b';return'a';}
     if(poly(ax,y,[[0,118],[60,96],[50,112],[30,130],[0,140]]))return'b';if(rr(ax,y,100,60,130,80,4))return'm';return 0;}
    if(kind===2){// Mothership: saucer with hangar bays
     if(el(ax,y,0,cy,150,30)){if(Math.abs(eld(ax,y,0,cy,150,30)-0.8)<0.05)return'b';if(y>cy+8&&Math.floor(ax/22)%2===0&&ax>30)return y>cy+14?'em':'dk';return'a';}
     if(el(ax,y,0,cy-18,58,32))return y<cy-40&&ax<26?'m':'a';if(el(ax,y,0,cy+30,40,22))return'b';return 0;}
    if(kind===3){// Rift Warden: spiked diamond with blades
     if(poly(ax,y,[[0,4],[50,40],[70,cy],[44,130],[0,160]])){if(Math.abs(ax-24)<1.2||Math.abs(y-cy)<1.4)return'b';return'a';}
-    if(poly(ax,y,[[60,50],[166,30],[140,64],[78,90]]))return sd(ax,y,60,50,166,30)<3?'m':'b';
     if(poly(ax,y,[[60,100],[130,140],[70,124]]))return'b';return 0;}
    // Void Heart: pulsing organic heart with tendrils
    const pul=1+Math.sin(ph)*0.04;const hx2=ax/pul,hy=(y-cy)/pul;
    const heart=el(hx2,hy,28,-10,44,44)||poly(hx2,hy,[[0,94],[70,10],[0,-20]]);
    if(heart){const v=vnoise(x/9,y/9,5);const ed=Math.hypot(hx2,hy+10)/80;if(Math.abs(Math.sin((hx2*0.08+hy*0.05)*3+v*4))<0.1)return'flesh2';return['flesh',v*0.25-ed*0.2];}
-   for(let k=0;k<4;k++){const a=0.5+k*0.33,bx=46+k*16,by=cy+10+k*14,wx=Math.sin(ph+k)*8;if(cap(ax,y,bx,by,bx+70+wx,by+40-k*6,6-(k*0.7)))return k%2?'flesh2':'flesh';}
    for(let k=-2;k<=2;k++){if(poly(x-cx-k*18,y,[[-5,cy-62+Math.abs(k)*8],[0,cy-90+Math.abs(k)*10],[5,cy-62+Math.abs(k)*8]]))return'dk';}return 0;};
   const fn=(x,y)=>{const c=core(x,y);if(c)return c;let v=body(x,y);if(!v)return 0;
    for(const[qx,qy,a]of cracks){const t=Math.abs((x-qx)*Math.sin(a)-(y-qy)*Math.cos(a)),u=(x-qx)*Math.cos(a)+(y-qy)*Math.sin(a);if(t<1.1+Math.sin(u*0.4)*0.6&&Math.abs(u)<18)return dmg>1&&t<0.6?'em':'sc';}
@@ -125,7 +122,19 @@ function boss(d,fin){const P=BOSSPAL[fin?4:d-1];const M=MAT({a:[P.a],b:[P.b],m:[
     v=Array.isArray(v)?[v[0],v[1]+(id-0.5)*0.16]:[v,(id-0.5)*0.16];}}
    const lights=(Math.floor(x/10)+Math.floor(y/10)+f)%9===0&&hash(Math.floor(x/10),Math.floor(y/10),d)>0.7&&((x%10)<2.5&&(y%10)<2.5);if(lights&&v!=='em')return'g';return v;};
   fr.push(paint(W2,H2,fn,M,{R:24,r:6,rim:fin?'#ff8aa0':'#cfe4ff'}));}frames.push(fr);}
- return {frames,W:W2,H:H2};}
+ // ---- independently moving parts (drawn over the body at runtime; mask uses the rest pose) ----
+ const cx=W2/2,cy=H2*0.45,PD=[];
+ if(kind===0)PD.push({fn:(ax,y)=>{const t=eld(ax,y,62,cy+18,62,44);if(t<1&&t>0.66&&y>cy-10&&ax>34){if(y>cy+40&&ax>90)return'm';return Math.abs(t-0.83)<0.03?'b':'a';}return 0;},bb:[30,cy-30,128,cy+66],pv:[40,cy+6],mo:(t,s)=>({a:s*0.22*Math.sin(t*2.2)})});
+ if(kind===1)PD.push({center:1,fn:(dx,y)=>{const ax=Math.abs(dx);if(!rr(ax,y,0,cy+28,64,cy+54,5))return 0;if(y<cy+37)return Math.sin(ax*0.35+0.8)>0?['m',(cy+37-y)*0.05]:0;if(Math.abs(y-cy-44)<1)return'dk';return ax%16<1?'b':'a';},bb:[-66,cy+26,66,cy+56],pv:[0,cy+28],mo:t=>({dy:(1+Math.sin(t*3))*4})});
+ if(kind===2)PD.push({fn:(ax,y)=>{const px=40,py=cy-24;if(cap(ax,y,px,py,px,py+16,2.6))return sd(ax,y,px,py+15,px,py+16)<2.6?'g':'m';if(el(ax,y,px,py,9,8))return y<py-2?'m':'dk';return 0;},bb:[28,cy-34,52,cy-4],pv:[40,cy-24],mo:(t,s,aim)=>({a:aim})});
+ if(kind===3)PD.push({fn:(ax,y)=>poly(ax,y,[[60,50],[166,30],[140,64],[78,90]])?(sd(ax,y,60,50,166,30)<3?'m':(Math.abs(sd(ax,y,70,70,150,46)-6)<1?'dk':'b')):0,bb:[56,26,168,92],pv:[62,62],mo:(t,s)=>({a:s*0.18*Math.sin(t*1.7)})});
+ if(kind===4)PD.push({fn:(ax,y)=>{for(let k=0;k<4;k++){const bx=46+k*16,by=cy+10+k*14;if(cap(ax,y,bx,by,bx+70,by+40-k*6,6-(k*0.7)))return Math.abs(sd(ax,y,bx,by,bx+70,by+40-k*6)-2)<0.6?'flesh2':(k%2?'flesh2':'flesh');}return 0;},bb:[38,cy+2,130,cy+66],pv:[44,cy+14],mo:(t,s)=>({a:s*0.13*Math.sin(t*2.1)})});
+ const parts=PD.map(P=>{const[x0,y0,x1,y1]=P.bb,w=Math.ceil(x1-x0),h=Math.ceil(y1-y0);const imgs=[0,1,2].map(dmg=>{const r=paint(w,h,(lx,ly)=>{const v=P.fn(x0+lx,y0+ly);if(!v)return 0;if(dmg>0&&vnoise((x0+lx)/9,(y0+ly)/9,d*5+1)>(dmg>1?0.7:0.84))return dmg>1&&vnoise(lx/4,ly/4,4)>0.5?'em':'sc';return v;},M,{R:10,r:6,rim:fin?'#ff8aa0':'#cfe4ff'});
+   if(P.center)return{R:r};const l=mk(w,h,6),lx=l.getContext('2d');lx.translate(w,0);lx.scale(-1,1);lx.drawImage(r,0,0);return{R:r,L:l};});
+  return{imgs,w,h,center:!!P.center,pvx:P.pv[0]-x0,pvy:P.pv[1]-y0,ax:P.pv[0],ay:P.pv[1],mo:P.mo};});
+ // rest-pose composite for the collision mask
+ const rest=mk(W2,H2,6),rc=rest.getContext('2d');rc.drawImage(frames[0][0],0,0);for(const p of parts){if(p.center)rc.drawImage(p.imgs[0].R,cx+(p.ax)-p.pvx,p.ay-p.pvy);else{rc.drawImage(p.imgs[0].R,cx+p.ax-p.pvx,p.ay-p.pvy);rc.drawImage(p.imgs[0].L,cx-p.ax-(p.w-p.pvx),p.ay-p.pvy);}}
+ return {frames,parts,rest,W:W2,H:H2,cx,cy:cy+6};}
 
 // ================= MARA ON FOOT: 40x56 art (20x28 logical) =================
 const MM=MAT({suit:['#3866cc'],suit2:['#284c9c'],arm:['#d6deee'],helm:['#dfe5f2'],vis:['#62f0ff',{e:1,li:'#ffffff'}],boot:['#2c2c3c'],gun:['#6c7290'],gunl:['#86dcff',{e:1}],scarf:['#ff8c3a'],pack:['#5c6274'],belt:['#1c2034']});
@@ -152,7 +161,17 @@ function maraPose(P){const hip=[19+P.lean*2,35+P.dy],sh=[20+P.lean*4,24+P.dy],he
   let v=lg(L1,false);if(v)return v;
   if(rr(x,y,sh[0]-10+P.lean*2,sh[1]-1,sh[0]-4,sh[1]+11,1.5))return y>sh[1]+8?'belt':'pack';
   v=lg(L2,true);if(v)return v;return 0;};
- return{c:paint(40,56,fn,MM,{R:3,rim:'#a8e8ff'}),tip:[(tip[0]-20)/2,(tip[1]-56)/2]};}
+ const K=MK,det=(X,Y)=>{const x=X/K,y=Y/K;let ux=x,uy=y;if(rot){const c=Math.cos(-rot),s2=Math.sin(-rot),vx=x-piv[0],vy=y-piv[1];ux=piv[0]+vx*c-vy*s2;uy=piv[1]+vx*s2+vy*c;}
+  const v=fn(x,y);if(!v)return 0;const m=Array.isArray(v)?v[0]:v;
+  // extra detail at the larger size: helmet antenna light, knee pads, glove cuffs, belt pouch, boot soles, suit seams
+  if(m==='helm'&&Math.abs(ux-(head[0]-4.2))<0.5&&uy<head[1]-3)return'gunl';
+  if(m==='suit'&&(Math.abs(ux-sh[0]-0.5)<0.28&&uy>sh[1]+2&&uy<hip[1]-2))return'suit2';
+  if(m==='belt'&&ux>hip[0]-1&&ux<hip[0]+2.2)return'pack';
+  if(m==='boot'&&(uy>54.3||Math.abs(uy-(L1[3]+1.6))<0.25))return'belt';
+  if((m==='suit'||m==='suit2')&&(Math.hypot(ux-L1[0],uy-L1[1])<2.1||Math.hypot(ux-L2[0],uy-L2[1])<2.1))return m==='suit'?'arm':['arm',-0.25];
+  return v;};
+ return{c:paint(Math.round(40*K),Math.round(56*K),det,MM,{R:4,rim:'#a8e8ff'}),tip:[(tip[0]-20)*K/2,(tip[1]-56)*K/2]};}
+const MK=1.65;
 function maraSet(){const S={idle:[],run:[],rise:[],fall:[],land:[],hit:null,death:[],tips:[]};
  for(let a=0;a<4;a++){const aim=AIMS[a];S.idle.push([]);S.run.push([]);
   for(let f=0;f<4;f++){const br=[0,0.5,1,0.5][f];const r=maraPose({lean:0,dy:br*0.6,headDy:br*0.3,l1:[0.12,0.05],l2:[-0.1,0.05],aim,scarf:f*1.6});S.idle[a].push(r.c);if(f===0)S.tips.push(r.tip);}

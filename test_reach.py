@@ -17,7 +17,9 @@ async def main():
     emp=y0-await E('__miny');await E('clearInterval(__iv)')
     out.append(f"jump: formula {JH:.1f}px ({JH/TS:.2f} tiles), measured in-game {emp:.1f}px; 75% budget {MARGIN*JH:.1f}px")
     if emp<JH*0.9:fails.append('measured jump much lower than formula')
-    H=min(JH,emp);g,jv,run,w,h=P['g'],P['jv'],P['run'],10,22
+    H=min(JH,emp);g,jv,run=P['g'],P['jv'],P['run'];w,h=ph['PW'],ph['PHh']
+    out.append(f'Mara hitbox {w}x{h}px (v3 was 10x22)')
+    if h<35: fails.append('Mara hitbox not scaled up')
     def reach(rise):  # horizontal distance at the moment feet come back down to height `rise`
       d=jv*jv-2*g*rise
       return -1 if d<0 else run*(jv+math.sqrt(d))/g
