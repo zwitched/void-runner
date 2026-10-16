@@ -166,6 +166,9 @@ function drawCoin(x,y,t,seed){const f=COIN[((t*12+seed)|0)%8];blit(f,Math.round(
 const GLW={};function glowS(x,y,r,c,a){if(r<=0||a<=0)return;let g=GLW[c];if(!g){const [cc,x2]=cnv(32,32);const gr=x2.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,c);gr.addColorStop(0.35,c+'88');gr.addColorStop(1,c+'00');x2.fillStyle=gr;x2.fillRect(0,0,32,32);g=GLW[c]=cc;}
  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(1,a);ctx.drawImage(g,x-r*2,y-r*2,r*4,r*4);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
 function glow(x,y,r,c,a){if(c.length===7){glowS(x,y,r,c,a*1.4);return;}ctx.globalCompositeOperation='lighter';ctx.globalAlpha=a;ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha=a*0.6;ctx.beginPath();ctx.arc(x,y,r*0.55,0,7);ctx.fill();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+function spaceBg(L,t){const d=Math.min(5,Math.max(1,L.final?5:L.d)),B=ART.space(d,RQ);const ny=Math.floor((t*7)%H);blit(B.neb,0,ny,W,H);blit(B.neb,0,ny-H,W,H);
+ const per=H+B.mh+40,my=((t*3.2+B.mh+50)%per)-B.mh,mxp=[150,40,70,150,25][d-1];if(d===4){blit(B.mark,mxp,-40,B.mw,B.mh*1.9);}else blit(B.mark,mxp-B.mw/2+30,Math.floor(my),B.mw,B.mh);
+ const dy=Math.floor((t*26)%H);blit(B.mid,0,dy,W,H);blit(B.mid,0,dy-H,W,H);}
 const NEB={};function nebula(L){if(NEB[L.name])return NEB[L.name];const c=document.createElement('canvas');c.width=W/2;c.height=H/2;const x=c.getContext('2d'),r=rng(L.name.length*97+L.d);
  const cols=[L.sky[1],'#3a1a6a','#0a4a6a','#6a1a3a'];for(let i=0;i<14;i++){const cx=r()*W/2,cy=r()*H/2,rad=20+r()*60,g=x.createRadialGradient(cx,cy,0,cx,cy,rad);g.addColorStop(0,cols[i%4]);g.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=0.35;x.fillStyle=g;x.fillRect(0,0,W/2,H/2);}
  // dither to keep it pixel-ish
@@ -292,7 +295,7 @@ function bossImg(b){const a=b.art,dm=bossDm(b),f=((G.t*8)|0)&3;if(b.flash){a.WC=
 function drawRock(e){draw(e.fl?ART.rockW:ART.rock[(((e.rot||0)/(Math.PI*2)*8)%8+8|0)%8],e.x,e.y,2);}
 function bar(x,y,w,h,f,c,bg='#222'){ctx.fillStyle=bg;ctx.fillRect(x,y,w,h);ctx.fillStyle=c;ctx.fillRect(x,y,Math.max(0,w*f)|0,h);}
 function drawSpace(dt){const L=G.L,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,L.sky[0]);g.addColorStop(1,L.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
- const nb=nebula(L),ny=(G.t*8)%H;ctx.drawImage(nb,0,ny,W,H);ctx.drawImage(nb,0,ny-H,W,H);{const pl=planet(L),py=((G.t*4+curLvl*90)%(H+180))-90;blit(pl,(curLvl*71)%(W-60)-15,py,90,90);}
+ spaceBg(L,G.t);
  ctx.save();shakeT(G.shake);stars(dt,G.boss?0.5:1.5);
  if(L.final){ctx.fillStyle='rgba(120,0,40,0.25)';const r=60+Math.sin(G.t)*6;ctx.beginPath();ctx.arc(W/2,80,r,0,7);ctx.fill();}
  for(const c of G.coins){if(c.k==='pu')puIcon(c.x,c.y,c.w,G.t,c.life);else if(c.k==='hp'){draw(ART.hp,c.x,c.y,2);}else drawCoin(c.x,c.y,G.t,(c.x*7)%10);}

@@ -348,6 +348,62 @@ function portraits(){const P={};
   for(let k=0;k<7;k++){const ta=k/7*Math.PI*2+0.3,wob=Math.sin(r*0.35+k)*0.18;const d2=Math.abs(((a-ta-wob+Math.PI*3)%(Math.PI*2))-Math.PI)*r;if(r<30&&d2<2.6-r*0.06)return r>27?'ve':'vr';}
   return 0;},MM,{R:4,r:2,rim:'#ff9ab0'});
  return P;}
+
+// ================= SPACE BACKDROPS (one set per chapter): nebula, a landmark, a debris layer =================
+function pix(w,h,r,fn){const c=mk(Math.round(w*r),Math.round(h*r),r),x=c.getContext('2d'),W2=c.width,H2=c.height,im=x.createImageData(W2,H2),d=im.data;
+ for(let py=0;py<H2;py++)for(let px=0;px<W2;px++){const v=fn((px+0.5)/r,(py+0.5)/r,BY[(py&3)*4+(px&3)]/16);if(!v)continue;const i=(py*W2+px)*4;d[i]=v[0];d[i+1]=v[1];d[i+2]=v[2];d[i+3]=v[3]===undefined?255:v[3];}
+ x.putImageData(im,0,0);return c;}
+const fbm2=(x,y,s)=>{let v=0,a=0.5;for(let k=0;k<4;k++){v+=a*vnoise(x,y,s+k*13);x*=2.03;y*=2.03;a*=0.5;}return v/0.9375;};
+const SPC=[// sky top, sky bottom, nebula colours (dim to bright)
+ {s0:'#05061a',s1:'#120a2c',n:['#1a1a4a','#34306e','#5a4a9a','#8a7ac8']},
+ {s0:'#120406',s1:'#2c0c08',n:['#3a1008','#6a2410','#b04a1a','#ff9a4a']},
+ {s0:'#020c14',s1:'#06222e',n:['#08303a','#10505a','#2a8a8a','#8ae0d0']},
+ {s0:'#0a0216',s1:'#22082e',n:['#2a0a40','#4a1a6a','#8a3aa8','#e08aff']},
+ {s0:'#000000',s1:'#140006',n:['#1a0008','#3a0614','#7a1028','#ff3a5a']}];
+function spaceSet(d,r){const P=SPC[d-1],S0=hx(P.s0),S1=hx(P.s1),N=P.n.map(hx),H=480,W=270;
+ const nf=(x,y)=>{const a=fbm2(x/70,y/70,d*31),b=fbm2(x/26+9,y/26,d*17);return a*0.75+b*0.35-0.18-(d===4?Math.abs(x-135)/400:0);};
+ const neb=pix(W,H,Math.min(r,1),(x,y,th)=>{const w=y<60?y/60:1;let n=nf(x,y)*w+nf(x,y+H)*(1-w);// fades into the copy above so it tiles vertically
+  let col=mix(S0,S1,0.5-0.5*Math.cos(y/H*TAU));const q=cl((n-0.25)*2.4,0,1)*4+th*0.9-0.45,lv=Math.floor(q);if(lv>=1)col=mix(col,N[Math.min(3,lv-1)],0.55+0.12*Math.min(3,lv-1));
+  if(d===2&&lv>=3&&hash(Math.floor(x),Math.floor(y),3)>0.97)col=mix(col,[255,220,160],0.6);return col.map(Math.round);});
+ let mark;
+ if(d===1){// Kestrel relay: ring station with solar wings, painted like the sprites
+  const M=MAT({rg:['#8a92a8'],rg2:['#4a5068'],hb:['#c8d0e0'],sp:['#2a4a9a',{li:'#8ab0ff'}],sp2:['#18285a'],lt:['#ffd23a',{e:1}],gl:['#62f0ff',{e:1}]});
+  mark=paint(240,240,(X,Y)=>{const x=X*150/240,y=Y*150/240,dx=x-75,dy=(y-75)*2.4,rr2=Math.hypot(dx,dy);
+   if(rr2>50&&rr2<60&&!(dy<0&&Math.abs(dx)<12&&rr2<60))return Math.abs(rr2-55)<1.2?'rg2':(Math.floor(Math.atan2(dy,dx)*6)%2?'rg':['rg',-0.1]);
+   if(rr(x,y,70,30,80,120,3)){if(Math.abs(y-75)<6)return'gl';return Math.floor(y/9)%2?'hb':['hb',-0.15];}
+   for(const sx of[-1,1])if(rr(x,y,sx>0?82:22,40,sx>0?128:68,52,1)){const gx=(x-(sx>0?82:22))%6,gy=(y-40)%4;return gx<0.8||gy<0.7?'sp2':'sp';}
+   if(cap(x,y,22,46,128,46,0.9))return'rg2';if(el(x,y,75,28,2,2)||el(x,y,75,122,2,2))return'lt';return 0;},M,{R:3,r:2,rim:'#d8e8ff'});}
+ else if(d===2){// Cinder Drift: a swollen red giant with granulation and a ragged corona
+  mark=pix(170,170,r,(x,y,th)=>{const dx=x-85,dy=y-85,rr2=Math.hypot(dx,dy);if(rr2<52){const g=vnoise(x/5,y/5,3)*0.6+vnoise(x/13,y/13,8)*0.4,limb=1-(rr2/52)**2;const t=cl(g*0.6+limb*0.7+th*0.12,0,1);
+    return mix(mix([90,14,10],[180,52,24],cl(t*1.6,0,1)),[220,120,60],cl((t-0.6)*2.5,0,1)).map(Math.round);}
+   const cor=52+18*vnoise(Math.atan2(dy,dx)*4+10,0.5,5)+6*vnoise(Math.atan2(dy,dx)*13,1.5,6);if(rr2<cor){const t=(cor-rr2)/(cor-52);if(t>th*0.9)return[220,Math.round(80+t*50),30,Math.round(60+t*90)];}return 0;});}
+ else if(d===3){// The Shear: banded ice giant with a tilted ring and a shard field crossing it
+  mark=pix(190,150,r,(x,y,th)=>{const dx=x-95,dy=y-75,rr2=Math.hypot(dx,dy),rx=dx*Math.cos(0.3)+dy*Math.sin(0.3),ry=(-dx*Math.sin(0.3)+dy*Math.cos(0.3))*3.6,rq=Math.hypot(rx,ry);
+   const ring=rq>62&&rq<88&&(Math.floor(rq/3)%3!==0);const front=ry>0;
+   if(ring&&front)return mix([40,110,120],[180,240,230],cl((rq-62)/26+th*0.2,0,1)*0.8).map(Math.round);
+   if(rr2<46){const band=Math.sin((dy+Math.sin(dx*0.08)*4)*0.33)+vnoise(x/6,y/3,4)*0.8,limb=Math.sqrt(1-(rr2/46)**2),lit=cl(0.25+limb*0.6-(dx+dy)/140,0,1);
+    const c=band>0.4?[60,170,170]:band>-0.3?[30,110,130]:[20,70,96];return mix([4,14,24],c,cl(lit+th*0.15,0,1)).map(Math.round);}
+   if(ring)return mix([30,90,100],[150,220,210],cl((rq-62)/26,0,1)*0.7).map(Math.round);return 0;});}
+ else if(d===4){// Rift Approach: a vertical tear with a hot white edge and warped stars sliding toward it
+  mark=pix(120,300,r,(x,y,th)=>{const cxx=60+Math.sin(y*0.045)*10+Math.sin(y*0.13)*4,w=3+14*Math.sin(Math.PI*y/300)**1.5,dx=Math.abs(x-cxx);
+   if(dx<w*0.2)return[235,200,250,220];if(dx<w*0.7)return mix([200,120,240],[90,20,140],(dx-w*0.2)/(w*0.5)).map(Math.round).concat([200]);
+   if(dx<w*2.6){const t=1-(dx-w*0.7)/(w*1.9);if(t>th)return[130,40,190,Math.round(50+t*80)];}
+   if(hash(Math.floor(x/3),Math.floor(y),2)>0.996)return[230,200,255,200];return 0;});}
+ else{// Void Heart: an accretion swirl round a black centre
+  mark=pix(220,220,r,(x,y,th)=>{const dx=x-110,dy=(y-110)*1.3,rr2=Math.hypot(dx,dy),a=Math.atan2(dy,dx);if(rr2<26)return rr2>23?[255,90,110]:[0,0,0];
+   if(rr2<104){const sw=Math.sin(a*3+rr2*0.12)*0.5+0.5,t=(1-(rr2-26)/78)*(0.5+sw*0.6);if(t>th*0.8)return mix([90,0,20],[255,140,150],cl(t*t*1.4,0,1)).map(Math.round).concat([Math.round(120+cl(t,0,1)*135)]);}return 0;});}
+ // debris layer (tiles vertically): drawn sprites, dimmed so they read as far away
+ const mid=mk(Math.round(W*r),Math.round(H*r),r),mx=mid.getContext('2d');mx.scale(r,r);mx.imageSmoothingEnabled=false;
+ const put=(img,x,y,s)=>{const w=img.width*s/img.r,h=img.height*s/img.r;for(const oy of[0,-H,H])mx.drawImage(img,x-w/2,y-h/2+oy,w,h);};
+ for(let i=0;i<(d===1?22:d===3?18:14);i++){const x=hash(i,1,d)*W,y=hash(i,2,d)*H,s=0.4+hash(i,3,d)*0.6;
+  if(d===1||d===2)put(A.rock[i%8],x,y,s*0.9);else if(d===3)put(shard(i),x,y,s*1.6);else if(d===4)put(shard(i+40,1),x,y,s*1.3);else put(A.rock[i%8],x,y,s);}
+ mx.globalCompositeOperation='source-atop';mx.fillStyle=P.s1;mx.globalAlpha=(d===1||d===2||d===5)?0.62:0.4;mx.fillRect(0,0,W,H);mx.globalAlpha=1;mx.globalCompositeOperation='source-over';
+ if(d===2||d===5)for(let i=0;i<70;i++){const x=hash(i,5,d)*W,y=hash(i,6,d)*H;mx.fillStyle=d===2?(i%3?'#ff9a3a':'#ffe08a'):'#ff3a5a';mx.globalAlpha=0.5+hash(i,7,d)*0.5;mx.fillRect(x,y,1,i%4?1:2);mx.globalAlpha=0.25;mx.fillRect(x,y-3,1,3);}
+ mx.globalAlpha=1;
+ return{neb,mark,mid,mw:mark.width/mark.r,mh:mark.height/mark.r};}
+const SHM=MAT({ic:['#6ad0d0',{li:'#e0ffff'}],ic2:['#2a7a8a'],pc:['#a060e0',{li:'#ffd0ff'}],pc2:['#5a2a9a']});
+function shard(i,purple){const a=hash(i,9,1)*Math.PI,L2=8+hash(i,8,1)*8,ca=Math.cos(a),sa=Math.sin(a);return paint(40,40,(x,y)=>{const dx=x-20,dy=y-20,u=dx*ca+dy*sa,v=-dx*sa+dy*ca;
+ if(Math.abs(v)<(1-Math.abs(u)/L2)*4.5&&Math.abs(u)<L2)return purple?(v>0?'pc2':'pc'):(v>0?'ic2':'ic');return 0;},SHM,{R:3,r:2,rim:purple?'#ffd0ff':'#e0ffff'});}
 // ================= EVASION top-down: 32x32 art (16 logical), 4 dirs x 4 frames =================
 const VM=MAT({arm:['#e4eaf6'],suit:['#4a80ea'],helm:['#e8eef8'],vis:['#62f0ff',{e:1}],boot:['#2c2c3c'],scarf:['#ff8c3a'],pack:['#5c6274'],
  h1:['#d0405e'],h2:['#8a2040'],d1:['#ff8a3a'],d2:['#a04a1a'],dm:['#d8dce8'],i1:['#5ae08a'],i2:['#2a8a4a'],k1:['#a068f0'],k2:['#5a2aa0'],ey:['#ffe07a',{e:1}]});
@@ -478,6 +534,7 @@ const HB={};A.hack=(col,k)=>HB[k]||(HB[k]=hackBlock(col,k));
 const BGS={};A.bg=(d,pal,bg,H,r)=>{const k=d+pal.join()+r;return BGS[k]||(BGS[k]=bgSet(d,pal,bg,H,r));};
 const MW={};A.wall=(pal,m,v)=>{const k=pal.join()+m+'_'+v;return MW[k]||(MW[k]=mazeWall(pal,m,v));};
 let PT=null;A.portrait=k=>(PT||(PT=portraits()))[k];
+const SPS={};A.space=(d,r)=>SPS[d+'_'+r]||(SPS[d+'_'+r]=spaceSet(d,r));
 A.white=white;return A;})();
 
 'use strict';
@@ -648,6 +705,9 @@ function drawCoin(x,y,t,seed){const f=COIN[((t*12+seed)|0)%8];blit(f,Math.round(
 const GLW={};function glowS(x,y,r,c,a){if(r<=0||a<=0)return;let g=GLW[c];if(!g){const [cc,x2]=cnv(32,32);const gr=x2.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,c);gr.addColorStop(0.35,c+'88');gr.addColorStop(1,c+'00');x2.fillStyle=gr;x2.fillRect(0,0,32,32);g=GLW[c]=cc;}
  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(1,a);ctx.drawImage(g,x-r*2,y-r*2,r*4,r*4);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
 function glow(x,y,r,c,a){if(c.length===7){glowS(x,y,r,c,a*1.4);return;}ctx.globalCompositeOperation='lighter';ctx.globalAlpha=a;ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha=a*0.6;ctx.beginPath();ctx.arc(x,y,r*0.55,0,7);ctx.fill();ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+function spaceBg(L,t){const d=Math.min(5,Math.max(1,L.final?5:L.d)),B=ART.space(d,RQ);const ny=Math.floor((t*7)%H);blit(B.neb,0,ny,W,H);blit(B.neb,0,ny-H,W,H);
+ const per=H+B.mh+40,my=((t*3.2+B.mh+50)%per)-B.mh,mxp=[150,40,70,150,25][d-1];if(d===4){blit(B.mark,mxp,-40,B.mw,B.mh*1.9);}else blit(B.mark,mxp-B.mw/2+30,Math.floor(my),B.mw,B.mh);
+ const dy=Math.floor((t*26)%H);blit(B.mid,0,dy,W,H);blit(B.mid,0,dy-H,W,H);}
 const NEB={};function nebula(L){if(NEB[L.name])return NEB[L.name];const c=document.createElement('canvas');c.width=W/2;c.height=H/2;const x=c.getContext('2d'),r=rng(L.name.length*97+L.d);
  const cols=[L.sky[1],'#3a1a6a','#0a4a6a','#6a1a3a'];for(let i=0;i<14;i++){const cx=r()*W/2,cy=r()*H/2,rad=20+r()*60,g=x.createRadialGradient(cx,cy,0,cx,cy,rad);g.addColorStop(0,cols[i%4]);g.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=0.35;x.fillStyle=g;x.fillRect(0,0,W/2,H/2);}
  // dither to keep it pixel-ish
@@ -774,7 +834,7 @@ function bossImg(b){const a=b.art,dm=bossDm(b),f=((G.t*8)|0)&3;if(b.flash){a.WC=
 function drawRock(e){draw(e.fl?ART.rockW:ART.rock[(((e.rot||0)/(Math.PI*2)*8)%8+8|0)%8],e.x,e.y,2);}
 function bar(x,y,w,h,f,c,bg='#222'){ctx.fillStyle=bg;ctx.fillRect(x,y,w,h);ctx.fillStyle=c;ctx.fillRect(x,y,Math.max(0,w*f)|0,h);}
 function drawSpace(dt){const L=G.L,g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,L.sky[0]);g.addColorStop(1,L.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
- const nb=nebula(L),ny=(G.t*8)%H;ctx.drawImage(nb,0,ny,W,H);ctx.drawImage(nb,0,ny-H,W,H);{const pl=planet(L),py=((G.t*4+curLvl*90)%(H+180))-90;blit(pl,(curLvl*71)%(W-60)-15,py,90,90);}
+ spaceBg(L,G.t);
  ctx.save();shakeT(G.shake);stars(dt,G.boss?0.5:1.5);
  if(L.final){ctx.fillStyle='rgba(120,0,40,0.25)';const r=60+Math.sin(G.t)*6;ctx.beginPath();ctx.arc(W/2,80,r,0,7);ctx.fill();}
  for(const c of G.coins){if(c.k==='pu')puIcon(c.x,c.y,c.w,G.t,c.life);else if(c.k==='hp'){draw(ART.hp,c.x,c.y,2);}else drawCoin(c.x,c.y,G.t,(c.x*7)%10);}
