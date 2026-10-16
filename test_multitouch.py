@@ -27,7 +27,7 @@ async def main():
       return False
     J=lambda i=2:T(235,421,i);RIGHT=T(99,421,1);LEFT=T(35,421,1);FIRE=T(172,421,3)
     async def fresh():
-      await E("VR.god=true;VR.start(1)");await pg.wait_for_timeout(1300);await E("VR.G().ens=VR.G().ens.filter(e=>e.k==='brute')")
+      await E("VR.god=true;VR.start(2)");await pg.wait_for_timeout(1300);await E("VR.G().ens=VR.G().ens.filter(e=>e.k==='brute')")
     jumps=lambda:E('VR.G().p.jumps||0')
     # A) hold > then tap JUMP repeatedly while moving (normal + ultra-short taps)
     await fresh();await touch('touchStart',[RIGHT]);presses=0

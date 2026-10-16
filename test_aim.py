@@ -10,7 +10,7 @@ async def main():
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(300)
     E=pg.evaluate;K=pg.keyboard
     async def fresh(pu=None):
-      await E("VR.god=true;VR.start(1)");await pg.wait_for_timeout(1300);await E("VR.G().ens=VR.G().ens.filter(e=>e.k==='brute');VR.G().p.face=1")
+      await E("VR.god=true;VR.start(2)");await pg.wait_for_timeout(1300);await E("VR.G().ens=VR.G().ens.filter(e=>e.k==='brute');VR.G().p.face=1")
       if pu: await E(f"VR.pu('{pu}')")
     def check(name,got,exp):
       ok=exp in got; res.append((name,exp,ok)); 

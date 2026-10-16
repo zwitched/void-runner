@@ -22,13 +22,13 @@ async def main():
     await pg.evaluate('VR.god=true')
     await pg.wait_for_timeout(9000); await pg.screenshot(path=OUT/'03_space.png')
     res=[]
-    for i in range(8):
+    for i in range(11):
       await pg.evaluate(f'VR.start({i})'); await pg.wait_for_timeout(1500)
       st=await pg.evaluate('VR.state()'); 
       await pg.evaluate('VR.boss()'); await pg.wait_for_timeout(4000 if i%3!=1 else 2500)
-      if i==4: await pg.screenshot(path=OUT/'05_boss.png')
-      if i==7: await pg.screenshot(path=OUT/'06_final_boss.png')
-      if i==3: await pg.screenshot(path=OUT/'04_platformer.png')
+      if i==6: await pg.screenshot(path=OUT/'05_boss.png')
+      if i==10: await pg.screenshot(path=OUT/'06_final_boss.png')
+      if i==4: await pg.screenshot(path=OUT/'04_platformer.png')
       # finish: kill boss
       await pg.evaluate('VR.kill()')
       if await pg.evaluate("VR.G().mode")=='plat':
@@ -39,7 +39,7 @@ async def main():
       await pg.wait_for_timeout(3500)
       res.append((i,st,await pg.evaluate('VR.state()')))
     # touch platformer buttons check
-    await pg.evaluate('VR.start(1)'); await pg.wait_for_timeout(500)
+    await pg.evaluate('VR.start(2)'); await pg.wait_for_timeout(500)
     x0=await pg.evaluate('VR.G().p.x')
     cdp=await ctx.new_cdp_session(pg)
     px,py=box['x']+99*box['width']/270, box['y']+420*box['height']/480

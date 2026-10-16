@@ -11,7 +11,7 @@ async def main():
     await E("Object.assign(VR.S(),{jet:0,armor:1});VR.god=true")
     ph=await E('VR.phys()');P=ph['PHYS'];TS=ph['TS'];ROWS=ph['ROWS'];JH=ph['JUMP_H']
     # empirical jump height from the real game loop
-    await E('VR.start(1)');await pg.wait_for_timeout(1200)
+    await E('VR.start(2)');await pg.wait_for_timeout(1200)
     y0=await E('VR.G().p.y');await E("window.__miny=1e9;window.__iv=setInterval(()=>{__miny=Math.min(__miny,VR.G().p.y)},5)")
     await pg.keyboard.down('Space');await pg.wait_for_timeout(1100);await pg.keyboard.up('Space')
     emp=y0-await E('__miny');await E('clearInterval(__iv)')
@@ -21,7 +21,7 @@ async def main():
     def reach(rise):  # horizontal distance at the moment feet come back down to height `rise`
       d=jv*jv-2*g*rise
       return -1 if d<0 else run*(jv+math.sqrt(d))/g
-    for lvl in (1,3,6):
+    for lvl in (2,4,9):
       await E(f'VR.start({lvl})');await pg.wait_for_timeout(100)
       m=await E("(()=>{const G=VR.G();return {cols:G.cols,map:Array.from(G.map),ceil:!!G.L.ceil}})()")
       C=m['cols'];M=m['map'];t=lambda x,y:M[y*C+x]
