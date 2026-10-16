@@ -4,7 +4,7 @@ from playwright.async_api import async_playwright
 TT='''(()=>{window.__act={};window.__tt=(type,pts)=>{const c=document.getElementById('c'),r=c.getBoundingClientRect();const mk=q=>new Touch({identifier:q.id,target:c,clientX:r.left+q.x*r.width/270,clientY:r.top+q.y*r.height/480});
  const ch=[];if(type!=='touchend'){for(const q of pts){__act[q.id]=q;ch.push(mk(q));}c.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,changedTouches:ch,touches:Object.values(__act).map(mk)}));}
  else{const g=pts.map(q=>mk(__act[q.id]||q));pts.forEach(q=>delete __act[q.id]);c.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,changedTouches:g,touches:Object.values(__act).map(mk)}));}}})()'''
-EV=(3,10)
+EV=(3,12)
 async def main():
   errs=[];bad=[];out=[]
   async with async_playwright() as p:
@@ -26,7 +26,7 @@ async def main():
       chk(f'ch{i+1} maze fully connected',r['open']==r['reach'],r);chk(f'ch{i+1} door reachable when open, sealed when locked',r['door']>0 and r['doorLocked']==-1,r)
       chk(f'ch{i+1} spawn safety (>=12 steps)',min(r['spawn'])>=12,r['spawn']);chk(f'ch{i+1} enemies/timer',r['n']==(3 if i==3 else 4) and 45<=r['lock']<=90,r)
     # 2) AI: every enemy moves; targets reflect personalities; stalker catches a still player
-    await fresh(10);await E("VR.god=true;VR.ev.H().en.forEach(e=>e.act=0)");p0=await E("VR.ev.H().en.map(e=>[e.tx,e.ty])");await pg.wait_for_timeout(3000)
+    await fresh(12);await E("VR.god=true;VR.ev.H().en.forEach(e=>e.act=0)");p0=await E("VR.ev.H().en.map(e=>[e.tx,e.ty])");await pg.wait_for_timeout(3000)
     p1=await E("VR.ev.H().en.map(e=>[e.tx,e.ty])");chk('all 4 enemies move',all(a!=b for a,b in zip(p0,p1)),(p0,p1))
     await E("VR.ev.place(7,19,1)");tg=await E("[0,1,3].map(i=>VR.ev.target(i))");chk('distinct AI targets (chase/ambush/flank)',len({tuple(t) for t in tg})==3,tg)
     await fresh(3,[0]);await E("(()=>{const G=VR.ev.H(),e=G.en[0],d=VR.ev.bfs(7,19,false);let k=d.findIndex(v=>v===8);e.tx=e.nx=e.hx=k%15;e.ty=e.ny=e.hy=Math.floor(k/15);e.act=0;e.t=0;})()");hp0=await E('VR.ev.H().p.hp')
@@ -71,7 +71,7 @@ async def main():
     s3=await E('VR.state()');await pg.wait_for_timeout(900);await tap(135,300);await pg.wait_for_timeout(300);s4=await E('VR.state()');lv=await E('VR.S().lvl')
     chk('campaign flow through evasion',[s1,s2,s3,s4,lv]==['story','evade','clear','shop',4],[s1,s2,s3,s4,lv])
     # screenshot
-    await E("VR.god=true;VR.start(10)");await pg.wait_for_timeout(100);await E("(()=>{const G=VR.ev.H();G.en.forEach((e,i)=>{e.act=0});G.lockT=21;})()");await pg.keyboard.press('ArrowLeft');await pg.wait_for_timeout(6000)
+    await E("VR.god=true;VR.start(12)");await pg.wait_for_timeout(100);await E("(()=>{const G=VR.ev.H();G.en.forEach((e,i)=>{e.act=0});G.lockT=21;})()");await pg.keyboard.press('ArrowLeft');await pg.wait_for_timeout(6000)
     await pg.screenshot(path='screenshots/14_evasion.png');await b.close()
   for o in out:print(o)
   print('BAD',bad);print('ERRORS',errs)

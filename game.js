@@ -52,7 +52,7 @@ function tone(f,f2,d,type,v,delay=0){if(!AC||!S.sound)return;const t=AC.currentT
 function noise(d,v,f=1000){if(!AC||!S.sound)return;if(!NB){NB=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const a=NB.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;}const s=AC.createBufferSource();s.buffer=NB;const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=f;const g=AC.createGain(),t=AC.currentTime;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);s.connect(fl);fl.connect(g);g.connect(master);s.start(t);s.stop(t+d);}
 const SFX={shoot:()=>tone(900,300,.06,'square',.02),hit:()=>tone(300,120,.05,'square',.03),boom:()=>noise(.35,.22,800),big:()=>{noise(.9,.4,500);tone(120,30,.8,'sawtooth',.1);},hurt:()=>{tone(200,60,.2,'sawtooth',.12);noise(.15,.15,2000);},coin:()=>{tone(1200,1200,.04,'square',.03);tone(1800,1800,.07,'square',.03,.04);},jump:()=>tone(300,700,.12,'square',.04),buy:()=>[523,659,784,1046].forEach((f,i)=>tone(f,f,.1,'square',.05,i*.07)),select:()=>tone(660,880,.06,'square',.04),pshoot:()=>tone(1300,500,.05,'square',.025),win:()=>[392,523,659,784,1046].forEach((f,i)=>tone(f,f,.18,'square',.06,i*.12))};
 let musT=0,musStep=0;const BASS=[45,45,57,45,48,48,60,48,43,43,55,43,50,50,62,52];const mtof=m=>440*Math.pow(2,(m-69)/12);
-function music(dt){if(!AC||!S.sound)return;musT-=dt;if(musT<-0.5)musT=0;if(musT>0)return;musT+=0.16;const play=state==='space'||state==='plat'||state==='hack'||state==='evade';const n=BASS[musStep%16]+(Math.floor(musStep/64)%2?(play?3:2):0);tone(mtof(n),mtof(n),.14,'triangle',.05);if(play){if(musStep%4===2)noise(.04,.04,6000);if(musStep%8===0)tone(mtof(n+24),mtof(n+24),.1,'square',.012);}musStep++;}
+function music(dt){if(!AC||!S.sound)return;musT-=dt;if(musT<-0.5)musT=0;if(musT>0)return;musT+=0.16;const play=state==='space'||state==='plat'||state==='hack'||state==='evade'||state==='engine';const n=BASS[musStep%16]+(Math.floor(musStep/64)%2?(play?3:2):0);tone(mtof(n),mtof(n),.14,'triangle',.05);if(play){if(musStep%4===2)noise(.04,.04,6000);if(musStep%8===0)tone(mtof(n+24),mtof(n+24),.1,'square',.012);}musStep++;}
 
 // ---------- hooks: features.js listens to these ----------
 const HOOKS=[];function emit(n,a){for(const f of HOOKS){try{f(n,a);}catch(e){console.error(e);}}}
@@ -62,7 +62,7 @@ function loadout(){return LOADOUTS[S.ship|0]||LOADOUTS[0];}
 const SKEY='voidrunner.save.v1';const DEF={dec:0,v:3,cr:0,lvl:0,sg:1,hull:1,shield:0,speed:1,fg:1,armor:1,jet:0,sound:1,ng:0};
 let S;function load(){try{S=Object.assign({},DEF,JSON.parse(localStorage.getItem(SKEY)||'{}'));}catch(e){S=Object.assign({},DEF);}}
 function save(){try{localStorage.setItem(SKEY,JSON.stringify(S));}catch(e){}}
-load();if(S.v!==3){if(S.v!==2&&S.lvl>0)S.lvl=[0,2,3,4,6,7,9,10][S.lvl]||0;if(S.lvl>0)S.lvl=[0,1,2,4,5,6,7,8,9,11,12][S.lvl]||0;S.v=3;save();}
+load();if(!(S.v>=3)){if(S.v!==2&&S.lvl>0)S.lvl=[0,2,3,4,6,7,9,10][S.lvl]||0;if(S.lvl>0)S.lvl=[0,1,2,4,5,6,7,8,9,11,12][S.lvl]||0;S.v=3;save();}
 const SHOP=[['SHIP',[['sg','BLASTER','More guns, faster fire',5,60],['hull','HULL','+2 ship hull',5,50],['shield','DEFLECTOR','Regen shield',4,80],['speed','THRUSTERS','Faster ship',4,50]]],
  ['SUIT',[['fg','PULSE RIFLE','On-foot firepower',5,60],['armor','ARMOR','+2 suit health',5,50],['jet','JETPACK','Hold jump: hover',4,70]]],
  ['HACK',[['dec','DECRYPTER','Slower fall, +preview, +time',3,60]]]];
@@ -115,8 +115,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state==='
 let defaultAct=null,anyTap=null,BTN=[];
 function onKey(c){if(c==='KeyM'){S.sound=S.sound?0:1;save();return;}
  if(state==='hack'&&!['Escape','KeyP'].includes(c))hackKey(c);if(state==='evade')evKey(c);
- if((c==='Escape'||c==='KeyP')){if(state==='space'||state==='plat'||state==='hack'||state==='evade')pause();else if(state==='pause')resume();return;}
- if((c==='Enter'||(c==='Space'&&state!=='plat'&&state!=='space'&&state!=='hack'&&state!=='evade'))&&defaultAct)pendingKey=true;}
+ if((c==='Escape'||c==='KeyP')){if(state==='space'||state==='plat'||state==='hack'||state==='evade'||state==='engine')pause();else if(state==='pause')resume();return;}
+ if((c==='Enter'||(c==='Space'&&state!=='plat'&&state!=='space'&&state!=='hack'&&state!=='evade'&&state!=='engine'))&&defaultAct)pendingKey=true;}
 let pendingKey=false;
 
 // ---------- text/ui ----------
@@ -198,7 +198,7 @@ function postFX(dt){if(state!==prevState){if(!(state==='pause'||prevState==='pau
  if(fadeT>0){fadeT=Math.max(0,fadeT-dt*3.5);ctx.fillStyle='rgba(3,4,10,'+fadeT.toFixed(3)+')';ctx.fillRect(0,0,W,H);}}
 function goStory(i){state='story';curLvl=i;stT=0;const L=LV[i];if(L&&L.t==='space')setTimeout(()=>{ART.boss(L.d,!!L.final);setTimeout(()=>ART.space(Math.min(5,L.final?5:L.d),RQ),60);},60);}
 function startLevel(i){curLvl=i;runCr=0;const L=LV[i];if(L.t==='space')initSpace(L);else if(L.t==='hack')initHack(L);else if(L.t==='evade')initEvade(L);else initPlat(L);stT=0;emit('start',L);}
-function pause(){if(state!=='space'&&state!=='plat'&&state!=='hack'&&state!=='evade')return;G.prev=state;state='pause';}
+function pause(){if(state!=='space'&&state!=='plat'&&state!=='hack'&&state!=='evade'&&state!=='engine')return;G.prev=state;state='pause';}
 function resume(){state=G.prev;}
 function levelClear(){const L=LV[curLvl];const bonus=40*L.d+(S.ng?20:0);S.cr+=runCr+bonus;clearInfo={got:runCr,bonus};if(!(window.FT&&FT.noSave))S.lvl=Math.max(S.lvl,curLvl+1);emit('clear',L);save();SFX.win();state='clear';stT=0;}
 function failLevel(){state='over';stT=0;}
@@ -643,8 +643,8 @@ function drawTitle(dt){ctx.fillStyle='#05060f';ctx.fillRect(0,0,W,H);stars(dt,2)
  txt('Original game. Art & sound made in code.',W/2,450,'#3a4466',7);txt(hasTouch?'Best in portrait':'Keys: arrows, Space/Z jump, X fire, Up/Down aim',W/2,462,'#3a4466',7);
  defaultAct=cont?()=>{state='shop';}:newGame;}
 function drawStory(dt){const L=LV[curLvl];ctx.fillStyle='#03040a';ctx.fillRect(0,0,W,H);stars(dt,0.3);stT+=dt;
- txt('CHAPTER '+(curLvl+1),W/2,40,'#8aa0d0',8);txt(L.name,W/2,54,L.t==='space'?'#5ab0ff':L.t==='hack'?'#9aff5a':L.t==='evade'?'#c05aff':'#ffa03a',12);
- txt(L.t==='space'?'[ SPACE FLIGHT ]':L.t==='hack'?'[ HACKING ]':L.t==='evade'?'[ EVASION - NO WEAPONS ]':'[ ON FOOT ]',W/2,72,'#56607e',7);
+ txt('CHAPTER '+(curLvl+1),W/2,40,'#8aa0d0',8);txt(L.name,W/2,54,L.t==='space'?'#5ab0ff':L.t==='hack'?'#9aff5a':L.t==='evade'?'#c05aff':L.t==='engine'?'#ffd23a':'#ffa03a',12);
+ txt(L.t==='space'?'[ SPACE FLIGHT ]':L.t==='hack'?'[ HACKING ]':L.t==='evade'?'[ EVASION - NO WEAPONS ]':L.t==='engine'?'[ ENGINE FAILURE ]':'[ ON FOOT ]',W/2,72,'#56607e',7);
  panel(8,92,W-16,338,'#2a3a6a');let chars=Math.floor(stT*45),all=true;const blocks=[];
  for(const para of L.story){if(chars<=0){all=false;break;}const m=para.match(/^([A-Z ]+?)( \([^)]*\))?: (.*)$/),who=m?m[1]+(m[2]||''):'',body=m?m[3]:para,k=m?m[1]:null,ind=k?48:0;
   const lines=[],src=wrap(body,W-46-ind,9);for(const ln of src){if(chars<=0){all=false;break;}lines.push(ln.slice(0,chars));chars-=ln.length;if(chars<0)all=false;}

@@ -11,7 +11,7 @@ async def main():
     pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:m.type=='error' and errs.append(m.text))
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(500)
     E=pg.evaluate
-    await E("VR.god=true;VR.start(5)");await pg.wait_for_timeout(1500)
+    await E("VR.god=true;VR.start(6)");await pg.wait_for_timeout(1500)
     # dash on flat ground away from rooms: put Mara on a clear stretch
     await E("(()=>{const G=VR.G(),p=G.p;G.ens=G.ens.filter(e=>e.k==='brute');const X=30;for(let x=X-2;x<X+12;x++){for(let y=0;y<17;y++)G.map[y*G.cols+x]=0;for(let y=17;y<22;y++)G.map[y*G.cols+x]=1;}p.x=X*16;p.y=17*16-p.h;p.vy=0;p.vx=0;p.face=1;p.dcd=0;})()")
     await pg.wait_for_timeout(200)
@@ -34,7 +34,7 @@ async def main():
     chk('wall jump launches up and away',st[0]<-150 and st[1]<0 and st[2]==1,st)
     # hidden rooms
     R=await E("VR.G().rooms");chk('level has hidden rooms',len(R)>=1,R)
-    await E("VR.start(5)");await pg.wait_for_timeout(1200)
+    await E("VR.start(6)");await pg.wait_for_timeout(1200)
     R=await E("VR.G().rooms");cr=[r for r in R if r['kind']==3][0];fk=[r for r in R if r['kind']==4]
     t=await E(f"VR.G().map[{cr['y']}*VR.G().cols+{cr['x']+1}]");chk('cracked floor tile present',t==3,t)
     await E(f"(()=>{{const G=VR.G(),p=G.p;G.ens=G.ens.filter(e=>e.k==='brute');p.x={cr['x']+1}*16+1;p.y={cr['y']}*16-p.h-1;p.vy=0;}})()");await pg.wait_for_timeout(1400)

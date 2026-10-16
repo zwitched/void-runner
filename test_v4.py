@@ -11,7 +11,7 @@ async def main():
     pg.on('pageerror',lambda e:errs.append(str(e)));pg.on('console',lambda m:errs.append(m.text) if m.type=='error' else None)
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(400)
     E=pg.evaluate
-    for lvl in (0,4,7,8,12):
+    for lvl in (0,4,8,10,14):
       await E(f"VR.god=true;VR.start({lvl})");await pg.wait_for_timeout(500);await E("VR.boss()");await pg.wait_for_timeout(4200)
       M=await E("VR.bossMask()")
       # pick a mask pixel outside the old v3 box (|dx|>0.45w or |dy|>0.42h): a wing / arm / claw

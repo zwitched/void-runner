@@ -44,7 +44,7 @@ async def main():
     chk('column of the special is empty after the wipe',c4==0,c4)
     sp=await E("(()=>{let n=0;VR.start(1);const H=VR.hk.H();H.noGarbage=1;for(let i=0;i<24;i++){VR.hk.spawn();if(H.p.sp)n++;H.p=null;}return n;})()")
     chk('specials show up every sixth fragment',3<=sp<=5,sp)
-    await E("VR.start(9)");await pg.wait_for_timeout(200)
+    await E("VR.start(11)");await pg.wait_for_timeout(200)
     await E("(()=>{const H=VR.hk.H();H.gbT=1.5;for(let y=15;y<20;y++)VR.hk.setRow(y,[1,1,0,1,1,1,1,1,1,1]);VR.s5.garbage(6);H.spc[17*10+3]='F';H.spc[18*10+8]='X';})()");await pg.wait_for_timeout(400)
     await pg.screenshot(path='screenshots/v6_hack_garbage.png')
     # ---- maze ----
@@ -59,7 +59,7 @@ async def main():
     chk('all keycards collected',all(k['got'] for k in await E("VR.s5.kc()")))
     await pg.wait_for_timeout(300);chk('door opens once all keycards are in and the timer is done',await E("VR.ev.H().unlocked"))
     # collapse
-    await E("VR.start(10)");await pg.wait_for_timeout(300)
+    await E("VR.start(12)");await pg.wait_for_timeout(300)
     cr=await E("VR.s5.cr()");chk('maze has crumbling tiles',len(cr)>=6,len(cr))
     idx=int(sorted(cr.keys(),key=int)[0]);x,y=idx%15,idx//15
     await E(f"VR.ev.place({x},{y},null)");await pg.wait_for_timeout(150)
