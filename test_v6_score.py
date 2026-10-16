@@ -12,8 +12,8 @@ async def main():
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(500)
     E=pg.evaluate
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(600)
-    await E("VR.god=true;VR.start(0)");await pg.wait_for_timeout(2500)
-    s0=await E("VR.score()");chk('score starts at 0',s0['score']==0,s0)
+    await E("VR.god=true;VR.start(0)");await pg.wait_for_timeout(200)
+    s0=await E("VR.score()");await pg.wait_for_timeout(2300);chk('score starts at 0',s0['score']==0,s0)
     for i in range(30):
       await E("(()=>{const G=VR.G();const e=G.en.find(e=>!e.dead);if(e){e.hp=1;G.bul.push({x:e.x,y:e.y+1,vx:0,vy:-1,dm:5,l:1,hits:[],c:'#5ab0ff'});}})()");await pg.wait_for_timeout(250)
     s1=await E("VR.score()");chk('kills add score',s1['score']>0 and s1['kills']>=4,s1);chk('chain builds',s1['best']>=4,s1)

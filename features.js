@@ -75,3 +75,36 @@ FT.toasts=[];function toast(msg,col='#9aff5a',icon){FT.toasts.push({msg,col,icon
 HOOKS.push((n,a)=>{if(n==='toast')toast(a);else if(n==='overlay'){const q=FT.toasts[0];if(!q)return;q.t-=a||0.016;const k=Math.min(1,q.t*3,(2.8-q.t)*4),y=Math.round(-26+k*56);
  const w=Math.min(W-20,tw(q.msg,7)+28);panel(W/2-w/2,y,w,22,q.col);txt(q.msg,W/2,y+8,q.col,7);if(q.t<=0)FT.toasts.shift();}});
 VR.toasts=()=>FT.toasts.map(t=>t.msg);
+// ================= 3. LOADOUTS + SECONDARY WEAPONS =================
+const SEC={bomb:{n:'BOMB',d:'Blast that hurts everything on screen and wipes nearby shots.',cd:22,col:'#ffa03a'},emp:{n:'EMP',d:'Wipes every enemy shot and freezes small ships.',cd:18,col:'#5ad0ff'}};
+const SECCOST=[150,250,400];
+function secCD(){return SEC[S.sec||'bomb'].cd-3*(S.secLv||0);}
+FT.shipArt=()=>ART.ships[S.ship|0];
+const SECB=[226,432,40,40];
+function fireSec(){if(!G||G.mode!=='space'||G.dead||G.endT)return false;if((G.secT||0)>0)return false;const k=S.sec||'bomb',lv=S.secLv||0,p=G.p;G.secT=secCD();G.secUses=(G.secUses||0)+1;emit('secondary',k);
+ if(k==='bomb'){const dm=6+3*lv;for(const e of G.en)if(e.y>-10)G.bul.push({x:e.x,y:e.y,vx:0,vy:-1,dm,l:0.1,hits:[],c:'#ffa03a'});if(G.boss){const b=G.boss,a=b.art;G.bul.push({x:b.x+(a.cx/2-a.W/4),y:b.y+(a.cy/2-a.H/4),vx:0,vy:-1,dm:10+5*lv,l:0.1,hits:[],c:'#ffa03a'});}
+  G.eb=G.eb.filter(u=>Math.hypot(u.x-p.x,u.y-p.y)>150);boom(p.x,p.y-60,40,FIRE);G.fx.push({x:p.x,y:p.y,ring:1,l:0.4,R:400});G.shake=0.5;SFX.big();}
+ else{const n=G.eb.length;G.eb=[];for(const e of G.en)e.stun=2.5+lv*0.8;G.fx.push({x:p.x,y:p.y,ring:1,l:0.4,R:600});for(let i=0;i<30;i++){const a=i/30*7;G.fx.push({x:p.x,y:p.y,vx:Math.cos(a)*260,vy:Math.sin(a)*260,l:.5,c:'#9ae8ff'});}tone(200,1600,.3,'sawtooth',.06);noise(.3,.12,4000);G.empCleared=(G.empCleared||0)+n;}
+ return true;}
+{const _pd=ptrDown;ptrDown=function(id,e){_pd(id,e);const q=ptrs[id];if(q&&state==='space'&&q.x>=SECB[0]-6&&q.y>=SECB[1]-6&&q.x<=SECB[0]+SECB[2]+4){q.nodrag=1;fireSec();}};}
+{const _ok=onKey;onKey=function(c){if(state==='space'&&(c==='KeyB'||c==='KeyC'||c==='KeyV')){fireSec();return;}_ok(c);};}
+HOOKS.push((n,dt)=>{if(n!=='overlay'||state!=='space'||!G)return;G.secT=Math.max(0,(G.secT||0)-dt);const k=S.sec||'bomb',c=SEC[k].col,rd=G.secT<=0,b=SECB;
+ blit(uiArt(b[2],b[3],c,'btn',0),b[0],b[1],b[2],b[3]);txt(SEC[k].n,b[0]+b[2]/2,b[1]+11,rd?c:'#4a5a7a',7);txt(hasTouch?'TAP':'B',b[0]+b[2]/2,b[1]+23,'#56607e',7);
+ if(!rd){ctx.fillStyle='#16203e';ctx.fillRect(b[0]+5,b[1]+b[3]-7,b[2]-10,3);ctx.fillStyle=c;ctx.fillRect(b[0]+5,b[1]+b[3]-7,(b[2]-10)*(1-G.secT/secCD()),3);}else if((T*3|0)%2){ctx.strokeStyle=c;ctx.strokeRect(b[0]-1.5,b[1]-1.5,b[2]+3,b[3]+3);}});
+HOOKS.push((n)=>{if(n==='start'&&G&&G.mode==='space')G.secT=4;});
+// hangar: loadout screen
+{const _ds=drawShop;drawShop=function(dt){_ds(dt);const ys=BTN.find(b=>b.w===80&&b.h===22);const y=ys?ys.y:420;btn('LOADOUT: '+loadout().n,96,y,164,22,()=>{state='loadout';},'#ffa03a');};}
+HOOKS.push((n,dt)=>{if(n!=='draw:loadout')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);ctx.fillStyle='#0c1228';for(let y=0;y<H;y+=8)ctx.fillRect(0,y,W,1);
+ txt('LOADOUT',W/2,12,'#ffa03a',16);txt('CREDITS: '+S.cr,W/2,34,'#ffd23a',9);
+ LOADOUTS.forEach((L,i)=>{const y=50+i*86,sel=(S.ship|0)===i;panel(8,y,W-16,80,sel?'#9aff5a':'#2a3a6a');const fi=(T*20|0)%4;blit(ART.flame[fi],34-12,y+46,8,15);blit(ART.flame[(fi+2)%4],34+4,y+46,8,15);draw(ART.ships[i][2],34,y+34,2);
+  txt(L.n,64,y+8,sel?'#9aff5a':'#dfe8ff',10,'left');wrap(L.d,W-150,7).forEach((ln,j)=>txt(ln,64,y+22+j*10,'#8aa0d0',7,'left'));
+  const st=[['SPD',L.spd],['HULL',1+L.hull/4],['FIRE',1/L.rate],['DMG',L.dm/1.5]];st.forEach(([k,v],j)=>{txt(k,64+j*40,y+50,'#56607e',7,'left');ctx.fillStyle='#1a2040';ctx.fillRect(64+j*40,y+60,34,3);ctx.fillStyle=sel?'#9aff5a':'#5ab0ff';ctx.fillRect(64+j*40,y+60,Math.min(34,34*v*0.7),3);});
+  if(!sel)btn('SELECT',W-82,y+8,64,22,()=>{S.ship=i;save();SFX.buy();},'#5ab0ff');else txt('IN USE',W-50,y+14,'#9aff5a',8);});
+ const y=312;panel(8,y,W-16,104,'#ffa03a');txt('SECONDARY',18,y+8,'#ffa03a',9,'left');
+ ['bomb','emp'].forEach((k,i)=>{const sel=(S.sec||'bomb')===k;btn(SEC[k].n,18+i*80,y+22,74,24,()=>{S.sec=k;save();SFX.buy();},sel?'#9aff5a':'#5ab0ff');});
+ wrap(SEC[S.sec||'bomb'].d,W-40,7).forEach((ln,j)=>txt(ln,18,y+54+j*10,'#8aa0d0',7,'left'));
+ const lv=S.secLv||0;txt('LEVEL',180,y+28,'#56607e',7,'left');for(let i=0;i<3;i++){ctx.fillStyle=i<lv?'#9aff5a':'#262c44';ctx.fillRect(212+i*9,y+28,7,7);}
+ txt('Recharge '+secCD()+'s',18,y+78,'#56607e',7,'left');const c=SECCOST[lv];btn(lv>=3?'MAX':'UPGRADE '+c+' CR',150,y+72,104,24,()=>{if(lv<3&&S.cr>=c){S.cr-=c;S.secLv=lv+1;save();SFX.buy();}},'#ffd23a',lv>=3||S.cr<c);
+ btn('BACK',10,440,80,26,()=>{state='shop';},'#8aa0d0');defaultAct=()=>{state='shop';};});
+VR.loadout=()=>({ship:S.ship|0,sec:S.sec||'bomb',lv:S.secLv||0,cd:G&&G.secT,mh:G&&G.p&&G.p.mhp});VR.fireSec=()=>fireSec();
+VR.setS=o=>{Object.assign(S,o);save();};

@@ -56,6 +56,25 @@ function shipFrame(b){const cx=36;return paint(72,76,(x,y)=>{const sx=x-cx-b*2.6
  if(ax>30&&ax<=34&&y>56.5&&y<61)return'lite';
  if(poly(ax,y,[[7,31],[33.5,55.5],[34.5,62],[25,62],[7,55]])){if(sd(ax,y,7,31,33.5,55.5)<2.4)return['trim',shade];if(y>57.5&&ax>20)return['hull2',shade];if(Math.abs(ax-21)<0.6&&y>46)return'dark';return['hull',shade];}
  if(ax>=21&&ax<=23&&y>=49&&y<=63)return['trim',shade];return 0;},SHIPM,{R:6});}
+
+// ---- alternate hulls for the hangar loadouts (same 72x76 canvas and pivot as the Kestrel) ----
+const WISPM=MAT({hull:['#dfe2ec'],hull2:['#b4bacb'],trim:['#ff7a2a'],dark:['#2a2433'],metal:['#8a8090'],gl:['#ffb03a',{li:'#fff4d8'}],glh:['#fffaf0',{e:1}],lite:['#ffd27a',{e:1}],red:['#ffb43a',{e:1}]});
+const BULM=MAT({hull:['#a9b49c'],hull2:['#808c76'],trim:['#4ab04a'],dark:['#20281e'],metal:['#6a7266'],gl:['#3ad08a',{li:'#e0fff0'}],glh:['#f0fff4',{e:1}],lite:['#9aff5a',{e:1}],red:['#ffb43a',{e:1}]});
+function wispFrame(b){const cx=36;return paint(72,76,(x,y)=>{const sx=x-cx-b*2.2,side=sx<0?-1:1,ax=Math.abs(sx)/(1-0.2*b*side),shade=b*side*0.12;
+ const fw=y<2?0:y<62?Math.min(4.6,(y-1)*0.3+0.8):y<70?4.6-(y-62)*0.4:0;
+ if(el(ax,y,0,24,2.4,7))return ax<0.9&&y>19&&y<24?'glh':['gl',shade];
+ if(ax<=fw){if(ax<0.9&&y>34&&y<60)return'trim';if(Math.abs(y-40)<0.7||Math.abs(y-52)<0.7)return'dark';return[y>44?'hull2':'hull',shade];}
+ if(poly(ax,y,[[4,40],[27,30],[30,32],[9,52],[4,54]])){if(sd(ax,y,4,40,27,30)<1.6)return['trim',shade];if(Math.abs(ax-16)<0.6&&y>38)return'dark';return['hull',shade];}
+ if(ax>26&&ax<30&&y>29&&y<33.5)return'lite';
+ if(poly(ax,y,[[3.5,58],[11,66],[11,72],[3.5,68]]))return['hull2',shade];
+ if(ax>=5&&ax<=8&&y>=56&&y<=68)return y>65?'dark':['metal',shade];return 0;},WISPM,{R:5});}
+function bulwarkFrame(b){const cx=36;return paint(72,76,(x,y)=>{const sx=x-cx-b*2.8,side=sx<0?-1:1,ax=Math.abs(sx)/(1-0.24*b*side),shade=b*side*0.12;
+ const fw=y<10?0:y<20?(y-10)*0.9+3:y<64?12:y<70?12-(y-64)*1.2:0;
+ if(el(ax,y,0,27,4.6,6))return(ax<1.6&&y>23&&y<27)?'glh':['gl',shade];
+ if(ax<=fw){if(Math.abs(y-38)<0.8||Math.abs(y-50)<0.8)return'dark';if(ax>9&&y>40&&y<62&&Math.floor(y/3)%2)return'dark';if(ax<1.2&&y>34)return'trim';return[(y>40)?'hull2':'hull',shade];}
+ if(rr(ax,y,15,30,27,68,3)){if(y>64)return'dark';if(ax>17&&ax<25&&y>36&&y<40)return'lite';if(Math.abs(y-48)<0.8||Math.abs(y-58)<0.8)return'dark';return['metal',shade+(ax<20?0.08:-0.06)];}
+ if(poly(ax,y,[[12,36],[15,34],[15,56],[12,60]]))return['trim',shade];
+ if(poly(ax,y,[[27,44],[34,50],[34,58],[27,60]]))return['hull',shade];return 0;},BULM,{R:7});}
 function flame(f){const L=16+[0,4,1,5][f],c=mk(16,30,4),x=c.getContext('2d');for(let y=0;y<30;y++)for(let X=0;X<16;X++){const t=y/L,w=4.2*(1-t)*(1+0.18*Math.sin(y*1.1+f*2.1));const dx=Math.abs(X+0.5-8);if(y>=L||dx>w)continue;const q=dx/w+t*0.8+(BY[(y&3)*4+(X&3)]/16-0.5)*0.25;x.fillStyle=q<0.35?'#ffffff':q<0.6?'#aef4ff':q<0.85?'#4ab8ff':q<1.1?'#2a6aff':'#1a2aa0';x.fillRect(X,y,1,1);}return c;}
 function flameOld(f){const M=MAT({f0:['#3a6aff',{e:1,er:3,li:'#ffffff'}]});const L=14+[0,3,1,4][f];return paint(14,26,(x,y)=>{const w=3.4*(1-y/L)*(1+0.15*Math.sin(y*1.3+f*2));return y<L&&Math.abs(x-7)<w?['f0',-y/L*0.5]:0;},M,{ol:null,rim:null});}
 
@@ -510,7 +529,7 @@ function hackBlock(col,k){const base=hx(col),c=mk(24,24,2),x=c.getContext('2d'),
 
 // ================= build all (bosses lazily) =================
 const A={};
-A.ship=[-2,-1,0,1,2].map(shipFrame);A.shipW=white(A.ship[2]);A.flame=[0,1,2,3].map(flame);
+A.ship=[-2,-1,0,1,2].map(shipFrame);A.ships=[A.ship,[-2,-1,0,1,2].map(wispFrame),[-2,-1,0,1,2].map(bulwarkFrame)];A.shipW=white(A.ship[2]);A.flame=[0,1,2,3].map(flame);
 A.en={drone:[0,1,2,3].map(drone),weaver:[0,1,2,3].map(weaver),gun:[0,1,2,3].map(gunship),kami:[0,1,2,3].map(kami)};A.enW={};for(const k in A.en)A.enW[k]=white(A.en[k][0]);
 A.rock=[];for(let f=0;f<8;f++)A.rock.push(rockF(f,2.3));A.rockW=white(A.rock[0]);
 A.mara=maraSet();
