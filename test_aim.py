@@ -16,24 +16,30 @@ async def main():
       ok=exp in got; res.append((name,exp,ok)); 
       if not ok: bad.append((name,exp,sorted(set(map(tuple,got)))))
     # keyboard
-    for name,keys,exp,aim in [('kb fwd',['KeyX'],[1,0],0),('kb up45',['ArrowRight','ArrowUp','KeyX'],[1,-1],-1),('kb up',['ArrowUp','KeyX'],[0,-1],-2),('kb down45',['ArrowDown','KeyX'],[1,1],1)]:
+    for name,keys,exp,aim in [('kb fwd',['KeyX'],[1,0],0),('kb up45',['ArrowRight','ArrowUp','KeyX'],[1,-1],-1),('kb up',['ArrowUp','KeyX'],[0,-1],-2),('kb ground down = crouch fwd',['ArrowDown','KeyX'],[1,0],0),('kb air down45',['AIR','ArrowDown','KeyX'],[1,1],1)]:
       await fresh();await E(REC)
+      if keys[0]=='AIR':
+        keys=keys[1:];await E("(()=>{const P=VR.G().p,Y=P.y-60;clearInterval(window.__pp);window.__pp=setInterval(()=>{P.y=Y;P.vy=0},2)})()");await pg.wait_for_timeout(60)
       for k in keys: await K.down(k)
       await pg.wait_for_timeout(350);a=await E('VR.G().p.aim')
       for k in keys: await K.up(k)
+      await E('clearInterval(window.__pp)')
       got=await E('__v');check(name,got,exp)
       if a!=aim: bad.append((name,'aim',a))
     # touch aim pad via CDP
     cdp=await ctx.new_cdp_session(pg);box=await pg.locator('canvas').bounding_box()
     T=lambda x,y:{'x':box['x']+x*box['width']/270,'y':box['y']+y*box['height']/480}
-    for name,dy,exp,aim in [('touch fwd',0,[1,0],0),('touch up45',-22,[1,-1],-1),('touch up',-45,[0,-1],-2),('touch down45',22,[1,1],1)]:
+    for name,dy,exp,aim in [('touch fwd',0,[1,0],0),('touch up45',-22,[1,-1],-1),('touch up',-45,[0,-1],-2),('touch ground down = crouch fwd',22,[1,0],0),('touch air down45',-1022,[1,1],1)]:
       await fresh();await E(REC)
+      if dy<-1000:
+        dy+=1000;dy=-dy;await E("(()=>{const P=VR.G().p,Y=P.y-60;clearInterval(window.__pp);window.__pp=setInterval(()=>{P.y=Y;P.vy=0},2)})()");await pg.wait_for_timeout(60)
       await cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[T(172,421)]})
       await pg.wait_for_timeout(50)
       await cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[T(172,421+dy)]})
       await pg.wait_for_timeout(350);a=await E('VR.G().p.aim')
       if name=='touch up45':await pg.screenshot(path='screenshots/11_aim_up45.png')
       await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
+      await E('clearInterval(window.__pp)')
       got=await E('__v');check(name,got,exp)
       if a!=aim: bad.append((name,'aim',a))
     # power-ups respect angle (straight up: every bullet must go up)

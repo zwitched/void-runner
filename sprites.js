@@ -201,6 +201,8 @@ function maraSet(){const S={idle:[],run:[],rise:[],fall:[],land:[],hit:null,deat
   S.land.push(maraPose({lean:0.2,dy:3.5,l1:[0.9,1.6],l2:[-0.2,1.3],aim,scarf:1}).c);}
  S.hit=maraPose({lean:-0.7,dy:0,headDy:1,l1:[0.5,0.6],l2:[-0.4,0.4],aim:-Math.PI*0.75,scarf:3}).c;
  for(let f=0;f<4;f++)S.death.push(maraPose({lean:-0.4,dy:f*1.2,l1:[0.3+f*0.2,0.9],l2:[-0.2,0.7],aim:-Math.PI*0.8+f*0.2,rot:-f*0.45,scarf:f}).c);
+ S.crouch=[];for(let f=0;f<2;f++)S.crouch.push(maraPose({lean:0.25,dy:12+f*0.5,headDy:0.3*f,l1:[1.5,0.5],l2:[0.9,2.47],aim:0.38,scarf:f*1.6}).c);
+ S.crouchShoot=maraPose({lean:0.05,dy:12,l1:[1.5,0.5],l2:[0.9,2.47],aim:0.38,scarf:3}).c;
  S.hitW=white(S.idle[2][0]);return S;}
 
 // ================= PLATFORMER ENEMIES =================

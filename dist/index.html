@@ -209,6 +209,8 @@ function maraSet(){const S={idle:[],run:[],rise:[],fall:[],land:[],hit:null,deat
   S.land.push(maraPose({lean:0.2,dy:3.5,l1:[0.9,1.6],l2:[-0.2,1.3],aim,scarf:1}).c);}
  S.hit=maraPose({lean:-0.7,dy:0,headDy:1,l1:[0.5,0.6],l2:[-0.4,0.4],aim:-Math.PI*0.75,scarf:3}).c;
  for(let f=0;f<4;f++)S.death.push(maraPose({lean:-0.4,dy:f*1.2,l1:[0.3+f*0.2,0.9],l2:[-0.2,0.7],aim:-Math.PI*0.8+f*0.2,rot:-f*0.45,scarf:f}).c);
+ S.crouch=[];for(let f=0;f<2;f++)S.crouch.push(maraPose({lean:0.25,dy:12+f*0.5,headDy:0.3*f,l1:[1.5,0.5],l2:[0.9,2.47],aim:0.38,scarf:f*1.6}).c);
+ S.crouchShoot=maraPose({lean:0.05,dy:12,l1:[1.5,0.5],l2:[0.9,2.47],aim:0.38,scarf:3}).c;
  S.hitW=white(S.idle[2][0]);return S;}
 
 // ================= PLATFORMER ENEMIES =================
@@ -654,7 +656,7 @@ function lp(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/
 // (so a touch is never double-counted or dropped by a pointercancel). Each finger maps to a control zone
 // by its current position, and jump presses are latched at touch time so taps between frames still count.
 const now=()=>performance.now()/1000;let jumpPressAt=-9;
-function zoneOf(q){if(state!=='plat'||q.y<PH-24)return null;if(q.x>=203&&q.y>=354&&q.y<390)return 'D';const f=PB.F;if(q.sx>=f[0]-6&&q.sx<f[0]+f[2]+3&&q.sy>=PH-24)return 'F';return q.x<67?'L':q.x<137?'R':q.x<203?'F2':'J';}
+function zoneOf(q){if(state!=='plat'||q.y<PH-24)return null;if(q.x>=203&&q.y>=354&&q.y<390)return 'D';if(q.sx>=138&&q.sx<203&&q.sy>=352&&q.sy<390)return 'C';const f=PB.F;if(q.sx>=f[0]-6&&q.sx<f[0]+f[2]+3&&q.sy>=PH-24)return 'F';return q.x<67?'L':q.x<137?'R':q.x<203?'F2':'J';}
 function ptrDown(id,e){initAudio();const p=lp(e),q={x:p.x,y:p.y,px:p.x,py:p.y,sx:p.x,sy:p.y,z:null};ptrs[id]=q;taps.push(p);q.z=zoneOf(q);if(state==='hack')hackDown(q);if(state==='evade')evDown(q);if(q.z==='J')jumpPressAt=now();}
 function ptrMove(id,e){const q=ptrs[id];if(!q)return;const p=lp(e);q.x=p.x;q.y=p.y;if(state==='hack')hackMove(q);if(state==='evade')evMove(q);const z=zoneOf(q);if(z==='J'&&q.z!=='J')jumpPressAt=now();q.z=z;}
 function ptrUp(id,cancel){if(state==='hack'&&ptrs[id])hackUp(ptrs[id],cancel);delete ptrs[id];}
@@ -932,18 +934,25 @@ function moveBody(o,dt){o.x+=o.vx*dt;let hit=false;const y0=Math.floor(o.y/TS),y
  if(o.vy>0){const ty=Math.floor((o.y+o.h)/TS);for(let x=x0;x<=x1;x++)if(solid(x,ty)){o.y=ty*TS-o.h;o.vy=0;o.on=true;break;}}
  else if(o.vy<0){const ty=Math.floor(o.y/TS);for(let x=x0;x<=x1;x++)if(solid(x,ty)){o.y=(ty+1)*TS;o.vy=0;break;}}
  return hit;}
-const PB={L:[6,392,58,58],R:[70,392,58,58],F:[144,392,56,58],J:[206,392,58,58],D:[206,356,58,32]};
+const PB={L:[6,392,58,58],R:[70,392,58,58],F:[144,392,56,58],J:[206,392,58,58],D:[206,356,58,32],C:[144,356,56,32]};
 const AIM_D=14,AIM_UP=36;
-function touchBtns(){const r={L:0,R:0,F:0,J:0,D:0,aim:null};for(const id in ptrs){const q=ptrs[id],z=zoneOf(q);q.z=z;if(z==='F'){r.F=1;const dy=q.y-q.sy;r.aim=dy<=-AIM_UP?-2:dy<=-AIM_D?-1:dy>=AIM_D?1:0;}else if(z==='F2')r.F=1;else if(z)r[z]=1;}return r;}
+function touchBtns(){const r={L:0,R:0,F:0,J:0,D:0,C:0,aim:null};for(const id in ptrs){const q=ptrs[id],z=zoneOf(q);q.z=z;if(z==='F'){r.F=1;const dy=q.y-q.sy;r.aim=dy<=-AIM_UP?-2:dy<=-AIM_D?-1:dy>=AIM_D?1:0;}else if(z==='F2')r.F=1;else if(z)r[z]=1;}return r;}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 function pdrop(x,y,n){for(let i=0;i<n;i++)G.coins.push({x:x+rnd(-8,8),y:y+rnd(-6,4),k:'c',v:2});if(Math.random()<0.08)G.coins.push({x,y:y-6,k:'hp',v:0});}
 function pboom(x,y,n,c){G.fx.push({x,y,ring:1,l:0.4,R:n*2+20});G.fx.push({x,y,vx:0,vy:0,sheet:ART.boom,l:0.55,L:0.55,sz:Math.min(72,18+n*0.9)});for(let i=0;i<n;i++){const a=rnd(0,7),s=rnd(20,120);G.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(.3,.7),c:c[ri(0,c.length-1)]});}}
 function aimAngle(p){const a=[-Math.PI/2,-Math.PI/4,0,Math.PI/4][(p.aim|0)+2];return p.face>0?a:(a===-Math.PI/2?a:Math.PI-a);}
+const CROUCH_H=24;function canStand(p){const top=p.y-(MARA_H-CROUCH_H),y0=Math.floor(top/TS),y1=Math.floor((p.y-0.01)/TS),x0=Math.floor(p.x/TS),x1=Math.floor((p.x+p.w-0.01)/TS);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(solid(x,y))return false;return true;}
 function updPlat(dt){const p=G.p,d=G.d;G.t+=dt;G.shake=Math.max(0,G.shake-dt);
  if(G.dead){G.dead-=dt;if(G.dead<=0)failLevel();return;}
  const tb=touchBtns();const L=keys.ArrowLeft||keys.KeyA||tb.L,R=keys.ArrowRight||keys.KeyD||tb.R,J=keys.Space||keys.KeyZ||keys.KeyK||tb.J,F=keys.KeyX||keys.KeyJ||keys.KeyF||tb.F;
  const kU=keys.ArrowUp||keys.KeyW,kD=keys.ArrowDown||keys.KeyS;p.aim=tb.aim!==null?tb.aim:kU?((keys.ArrowLeft||keys.KeyA||keys.ArrowRight||keys.KeyD)?-1:-2):kD?1:0;
- G.tb=tb;const ax=(R?1:0)-(L?1:0);p.vx=ax*PHYS.run;if(ax)p.face=ax;
+ // crouch: on the ground Down/S, the CROUCH pad, or sliding FIRE down all crouch (aim stays forward, low muzzle).
+ // In the air Down still aims 45 down. Can't stand up with a ceiling right overhead.
+ {const jb=now()-jumpPressAt<=JUMP_BUF,want=p.on&&!(p.dashT>0)&&(kD||tb.C||(tb.F&&tb.aim===1))&&!(jb&&canStand(p));
+  if(want&&!p.crouch){p.crouch=1;p.y+=MARA_H-CROUCH_H;p.h=CROUCH_H;}
+  else if(!want&&p.crouch){if(canStand(p)){p.y-=MARA_H-CROUCH_H;p.h=MARA_H;p.crouch=0;}else if(jb)jumpPressAt=-9;}
+  if(p.crouch)p.aim=0;}
+ G.tb=tb;const ax=(R?1:0)-(L?1:0);p.vx=p.crouch?0:ax*PHYS.run;if(ax)p.face=ax;
  // dash: Shift/C, the DASH pad, or double-tap a direction. Short burst, no invulnerability, one per airtime.
  p.dcd=Math.max(0,(p.dcd||0)-dt);if(p.on)p.dair=1;const dwant=keys.ShiftLeft||keys.ShiftRight||keys.KeyC||tb.D;
  if(ax&&!p._ax){if(now()-(p.lastTap&&p.lastTap.d===ax?p.lastTap.t:-9)<0.25)p.dq=1;p.lastTap={d:ax,t:now()};}p._ax=ax;
@@ -962,9 +971,9 @@ function updPlat(dt){const p=G.p,d=G.d;G.t+=dt;G.shake=Math.max(0,G.shake-dt);
  p.jet=false;if(J&&!p.on&&S.jet>0&&p.vy>-60&&p.fuel>0&&p.co<=0){p.vy=Math.max(-110,p.vy-1500*dt);p.fuel-=dt;p.jet=true;if(Math.random()<.6)G.fx.push({x:p.x+p.w/2-p.face*4,y:p.y+p.h-4,vx:rnd(-10,10),vy:rnd(40,80),l:.25,c:FIRE[ri(1,3)]});}
  p.jh=J;if(!(p.dashT>0))p.vy=Math.min(p.vy+PHYS.g*dt,p.slide?60:500);moveBody(p,dt);
  {const fx=Math.floor((p.x+p.w/2)/TS),fy=Math.floor((p.y+p.h+1)/TS);if(p.on&&tile(fx,fy)===3){const k=fx+','+fy;G.crk[k]=(G.crk[k]||0)+dt;if(G.crk[k]>0.55)breakTile(fx,fy);}}
- if(p.on&&tile(Math.floor((p.x+p.w/2)/TS),Math.floor((p.y+p.h+1)/TS))===1){p.cx=p.x;p.cy=p.y;}
+ if(p.on&&tile(Math.floor((p.x+p.w/2)/TS),Math.floor((p.y+p.h+1)/TS))===1){p.cx=p.x;p.cy=p.y-(p.crouch?MARA_H-CROUCH_H:0);}
  p.inv=Math.max(0,p.inv-dt);p.ft-=dt;
- if(F&&p.ft<=0){const g=S.fg,pu=G.pu&&G.pu.k;p.ft=[0,.3,.25,.2,.17,.13][g]*(pu==='prapid'?0.45:pu==='shotgun'?1.3:1);const dm=g>=4?2:1,a0=aimAngle(p),bx=p.x+p.w/2+Math.cos(a0)*13,byy=p.y+p.h*0.38+Math.sin(a0)*13;
+ if(F&&p.ft<=0){const g=S.fg,pu=G.pu&&G.pu.k;p.ft=[0,.3,.25,.2,.17,.13][g]*(pu==='prapid'?0.45:pu==='shotgun'?1.3:1);const dm=g>=4?2:1,a0=aimAngle(p),bx=p.x+p.w/2+Math.cos(a0)*13,byy=p.crouch?p.y+p.h-5:p.y+p.h*0.38+Math.sin(a0)*13;p.shotT=G.t;
   const B=(off,o={})=>{const sp=o.sp||300,a=a0+off;G.bul.push(Object.assign({x:bx,y:byy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,dm,l:0.8,c:pu==='prapid'?'#5ad0ff':'#bfffcf',hits:[]},o));};
   p.shots=(p.shots||0)+1;B(0);if(g>=3)B(-0.23);if(g>=5)B(0.23);
   if(pu==='shotgun'){for(const v of[-0.38,-0.2,0.2,0.38])B(v,{l:0.35,c:'#ffa03a'});noise(.08,.12,3000);}
@@ -972,7 +981,7 @@ function updPlat(dt){const p=G.p,d=G.d;G.t+=dt;G.shake=Math.max(0,G.shake-dt);
  // spikes & pits
  const sx0=Math.floor(p.x/TS),sx1=Math.floor((p.x+p.w)/TS),sy0=Math.floor(p.y/TS),sy1=Math.floor((p.y+p.h)/TS);
  for(let X=sx0;X<=sx1;X++)for(let Y=sy0;Y<=sy1;Y++)if(tile(X,Y)===2&&p.y+p.h>Y*TS+8){if(p.inv<=0){hurt();p.vy=-260;}}
- if(p.y>PH+30){if(!god()){p.inv=0;hurt();}p.x=p.cx;p.y=p.cy;p.vy=0;p.inv=1.2;}
+ if(p.y>PH+30){if(!god()){p.inv=0;hurt();}p.x=p.cx;p.y=p.cy;if(p.crouch){p.crouch=0;p.h=MARA_H;}p.vy=0;p.inv=1.2;}
  for(const e of G.ens){e.t+=dt;e.fl=Math.max(0,e.fl-dt);e.ht=Math.max(0,(e.ht||0)-dt);const dx=(p.x+p.w/2)-(e.x+e.w/2),dy=(p.y+p.h/2)-(e.y+e.h/2);
   if(e.k==='crawler'){e.vy=Math.min(e.vy+900*dt,400);const wall=moveBody(e,dt);const fx=e.vx>0?e.x+e.w+1:e.x-1;if(wall||!solid(Math.floor(fx/TS),Math.floor((e.y+e.h+2)/TS))||tile(Math.floor(fx/TS),Math.floor((e.y+e.h-2)/TS))===2)e.vx=-e.vx;}
   else if(e.k==='turret'){e.ft-=dt;if(Math.abs(dx)<220&&e.ft<=0){e.ft=Math.max(1,2.4-0.3*d);const a=Math.atan2(dy,dx),s=110+d*10;G.eb.push({x:e.x+e.w/2,y:e.y+3,vx:Math.cos(a)*s,vy:Math.sin(a)*s});}}
@@ -1008,7 +1017,7 @@ function drawPlat(){const L=G.L,cam=Math.round(G.cam),pl=L.pal,art=platArt(L);co
  for(const c of G.coins){if(c.rm&&!c.rm.found)continue;const bob=Math.sin(G.t*4+c.x)*2;if(c.k==='part'){glowS(c.x-cam,c.y+bob,9,'#9ad8ff',0.6);draw(ART.hack('#9ad8ff','part'),c.x-cam,c.y+bob,1);}else if(c.k==='pu')puIcon(c.x-cam,c.y+bob,c.w,G.t,c.life);else if(c.k==='hp'){draw(ART.hp,c.x-cam,c.y+bob,2);}else drawCoin(c.x-cam,c.y+bob,G.t,(c.x*7)%10);}
  for(const e of G.ens){const cx=e.x+e.w/2-cam,cy=e.y+e.h/2;if(e.k==='brute'){const B=ART.brute(G.d),dir=(e.vx||((G.p.x+G.p.w/2)-(e.x+e.w/2)))<0;e.wt=(e.wt||0)+Math.abs(e.vx||0)/1800;draw(e.fl?B.W:e.ht>0?B.hit:e.atk>0?B.atk[(e.atk*12|0)&1]:B.walk[(e.wt*4|0)&3],cx,e.y+e.h-23,3,dir);if(e.act){bar(cx-20,e.y-8,40,3,e.hp/e.mhp,'#ff3a6a');}}else{if(e.k==='flyer')glow(cx,cy+4,3+Math.sin(G.t*20),'#c05aff',0.5);{const A=ART.pe[e.k];let img,yy=cy,fl=false;if(e.fl)img=ART.peW[e.k];else if(e.k==='turret'){const a=Math.atan2((G.p.y+G.p.h/2)-(e.y+3),(G.p.x+G.p.w/2)-(e.x+e.w/2));img=(e.ht>0?ART.peH.turret:A)[((Math.round(a/(Math.PI/4))%8)+8)%8];}else if(e.ht>0)img=ART.peH[e.k];else img=A[((G.t*10+e.x*0.1)|0)&3];if(e.k==='crawler'){yy=e.y+e.h-5;fl=e.vx<0;}else if(e.k==='turret')yy=e.y+e.h-7.5;draw(img,cx,yy,2,fl);}}}
  const p=G.p;{const M=ART.mara,ai=clamp((p.aim|0)+2,0,3);if(p.on&&!p._on&&p._air>0.15)p.landT=0.12;p._air=p.on?0:(p._air||0)+1/60;p._on=p.on;p.landT=Math.max(0,(p.landT||0)-1/60);
- let fr;if(G.dead)fr=M.death[Math.min(3,Math.floor((1.4-G.dead)*6))];else if(p.inv>0.8)fr=M.hit;else if(!p.on)fr=p.vy<0?M.rise[ai]:M.fall[ai];else if(p.landT>0)fr=M.land[ai];else if(p.vx)fr=M.run[ai][(G.t*14|0)%8];else fr=M.idle[ai][(G.t*3|0)%4];
+ let fr;if(G.dead)fr=M.death[Math.min(3,Math.floor((1.4-G.dead)*6))];else if(p.inv>0.8)fr=M.hit;else if(p.crouch)fr=G.t-(p.shotT||-9)<0.12?M.crouchShoot:M.crouch[(G.t*2|0)%2];else if(!p.on)fr=p.vy<0?M.rise[ai]:M.fall[ai];else if(p.landT>0)fr=M.land[ai];else if(p.vx)fr=M.run[ai][(G.t*14|0)%8];else fr=M.idle[ai][(G.t*3|0)%4];
  if(G.dead||!(p.inv>0&&p.inv<=0.8&&(G.t*20|0)%2)){if(p.jet&&!G.dead)glow(p.x+p.w/2-p.face*4-cam,p.y+p.h-2,4,'#ffa03a',0.6);draw(fr,p.x+p.w/2-cam,p.y+p.h-23,2,p.face<0);}}
  if(G.dead){ctx.fillStyle='#ff3a6a';txt('SUIT BREACH',W/2,140,'#ff3a6a',10);}
  pBullets(cam,true);
@@ -1023,8 +1032,8 @@ function drawPlat(){const L=G.L,cam=Math.round(G.cam),pl=L.pal,art=platArt(L);co
  // control panel
  ctx.fillStyle='#070912';ctx.fillRect(0,PH,W,H-PH);ctx.fillStyle='#1a2340';ctx.fillRect(0,PH,W,1);
  const tb=G.tb||{};const pb=(k,lab)=>{const b=PB[k];blit(uiArt(b[2],b[3],'#5ab0ff','btn',tb[k]),b[0],b[1],b[2],b[3]);txt(lab,b[0]+b[2]/2,b[1]+b[3]/2-5,'#bfe8ff',10);};
- pb('L','<');pb('R','>');pb('F','FIRE');{const b=PB.D,cd=G.p.dcd||0;blit(uiArt(b[2],b[3],'#9ad8ff','btn',tb.D),b[0],b[1],b[2],b[3]);txt('DASH',b[0]+b[2]/2,b[1]+b[3]/2-4,cd>0?'#4a5a7a':'#dff4ff',8);if(cd>0){ctx.fillStyle='#9ad8ff';ctx.fillRect(b[0]+4,b[1]+b[3]-5,(b[2]-8)*(1-cd/0.75),2);}}{const b=PB.F,cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,am=tb.F?(p.aim|0):null;txt('^',cx,b[1]+3,am!==null&&am<0?'#ffd23a':'#3a4a7a',8);txt('v',cx,b[1]+b[3]-12,am===1?'#ffd23a':'#3a4a7a',8);if(am!==null){const a=aimAngle(p);ctx.fillStyle='#ffd23a';for(let i=10;i<=18;i+=2)ctx.fillRect(cx-6+Math.cos(a)*(i-6)-1,cy+13+Math.sin(a)*(i-6)*0.5-1,2,2);}}pb('J',S.jet?'JUMP+':'JUMP');
- txt(G.t<6?'Foes may drop weapon boosts':G.t<14?(hasTouch?'DASH or double-tap. Jump off walls':'SHIFT/C dash. Jump off walls'):hasTouch?'Slide FIRE up/down to aim':'Z jump  X fire  UP/DOWN aim',8,PH+12,'#56607e',7,'left');
+ pb('L','<');pb('R','>');pb('F','FIRE');{const b=PB.C;blit(uiArt(b[2],b[3],'#5ab0ff','btn',tb.C||G.p.crouch),b[0],b[1],b[2],b[3]);txt('CROUCH',b[0]+b[2]/2,b[1]+b[3]/2-4,G.p.crouch?'#ffd23a':'#bfe8ff',8);}{const b=PB.D,cd=G.p.dcd||0;blit(uiArt(b[2],b[3],'#9ad8ff','btn',tb.D),b[0],b[1],b[2],b[3]);txt('DASH',b[0]+b[2]/2,b[1]+b[3]/2-4,cd>0?'#4a5a7a':'#dff4ff',8);if(cd>0){ctx.fillStyle='#9ad8ff';ctx.fillRect(b[0]+4,b[1]+b[3]-5,(b[2]-8)*(1-cd/0.75),2);}}{const b=PB.F,cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,am=tb.F?(p.aim|0):null;txt('^',cx,b[1]+3,am!==null&&am<0?'#ffd23a':'#3a4a7a',8);txt('v',cx,b[1]+b[3]-12,am===1?'#ffd23a':'#3a4a7a',8);if(am!==null){const a=aimAngle(p);ctx.fillStyle='#ffd23a';for(let i=10;i<=18;i+=2)ctx.fillRect(cx-6+Math.cos(a)*(i-6)-1,cy+13+Math.sin(a)*(i-6)*0.5-1,2,2);}}pb('J',S.jet?'JUMP+':'JUMP');
+ wrap(G.t<6?'Foes may drop weapon boosts':G.t<14?(hasTouch?'DASH or double-tap. Jump off walls':'SHIFT/C dash. Jump off walls'):G.t<22?(hasTouch?'CROUCH or slide FIRE down for low shots':'DOWN crouch + X: low shots hit crawlers'):hasTouch?'Slide FIRE up to aim, down in the air':'Z jump  X fire  UP aim  DOWN crouch/air aim',132,7).slice(0,2).forEach((l,k)=>txt(l,8,PH+6+k*10,'#56607e',7,'left'));
  pauseBtn();}
 
 // ---------- HACKING (falling data-fragment line-clear puzzle) ----------
