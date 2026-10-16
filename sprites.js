@@ -221,6 +221,56 @@ function brute(d,f,atk,hit){const P=BRP[d-1],M=MAT({a:[P.a],b:[P.b],c:[P.c,{e:1,
   const sB=[34,36+bob],hB=hit?[18,28]:atk?[22,12]:[26-Math.sin(ph)*5,66+bob];if(cap(x,y,sB[0],sB[1],hB[0],hB[1],6.5))return'b';if(el(x,y,hB[0],hB[1],8,7))return['m',-0.15];
   v=lg(42,ph+Math.PI,true);if(v)return v;return 0;},M,{R:7,r:6,rim:'#ffe8c8'});}
 
+
+// ================= PLATFORMER PARALLAX (one set per chapter; tiles seamlessly every 540 logical px) =================
+const TAU=Math.PI*2,PP=540;
+const fb1=(x,s,n=5)=>{let v=0,a=1,t=0;const F=[3,5,9,17,31,47];for(let k=0;k<n;k++){v+=a*Math.sin(x/PP*TAU*F[k]+hash(k,s,7)*TAU);t+=a;a*=0.55;}return v/t;};
+function scene(h,r,fn){const w=PP,c=mk(w*r,h*r,r),x=c.getContext('2d'),im=x.createImageData(w*r,h*r),d=im.data;
+ for(let py=0;py<h*r;py++)for(let px=0;px<w*r;px++){const v=fn((px+0.5)/r,(py+0.5)/r,BY[(py&3)*4+(px&3)]/16);if(!v)continue;const i=(py*w*r+px)*4;d[i]=v[0];d[i+1]=v[1];d[i+2]=v[2];d[i+3]=v[3]===undefined?255:v[3];}
+ x.putImageData(im,0,0);return c;}
+const sh=(c,k)=>c.map(v=>cl(Math.round(v*k),0,255));
+function bgSet(d,pal,bg,H,r){const P0=hx(pal[0]),P1=hx(pal[1]),P2=hx(pal[2]),B0=hx(bg[0]),B1=hx(bg[1]);const fog=(c,t)=>mix(c,mix(B0,B1,0.5),t).map(Math.round);
+ if(d===1){// ASTER-9: station interior. Far wall with observation bays, mid machinery, near hanging cables.
+  const far=scene(H,r,(x,y,th)=>{const bx=x%135,wy0=34,wy1=150;
+   if(bx>22&&bx<113&&y>wy0&&y<wy1){if(bx<26||bx>109||y<wy0+4||y>wy1-4)return fog(sh(P2,0.7),0.45);
+    const gx=(x-67)%135,gc=Math.hypot(((x%270)-180)/1.0,y-240);if(gc<130)return fog(mix([60,40,90],[150,110,170],cl((130-gc)/40,0,1)*(y<180?1:0)*0.6+((gc+(y*0.4))%18<2?0.2:0)).map(Math.round),0.25);
+    if(hash(Math.floor(x),Math.floor(y),3)>0.994)return[220,230,255];return fog([8,10,24],0.1);}
+   if(x%67.5<5)return fog(sh(P1,x%67.5<1.5?1.5:1.15),0.35+(y%24<1?0.1:0));
+   if(y>170&&y<178)return fog(sh(P2,y<172?0.9:0.6),0.4);
+   if(y>178&&y<206){const q=Math.abs(((x+y)%28)-14)<1.3||Math.abs(((x-y)%28+28)%28-14)<1.3;if(q)return fog(sh(P1,1.2),0.45);}
+   const pid=Math.floor(x/33.75)*31+Math.floor(y/24);if(y%24<1||x%33.75<0.8)return fog(sh(P1,0.55),0.4);
+   if(hash(pid,1,5)>0.82&&Math.abs((x%33.75)-28)<1.2&&Math.abs((y%24)-6)<1.2)return hash(pid,2,5)>0.5?[255,200,110]:[110,210,255];
+   return fog(sh(P1,0.82+((x%33.75)<2?0.1:0)-(y/H)*0.25+(th<0.5&&(y%24)>20?-0.05:0)),0.42);});
+  const mid=scene(H,r,(x,y,th)=>{const bx=x%90,top=H-150;
+   const tank=bx>8&&bx<52&&y>top+((bx-30)/22)**2*14;if(tank){const n=(bx-30)/22;if(Math.abs(y-(top+60))<2||Math.abs(y-(top+100))<2)return sh(P1,0.7);return sh(P1,0.9+0.5*Math.max(0,-n-0.2)+(th<0.3&&n>0.4?-0.15:0));}
+   if(y>H-96&&y<H-88)return sh(P2,y<H-93?0.75:0.5);if(Math.abs(bx-70)<1&&y>H-88&&y<H-60)return sh(P2,0.6);
+   if(bx>58&&bx<86&&y>H-60){if(bx>62&&bx<82&&y>H-54&&y<H-44)return((Math.floor(x*2)+Math.floor(y*2))%3===0)?[90,220,160]:[18,40,46];return sh(P1,1.05-(y>H-58?0:0.2));}
+   return 0;});
+  const near=scene(H,r,(x,y,th)=>{const bx=x%120,cy=10+26*(1-((bx-60)/60)**2),cy2=6+40*(1-((((x+40)%160)-80)/80)**2);
+   if(Math.abs(y-cy)<1.4||Math.abs(y-cy2)<1.1)return[10,12,22];if(y<8&&(x%40)<6)return[14,16,28];if(Math.abs(bx-60)<1.2&&y>cy&&y<cy+16)return[10,12,22];if(Math.abs(bx-60)<2.4&&Math.abs(y-cy-17)<2.4)return(hash(Math.floor(x/120),0,9)>0.5)?[255,190,90]:[30,32,44];return 0;});
+  return{far,mid,near,v:[0.12,0.28,0.55]};}
+ if(d===2){// ORUUN: dusk desert. Banded mesas, rock spires with glowing pod stalks, dark boulders.
+  const far=scene(H,r,(x,y,th)=>{const n=fb1(x,11),m=H-150-46*Math.max(-0.3,Math.min(0.55,n))*1.6;if(y<m)return 0;
+   const band=Math.floor((y-m+fb1(x,4,3)*6)/9)%3;const base=fog(sh(P0,0.75+band*0.08),0.55),hz=cl((y-m)/90,0,1);
+   if(y-m<1.5)return fog(sh(P2,0.9),0.45);return mix(base,fog(sh(P1,0.8),0.6),hz*(th<0.6?1:0.7)).map(Math.round);});
+  const mid=scene(H,r,(x,y,th)=>{const bx=x%77;const sp=H-110-40*Math.abs(fb1(x,23,4));const sx=Math.abs(bx-38);
+   const spire=y>H-205+sx*sx*0.15+fb1(x,8,3)*8&&sx<14;if(spire||y>sp){const lit=(bx<38&&spire)?0.18:0;return sh(P1,1.0+lit-(y>H-40?0.15:0)+(th<0.25?-0.06:0));}
+   const st=(x+30)%113,stx=Math.abs(st-56+Math.sin(y*0.05)*4);if(stx<1.3&&y>H-180)return sh(P1,0.8);
+   if(el(st,y,56+Math.sin((H-186)*0.05)*4,H-186,5,7)||el(st,y,56+Math.sin((H-160)*0.05)*4+6,H-160,3,4))return eld(st,y,56+Math.sin((H-186)*0.05)*4,H-186,5,7)<0.5?[255,236,170]:[255,170,80];
+   return 0;});
+  const near=scene(H,r,(x,y,th)=>{const h=H-34-18*fb1(x,31,6)-8*Math.max(0,Math.sin(x*0.09));if(y<h){const gx=Math.floor(x*1.3);if(hash(gx,0,4)>0.7&&y>h-4-hash(gx,1,4)*6&&Math.abs((x*1.3)%1-0.5)<0.35)return[26,10,12];return 0;}
+   return y<h+2?sh(P1,0.55):[20,8,10];});
+  return{far,mid,near,v:[0.1,0.25,0.5]};}
+ // HIVE SPIRE: grown interior. Honeycomb far wall with glowing nodes, mid hanging membranes, near roots.
+ const far=scene(H,r,(x,y,th)=>{const q=Math.sqrt(3),hy=y/12,hx2=x/12/q*2;const cx=Math.round(hx2),odd=cx&1,cyy=Math.round(hy-odd*0.5),dx=(hx2-cx)*q/2*12,dy=(hy-cyy-odd*0.5)*12;
+  const hd=Math.max(Math.abs(dx)*0.87+Math.abs(dy)*0.5,Math.abs(dy));
+  const col=x%108,cw=14+6*Math.sin(y*0.045+Math.floor(x/108));if(Math.abs(col-54)<cw){const n=(col-54)/cw;if(Math.abs(Math.sin(y*0.32))<0.2)return fog(sh(P1,1.1),0.35);return fog(sh(P0,0.8+0.4*Math.max(0,-n)),0.4);}
+  if(hd>5.4)return fog(sh(P1,0.75),0.45);if(hash(cx,cyy,6)>0.972&&hd<2.6)return hd<1.2?[255,200,255]:[200,120,240];return fog(sh(P1,0.45+th*0.08),0.5);});
+ const mid=scene(H,r,(x,y,th)=>{const bx=x%96,dr=46+30*fb1(x,17,4)+18*Math.max(0,Math.sin(bx/96*Math.PI*3));if(y<dr)return sh(P0,0.9+(y>dr-3?0.25:0));
+  for(let k=0;k<3;k++){const tx=k*33+12,len=dr+40+hash(Math.floor(x/96),k,3)*70;if(Math.abs(bx-tx-Math.sin(y*0.07+k)*4)<1.4&&y<len)return sh(P0,0.8);if(eld(bx,y,tx+Math.sin(len*0.07+k)*4,len,3.2,4.2)<1)return eld(bx,y,tx+Math.sin(len*0.07+k)*4,len,3.2,4.2)<0.5?[255,190,255]:[190,110,230];}
+  const sac=(x+50)%140;if(y>H-70&&eld(sac,y,70,H-36,20,30)<1){const e=eld(sac,y,70,H-36,20,30);return e<0.45?mix([150,80,190],[230,160,255],0.5-e).map(Math.round):sh(P0,0.85+(sac<70?0.15:0));}return 0;});
+ const near=scene(H,r,(x,y,th)=>{for(let k=0;k<2;k++){const c=(x+k*90)%180,ry=H-6-64*Math.sqrt(Math.max(0,1-((c-90)/90)**2))*(0.6+k*0.3);if(Math.abs(y-ry)<2.4&&c>4&&c<176)return[16,8,24];}if(y>H-14+6*fb1(x,5,4))return[12,6,20];return 0;});
+ return{far,mid,near,v:[0.12,0.28,0.55]};}
 // ================= EVASION top-down: 32x32 art (16 logical), 4 dirs x 4 frames =================
 const VM=MAT({arm:['#e4eaf6'],suit:['#4a80ea'],helm:['#e8eef8'],vis:['#62f0ff',{e:1}],boot:['#2c2c3c'],scarf:['#ff8c3a'],pack:['#5c6274'],
  h1:['#d0405e'],h2:['#8a2040'],d1:['#ff8a3a'],d2:['#a04a1a'],dm:['#d8dce8'],i1:['#5ae08a'],i2:['#2a8a4a'],k1:['#a068f0'],k2:['#5a2aa0'],ey:['#ffe07a',{e:1}]});
@@ -348,4 +398,5 @@ A.boom=explosion(['#ffffff','#fff09a','#ffb43a','#ff5a2a','#a02030']);A.boomB=ex
 const BS={};A.boss=(d,fin)=>{const k=fin?'f':d;return BS[k]||(BS[k]=boss(d,fin));};
 const TL={};A.tiles=(pal,ceil,seed)=>{const k=pal.join()+ceil;return TL[k]||(TL[k]=tiles(pal,ceil,seed));};
 const HB={};A.hack=(col,k)=>HB[k]||(HB[k]=hackBlock(col,k));
+const BGS={};A.bg=(d,pal,bg,H,r)=>{const k=d+pal.join()+r;return BGS[k]||(BGS[k]=bgSet(d,pal,bg,H,r));};
 A.white=white;return A;})();
