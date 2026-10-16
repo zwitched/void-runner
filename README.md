@@ -14,3 +14,9 @@ All sprites drawn in code; chiptune SFX/music via WebAudio. Progress saved in lo
 
 ## Graphics v2
 Renders at 2x the 270x480 logical resolution (GFX: HIGH), or 1x on GFX: LOW (title or pause screen). Sprites are EPX-upscaled and shaded once at load. Includes a bitmap pixel font, speaker portraits, glow sprites, darkness lighting in station levels, parallax and foreground layers, and an optional CRT filter. `test_perf.py` reports per-frame CPU time in High and Low.
+
+## Sprites v3
+`sprites.js` holds all character, enemy, boss, pickup, coin, explosion, tile and hack-block art. Each sprite is
+authored at 2 art pixels per logical pixel as small geometry functions, shaded at load with 6-step material
+ramps, dither, seams, rim light and outlines. Hitboxes are unchanged and independent of art size.
+`screenshots/v3_sprites.png` is a contact sheet of every frame.

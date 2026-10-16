@@ -475,7 +475,7 @@ function failLevel(){state='over';stT=0;}
 // ---------- SPACE ----------
 const ET={drone:{hp:2,r:7,cr:2},weaver:{hp:2,r:7,cr:2},kami:{hp:1,r:5,cr:3},gun:{hp:10,r:11,cr:8},rock:{hp:4,r:9,cr:1}};
 function makeWaves(L){const d=L.d,w=[],len=L.final?25:35+d*8;const pool=['drone','weaver','rock'];if(d>=2)pool.push('kami');if(d>=3)pool.push('gun');if(d>=4)pool.push('gun','kami','weaver');let t=2;while(t<len){w.push({t,k:pool[ri(0,pool.length-1)]});t+=Math.max(1.0,3.0-d*0.4)+rnd(0,1);}for(let i=1;i<d;i++)w.push({t:len*i/d,k:'gun'});w.sort((a,b)=>a.t-b.t);return{list:w,len};}
-function initSpace(L){const mh=2+S.hull*2;G={mode:'space',L,d:L.d+(S.ng?1:0),t:0,p:{x:W/2,y:H-70,hp:mh,mhp:mh,sh:S.shield*2,msh:S.shield*2,inv:1.5,ft:0,shT:9},bul:[],eb:[],en:[],fx:[],coins:[],waves:makeWaves(L),boss:null,endT:0,shake:0,dead:0};state='space';}
+function initSpace(L){ART.boss(L.d,!!L.final);const mh=2+S.hull*2;G={mode:'space',L,d:L.d+(S.ng?1:0),t:0,p:{x:W/2,y:H-70,hp:mh,mhp:mh,sh:S.shield*2,msh:S.shield*2,inv:1.5,ft:0,shT:9},bul:[],eb:[],en:[],fx:[],coins:[],waves:makeWaves(L),boss:null,endT:0,shake:0,dead:0};state='space';}
 function mkE(k,x,y,o={}){const t=ET[k],m=1+(G.d-1)*0.35;const e=Object.assign({k,x,y,x0:x,hp:Math.ceil(t.hp*m),r:t.r,cr:t.cr,t:0,ph:rnd(0,6),fl:0,ft:rnd(0.5,1.5),ty:rnd(70,170),vx:rnd(-20,20),vy:rnd(40,70),rot:0},o);G.en.push(e);}
 function spawnWave(k){const d=G.d;if(k==='drone'){const n=Math.min(7,3+d),cx=rnd(60,W-60);for(let i=0;i<n;i++){const o=i-(n-1)/2;mkE('drone',clamp(cx+o*22,12,W-12),-10-Math.abs(o)*14);}}
  else if(k==='weaver'){const n=4+d,x=rnd(55,W-55);for(let i=0;i<n;i++)mkE('weaver',x,-10-i*22,{ph:0});}
