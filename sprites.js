@@ -253,8 +253,8 @@ function bgSet(d,pal,bg,H,r){const P0=hx(pal[0]),P1=hx(pal[1]),P2=hx(pal[2]),B0=
   const far=scene(H,r,(x,y,th)=>{const n=fb1(x,11),m=H-150-46*Math.max(-0.3,Math.min(0.55,n))*1.6;if(y<m)return 0;
    const band=Math.floor((y-m+fb1(x,4,3)*6)/9)%3;const base=fog(sh(P0,0.75+band*0.08),0.55),hz=cl((y-m)/90,0,1);
    if(y-m<1.5)return fog(sh(P2,0.9),0.45);return mix(base,fog(sh(P1,0.8),0.6),hz*(th<0.6?1:0.7)).map(Math.round);});
-  const mid=scene(H,r,(x,y,th)=>{const bx=x%77;const sp=H-110-40*Math.abs(fb1(x,23,4));const sx=Math.abs(bx-38);
-   const spire=y>H-205+sx*sx*0.15+fb1(x,8,3)*8&&sx<14;if(spire||y>sp){const lit=(bx<38&&spire)?0.18:0;return sh(P1,1.0+lit-(y>H-40?0.15:0)+(th<0.25?-0.06:0));}
+  const mid=scene(H,r,(x,y,th)=>{const bx=x%135;const sp=H-78-30*Math.abs(fb1(x,23,4));const sx=Math.abs(bx-38);
+   const spire=y>H-168+sx*sx*0.2+fb1(x,8,3)*8&&sx<11;if(spire||y>sp){const lit=(bx<38&&spire)?0.18:0;return sh(P1,1.0+lit-(y>H-40?0.15:0)+(th<0.25?-0.06:0));}
    const st=(x+30)%113,stx=Math.abs(st-56+Math.sin(y*0.05)*4);if(stx<1.3&&y>H-180)return sh(P1,0.8);
    if(el(st,y,56+Math.sin((H-186)*0.05)*4,H-186,5,7)||el(st,y,56+Math.sin((H-160)*0.05)*4+6,H-160,3,4))return eld(st,y,56+Math.sin((H-186)*0.05)*4,H-186,5,7)<0.5?[255,236,170]:[255,170,80];
    return 0;});
