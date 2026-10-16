@@ -310,7 +310,7 @@ PTS.gate=100;
 {const _go=goStory;goStory=function(i){FT.retry=0;_go(i);};}
 function engThrust(){if(state!=='engine'||!G||G.mode!=='engine')return;if(engKick(G)){tone(260,520,.05,'square',.04);for(let j=0;j<6;j++)G.fx.push({x:EN.sx-9,y:G.y+3,vx:rnd(-90,-30),vy:rnd(10,70),l:rnd(.15,.3),c:j%2?'#ffd23a':'#ff6a3a',s:2});}}
 {const _pd=ptrDown;ptrDown=function(id,e){_pd(id,e);const q=ptrs[id];if(q&&state==='engine'&&!(q.x>236&&q.y<26))engThrust();};}
-{const _ok=onKey;onKey=function(c){if(state==='engine'&&(c==='Space'||c==='ArrowUp'||c==='KeyW')){engThrust();return;}_ok(c);};}
+{const _ok=onKey;onKey=function(c){if(state==='engine'&&c==='KeyH'){FT.hitbox=!FT.hitbox;return;}if(state==='engine'&&(c==='Space'||c==='ArrowUp'||c==='KeyW')){engThrust();return;}_ok(c);};}
 function updEngine(dt){const E=G;for(const f of E.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.l-=dt;if(f.smoke){f.s+=dt*6;}}E.fx=E.fx.filter(f=>f.l>0);
  if(E.dead){E.dead-=dt;if(E.dead<=0){E.dead=0;failLevel();}return;}
  if(E.won){E.won-=dt;E.dock=(E.dock||0)+dt;if(E.won<=0){E.won=0;levelClear();}return;}
@@ -331,12 +331,12 @@ const ENGSHIP=(()=>{const c=document.createElement('canvas');c.width=48;c.height
 function drawEngShip(E,x,y){ctx.save();ctx.translate(x,y);ctx.rotate(Math.max(-0.45,Math.min(0.7,E.vy/520)));if(E.kickT>0){glow(-10,4,6,'#ffa03a',0.5);ctx.fillStyle='#ffd23a';ctx.fillRect(-9,4,4,4);ctx.fillStyle='#ff6a3a';ctx.fillRect(-7,8,3,4);}
  ctx.drawImage(ENGSHIP,-12,-7,24,13);ctx.restore();}
 function drawColumn(g,x,y0,y1,end){const h=y1-y0;if(h<=0)return;const w=EN.gw,r=rng(g.seed+(end>0?7:3));
- if(g.kind==='strut'){ctx.fillStyle='#22304a';ctx.fillRect(x+2,y0,w-4,h);ctx.fillStyle='#8a9aba';ctx.fillRect(x+2,y0,2,h);ctx.fillRect(x+w-4,y0,2,h);ctx.fillStyle='#5a6a8a';
-  for(let yy=y0+(end>0?0:h%18);yy<y1-2;yy+=18){for(let k=0;k<16;k+=2){ctx.fillRect(x+4+k*(w-8)/16,yy+k,2,2);ctx.fillRect(x+w-6-k*(w-8)/16,yy+k,2,2);}ctx.fillRect(x+4,yy,w-8,1);}
+ if(g.kind==='strut'){ctx.fillStyle='#22304a';ctx.fillRect(x,y0,w,h);ctx.fillStyle='#8a9aba';ctx.fillRect(x,y0,2,h);ctx.fillRect(x+w-2,y0,2,h);ctx.fillStyle='#5a6a8a';
+  for(let yy=y0+(end>0?0:h%18);yy<y1-2;yy+=18){for(let k=0;k<16;k+=2){if(yy+k<y0||yy+k+2>y1)continue;ctx.fillRect(x+4+k*(w-8)/16,yy+k,2,2);ctx.fillRect(x+w-6-k*(w-8)/16,yy+k,2,2);}if(yy>=y0)ctx.fillRect(x+4,yy,w-8,1);}
   const ey=end>0?y1-8:y0;ctx.fillStyle='#3a4a6a';ctx.fillRect(x,ey,w,8);for(let k=0;k<w;k+=6){ctx.fillStyle='#ffd23a';ctx.fillRect(x+k,ey+2,3,4);}ctx.fillStyle=(T*2|0)%2?'#ff3a6a':'#5a1020';ctx.fillRect(x+w/2-1,end>0?y1-11:y0+8,2,3);}
  else if(g.kind==='wreck'){ctx.fillStyle='#4a2a22';ctx.fillRect(x,y0,w,h);for(let yy=y0;yy<y1;yy+=14){ctx.fillStyle=r()<.5?'#6a3a2a':'#5a3226';ctx.fillRect(x+1,yy+1,w-2,12);ctx.fillStyle='#8a5a3a';ctx.fillRect(x+1,yy+1,w-2,1);ctx.fillStyle='#2a1810';ctx.fillRect(x+3,yy+5,2,2);ctx.fillRect(x+w-5,yy+5,2,2);if(r()<.3){ctx.fillStyle='#1a0e0a';ctx.fillRect(x+6+r()*10,yy+3,5,6);}}
   ctx.fillStyle='#4a2a22';const ey=end>0?y1:y0;for(let k=0;k<w;k+=4){const t=2+Math.floor(r()*5);ctx.fillRect(x+k,end>0?ey:ey-t,4,t);}ctx.fillStyle='#ff9a3a';if((T*6+g.seed)%7<1)ctx.fillRect(x+w/2,end>0?y1+2:y0-4,1,2);}
- else{for(let yy=y0;yy<y1;yy+=9){for(let k=0;k<3;k++){const cx=x+4+k*9+(r()*4-2),cy=yy+r()*6,s=5+r()*5;ctx.fillStyle='#2e2e3e';ctx.fillRect(cx-1,cy-1,s+2,s+2);ctx.fillStyle=r()<.5?'#4a4a5a':'#56566a';ctx.fillRect(cx,cy,s,s);ctx.fillStyle='#7a7a90';ctx.fillRect(cx,cy,s,1);}}for(let k=0;k<w+8;k+=5){const t=2+Math.floor(r()*4);ctx.fillStyle='#3a3a4c';ctx.fillRect(x-4+k,end>0?y1-1:y0-t+1,4,t);}}}
+ else{ctx.fillStyle='#24242f';ctx.fillRect(x,y0,w,h);for(let yy=y0;yy<y1-3;yy+=9){for(let k=0;k<3;k++){const cx=x+2+k*8+r()*2,cy=yy+r()*3,s=Math.min(5+r()*5,x+w-1-cx,y1-1-cy);if(s<2)continue;ctx.fillStyle='#2e2e3e';ctx.fillRect(cx-1,cy-1,s+2,s+2);ctx.fillStyle=r()<.5?'#4a4a5a':'#56566a';ctx.fillRect(cx,cy,s,s);ctx.fillStyle='#7a7a90';ctx.fillRect(cx,cy,s,1);}}for(let k=0;k<w+8;k+=5){const t=2+Math.floor(r()*4);ctx.fillStyle='#3a3a4c';ctx.fillRect(x-4+k,end>0?y1-1:y0-t+1,4,t);}}}
 function drawEngine(dt){const E=G,L=E.L||{bg:['#0c0612','#2a1018'],planet:'#d06a3a'};const gr=ctx.createLinearGradient(0,0,0,H);gr.addColorStop(0,L.bg[0]);gr.addColorStop(1,L.bg[1]);ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
  const sp=E.ready?20:E.v;for(const s of E.stars){if(dt)s.x-=sp*0.04*s.z*s.z*dt;if(s.x<0){s.x=W;s.y=EN.top+Math.random()*(EN.bot-EN.top);}ctx.fillStyle=s.z===3?'#fff':s.z===2?'#8aa0d0':'#44507a';ctx.fillRect(s.x|0,s.y|0,s.z===3?2:1,1);}
  {const px=200-E.dist*0.02,py=140;ctx.fillStyle=L.planet;ctx.globalAlpha=0.35;ctx.beginPath();ctx.arc(px,py,60,0,7);ctx.fill();ctx.globalAlpha=0.25;ctx.fillStyle='#000';ctx.beginPath();ctx.arc(px+18,py-10,58,0,7);ctx.fill();ctx.globalAlpha=1;}
@@ -347,8 +347,8 @@ function drawEngine(dt){const E=G,L=E.L||{bg:['#0c0612','#2a1018'],planet:'#d06a
  // dock
  const dx=E.goal-E.dist+EN.sx+30;if(dx<W+60){ctx.fillStyle='#1a2a3a';ctx.fillRect(dx,EN.top,W,EN.bot-EN.top);ctx.fillStyle='#04060c';ctx.fillRect(dx,170,W,110);ctx.fillStyle='#3a5a7a';ctx.fillRect(dx,166,W,4);ctx.fillRect(dx,280,W,4);
   for(let k=0;k<6;k++){ctx.fillStyle=((T*6|0)+k)%6===0?'#9aff5a':'#2a5a3a';ctx.fillRect(dx+6+k*14,172,6,2);ctx.fillRect(dx+6+k*14,276,6,2);}ctx.fillStyle='#8a9aba';ctx.fillRect(dx-3,EN.top,3,136);ctx.fillRect(dx-3,284,3,EN.bot-284);txt('DOCK',dx+30,150,'#9aff5a',8);}
- for(const g of E.gates){const x=g.x-E.dist+EN.sx-EN.sx;const sx=g.x-E.dist+EN.sx;if(sx<-40||sx>W+10)continue;const c=gateY(E,g);drawColumn(g,sx,EN.top,c-g.gap/2,1);drawColumn(g,sx,c+g.gap/2,EN.bot,-1);}
- for(const c of E.coins)if(!c.got){const x=c.x-E.dist+EN.sx;if(x>-10&&x<W+10)drawCoin(x,c.y,E.t,c.x);}
+ drawGates(E);
+ for(const c of E.coins)if(!c.got){const x=c.x-E.dist;if(x>-10&&x<W+10)drawCoin(x,c.y,E.t,c.x);}
  drawFx(E.fx.filter(f=>f.smoke));
  if(!E.dead&&!(E.inv>0&&(E.t*20|0)%2)){const sx=E.won?EN.sx+(E.dock||0)*60:EN.sx,sy=E.won?E.y+((225-E.y)*Math.min(1,(E.dock||0)*1.5)):E.y;drawEngShip(E,sx,sy);}
  drawFx(E.fx.filter(f=>!f.smoke));ctx.restore();
@@ -361,11 +361,24 @@ function drawEngine(dt){const E=G,L=E.L||{bg:['#0c0612','#2a1018'],planet:'#d06a
  if(E.dead)txt('HULL BREACH',W/2,200,'#ff3a6a',12);if(E.won)txt('DOCKING',W/2,200,'#9aff5a',12);
  txt(hasTouch?'Tap anywhere to fire the lift jets':'Space / Up for the lift jets',8,470,'#56607e',7,'left');
  pauseBtn();}
-HOOKS.push((n,dt)=>{if(n==='draw:engine'&&G&&G.mode==='engine'){updEngine(dt);drawEngine(dt);}});
+function drawGates(E){for(const g of E.gates){const sx=g.x-E.dist;if(sx<-40||sx>W+10)continue;const c=gateY(E,g);drawColumn(g,sx,EN.top,c-g.gap/2,1);drawColumn(g,sx,c+g.gap/2,EN.bot,-1);}}
+function engColliders(E){const o=[];for(const g of E.gates){const gx=g.x-E.dist;if(gx>W||gx+EN.gw<0)continue;const c=gateY(E,g);o.push([gx,EN.top,EN.gw,c-g.gap/2-EN.top],[gx,c+g.gap/2,EN.gw,EN.bot-(c+g.gap/2)]);}return o;}
+function drawHitboxes(E){ctx.strokeStyle='#ff2a2a';ctx.lineWidth=1;for(const [x,y,w,h] of engColliders(E))ctx.strokeRect(x+.5,y+.5,w-1,h-1);ctx.strokeStyle='#ffff3a';ctx.strokeRect(0.5,EN.top+.5,W-1,EN.bot-EN.top-1);ctx.strokeStyle='#3aff6a';ctx.beginPath();ctx.arc(EN.sx,E.y,EN.r,0,7);ctx.stroke();ctx.fillStyle='#3aff6a';for(const c of E.coins)if(!c.got){const x=c.x-E.dist;if(x>-10&&x<W+10)ctx.fillRect(x-1,c.y-1,2,2);}txt('HITBOXES ON (H)',W-8,470,'#ff2a2a',7,'right');}
+FT.hitbox=false;
+// draw only the obstacles into an offscreen layer (same code as the real frame) so tests can compare against colliders
+function engLayer(E){const c=document.createElement('canvas');c.width=W;c.height=H;const sv=ctx;ctx=c.getContext('2d');try{drawGates(E);}finally{ctx=sv;}return c.getContext('2d').getImageData(0,0,W,H).data;}
+function engAudit(seeds,frames){const bad=[];let pts=0,crashes=0,crashOk=0;
+ for(let s=1;s<=seeds;s++){const d=1+s%3,E=engNew(s*7717,d,1,1);E.ready=false;const r=rng(s);let f=0;
+  while(f<frames&&!E.dead&&!E.won){if(r()<0.09)engKick(E);const y0=E.y;engStep(E,1/60);f++;
+   if(f%7===0||E.dead){const px=engLayer(E),A=(x,y)=>{x=Math.floor(x);y=Math.floor(y);return x<0||y<0||x>=W||y>=H?0:px[(y*W+x)*4+3];};
+    for(const [x,y,w,h] of engColliders(E))for(let yy=y+0.5;yy<y+h;yy+=3)for(let xx=Math.max(0,x+0.5);xx<Math.min(W,x+w);xx+=3){pts++;if(!A(xx,yy)){bad.push({s,f,x:xx,y:yy});if(bad.length>20)return {pts,bad,crashes,crashOk};}}
+    if(E.dead){crashes++;const y=E.y;if(y-EN.r<EN.top||y+EN.r>EN.bot){crashOk++;}else{let ok=false;for(const [x,yy,w,h] of engColliders(E)){const cx=Math.max(x,Math.min(EN.sx,x+w-0.01)),cy=Math.max(yy,Math.min(y,yy+h-0.01));if(Math.hypot(cx-EN.sx,cy-y)<=EN.r+0.01&&A(cx,cy))ok=true;}if(ok)crashOk++;else bad.push({s,f,crash:1,y});}}}}}
+ return {pts,bad,crashes,crashOk};}
+HOOKS.push((n,dt)=>{if(n==='draw:engine'&&G&&G.mode==='engine'){updEngine(dt);drawEngine(dt);if(FT.hitbox)drawHitboxes(G);}});
 {const _dm=drawMode;drawMode=function(dt){if(G&&G.mode==='engine'){drawEngine(0);return;}_dm(dt);};}
 ACH.push(['engine','LIMPED HOME','Reach a repair dock with a dead drive.'],['engine0','FEATHER TOUCH','Dock without a scratch on Hard.']);
 HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='engine'){unlockA('engine');if(diffIdx()===2&&FT.last&&FT.last.dmg===0)unlockA('engine0');}});
-VR.eng={H:()=>G,kick:()=>engThrust(),sim:(s,d,k)=>engSim(s,d,k||1),check:(s,d)=>{const E=engNew(s,d,1,1);return engCheck(E);},course:(s,d)=>{const E=engNew(s,d,1,1);return E.gates.map(g=>({x:g.x,cy:g.cy,gap:g.gap,amp:g.amp}));},
+VR.eng={H:()=>G,audit:(s,f)=>engAudit(s,f),hitbox:v=>{FT.hitbox=v===undefined?!FT.hitbox:!!v;return FT.hitbox;},colliders:()=>engColliders(G),kick:()=>engThrust(),sim:(s,d,k)=>engSim(s,d,k||1),check:(s,d)=>{const E=engNew(s,d,1,1);return engCheck(E);},course:(s,d)=>{const E=engNew(s,d,1,1);return E.gates.map(g=>({x:g.x,cy:g.cy,gap:g.gap,amp:g.amp}));},
  step:(n,thrust)=>{const E=engNew(1,1,1,1);E.ready=false;E.gates=[];const ys=[];for(let i=0;i<n;i++){if(thrust&&i===0)engKick(E);engStep(E,1/60);ys.push([E.y,E.vy]);}return ys;},
  hitTest:(gx,cy,gap,y)=>{const E=engNew(1,1,1,1);E.dist=0;return engHitGate(E,{x:gx,cy,gap,amp:0},y);},idx:()=>LV.map((L,i)=>L.t==='engine'?i:-1).filter(i=>i>=0)};
 {const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='engine'){G.ready=false;G.auto=1;G.dist=Math.max(G.dist,G.goal-140);G.gates=G.gates.filter(g=>g.x<G.dist);return;}_b();};
