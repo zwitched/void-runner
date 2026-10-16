@@ -11,3 +11,6 @@ All sprites drawn in code; chiptune SFX/music via WebAudio. Progress saved in lo
 - Palette separation: `python3 test_palette.py` (enemy shots red/magenta only; coins/pickups never).
 - Hacking mode: `python3 test_hack.py` (rotation/kicks, collisions, clears, win/lose, gestures, keys, campaign).
 - Evasion maze: `python3 test_evasion.py`.
+
+## Graphics v2
+Renders at 2x the 270x480 logical resolution (GFX: HIGH), or 1x on GFX: LOW (title or pause screen). Sprites are EPX-upscaled and shaded once at load. Includes a bitmap pixel font, speaker portraits, glow sprites, darkness lighting in station levels, parallax and foreground layers, and an optional CRT filter. `test_perf.py` reports per-frame CPU time in High and Low.

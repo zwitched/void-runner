@@ -640,8 +640,8 @@ function drawWin(dt){stT+=dt;ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);stars(dt
 
 function drawMode(dt){if(G.mode==='space')drawSpace(dt);else if(G.mode==='hack')drawHack(dt);else if(G.mode==='evade')drawEvade(dt);else drawPlat();}
 // ---------- main ----------
-let last=0,T=0;
-function frame(ts){const rdt=Math.min(0.033,(ts-last)/1000||0);last=ts;T+=rdt;const dt=HS>0?0:rdt;HS=Math.max(0,HS-rdt);BTN=[];anyTap=null;defaultAct=null;
+let last=0,T=0;const PF=[];
+function frame(ts){const rdt=Math.min(0.033,(ts-last)/1000||0);last=ts;T+=rdt;const dt=HS>0?0:rdt;HS=Math.max(0,HS-rdt);const pf0=performance.now();BTN=[];anyTap=null;defaultAct=null;
  try{if(state==='space')updSpace(dt);else if(state==='plat')updPlat(dt);else if(state==='hack')updHack(dt);else if(state==='evade')updEvade(dt);
  ctx.setTransform(RQ,0,0,RQ,0,0);ctx.imageSmoothingEnabled=false;
  switch(state){case 'title':drawTitle(dt);break;case 'story':drawStory(dt);break;case 'shop':drawShop(dt);break;
@@ -650,11 +650,11 @@ function frame(ts){const rdt=Math.min(0.033,(ts-last)/1000||0);last=ts;T+=rdt;co
   case 'clear':drawMode(dt);BTN=[];drawClear(dt);break;
   case 'over':drawMode(dt);BTN=[];drawOver(dt);break;
   case 'win':drawWin(dt);break;}
- postFX(rdt);handleTaps();}catch(err){console.error(err);}
+ postFX(rdt);handleTaps();}catch(err){console.error(err);}PF.push(performance.now()-pf0);if(PF.length>600)PF.shift();
  for(const id in ptrs){ptrs[id].px=ptrs[id].x;ptrs[id].py=ptrs[id].y;}
  music(dt);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
-window.VR={ev:{H:()=>G,open:(x,y)=>eopen(G,x,y),bfs:(x,y,door)=>Array.from(ebfs(G,x,y,door)),want:i=>evWant(i),target:i=>etarget(G,G.en[i]),tile:m=>etile(m),place:(x,y,dir)=>{const p=G.p;p.tx=p.nx=x;p.ty=p.ny=y;p.p=0;p.moving=false;p.dir=dir==null?null:EDIRS[dir];p.want=null;},EW,EH},hk:{H:()=>G,fits:(k,r,x,y)=>hfits(G,k,r,x,y),spawn:k=>hspawn(G,k),move:d=>hmove(G,d),rot:d=>hrot(G,d),soft:()=>hsoft(G),hard:()=>hhard(G),hold:()=>hholdP(G),cells:()=>hcells(G.p),setRow:(y,arr)=>{for(let x=0;x<HW;x++)G.b[y*HW+x]=arr[x]?'J':0;}},palette:()=>{const px=c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,o=[];for(let i=0;i<d.length;i+=4)if(d[i+3]>0)o.push([d[i],d[i+1],d[i+2]]);return o;};const pu={};for(const k in PU){const c=document.createElement('canvas');c.width=c.height=20;const x=c.getContext('2d');const sv=ctx;ctx=x;puIcon(10,10,k,0,9);ctx=sv;pu[k]=px(c);}return {eb:[...DANGER,DANGER_FOOT].map(c=>ebSpr(c).flatMap(px)),coin:COIN.flatMap(px),pu,hp:[[154,255,90]]};},arena:()=>G.arena,spawn:(k,dx,dy)=>{const p=G.p,e=mkPE(k,0,0,1);e.x=p.x+dx;e.y=p.y+dy;e.by=e.y;e.vx=0;G.ens.push(e);return e;},phys:()=>({PHYS,JUMP_H,TS,ROWS}),god:false,start:i=>startLevel(i),state:()=>state,G:()=>G,S:()=>S,story:i=>goStory(i),shop:()=>{state='shop';},
+window.VR={perf:()=>{const a=PF.slice().sort((x,y)=>x-y);return {n:a.length,avg:a.reduce((x,y)=>x+y,0)/Math.max(1,a.length),p95:a[Math.floor(a.length*0.95)]||0,max:a[a.length-1]||0,rq:RQ};},perfReset:()=>{PF.length=0;},ev:{H:()=>G,open:(x,y)=>eopen(G,x,y),bfs:(x,y,door)=>Array.from(ebfs(G,x,y,door)),want:i=>evWant(i),target:i=>etarget(G,G.en[i]),tile:m=>etile(m),place:(x,y,dir)=>{const p=G.p;p.tx=p.nx=x;p.ty=p.ny=y;p.p=0;p.moving=false;p.dir=dir==null?null:EDIRS[dir];p.want=null;},EW,EH},hk:{H:()=>G,fits:(k,r,x,y)=>hfits(G,k,r,x,y),spawn:k=>hspawn(G,k),move:d=>hmove(G,d),rot:d=>hrot(G,d),soft:()=>hsoft(G),hard:()=>hhard(G),hold:()=>hholdP(G),cells:()=>hcells(G.p),setRow:(y,arr)=>{for(let x=0;x<HW;x++)G.b[y*HW+x]=arr[x]?'J':0;}},palette:()=>{const px=c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,o=[];for(let i=0;i<d.length;i+=4)if(d[i+3]>0)o.push([d[i],d[i+1],d[i+2]]);return o;};const pu={};for(const k in PU){const c=document.createElement('canvas');c.width=c.height=20;const x=c.getContext('2d');const sv=ctx;ctx=x;puIcon(10,10,k,0,9);ctx=sv;pu[k]=px(c);}return {eb:[...DANGER,DANGER_FOOT].map(c=>ebSpr(c).flatMap(px)),coin:COIN.flatMap(px),pu,hp:[[154,255,90]]};},arena:()=>G.arena,spawn:(k,dx,dy)=>{const p=G.p,e=mkPE(k,0,0,1);e.x=p.x+dx;e.y=p.y+dy;e.by=e.y;e.vx=0;G.ens.push(e);return e;},phys:()=>({PHYS,JUMP_H,TS,ROWS}),god:false,start:i=>startLevel(i),state:()=>state,G:()=>G,S:()=>S,story:i=>goStory(i),shop:()=>{state='shop';},
  boss:()=>{if(G.mode==='hack'||G.mode==='evade')return;if(G.mode==='space'){G.t=G.waves.len+1;G.waves.list=[];G.en=[];}else{G.p.x=G.brute.x-150;G.p.y=G.brute.y-20;G.p.vy=0;}},
  pu:k=>givePU(k),drop:k=>{const p=G.p;G.coins.push(G.mode==='space'?{x:p.x,y:p.y-60,k:'pu',w:k,life:8,vx:0,vy:20,v:0}:{x:p.x+30,y:p.y+5,k:'pu',w:k,life:8,vx:0,vy:0,v:0});},
  kill:()=>{if(G.mode==='evade'){G.won=0.8;return;}if(G.mode==='hack'){G.lines=G.target;G.won=1;G.p=null;return;}if(G.mode==='space'&&G.boss)G.boss.hp=1;else if(G.brute)G.brute.hp=1;}};
