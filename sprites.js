@@ -644,7 +644,7 @@ A.en={drone:[0,1,2,3].map(drone),weaver:[0,1,2,3].map(weaver),gun:[0,1,2,3].map(
 A.rock=[];for(let f=0;f<8;f++)A.rock.push(rockF(f,2.3));A.rockW=white(A.rock[0]);
 A.mara=maraSet();
 A.pe={crawler:[0,1,2,3].map(f=>crawler(f)),turret:[],flyer:[0,1,2,3].map(f=>flyer(f))};A.peH={crawler:crawler(0,1),flyer:flyer(0,1),turret:[]};for(let i=0;i<8;i++){A.pe.turret.push(turret(i/8*Math.PI*2));A.peH.turret.push(turret(i/8*Math.PI*2,1));}A.peW={};for(const k in A.pe)A.peW[k]=white(A.pe[k][0]);
-const BR={};A.brute=d=>{if(BR[d])return BR[d];const walk=[0,1,2,3].map(f=>brute(d,f,false)),atk=[brute(d,0,true),brute(d,1,true)];return BR[d]={walk,atk,hit:brute(d,1,false,true),W:white(walk[0])};};
+const BR={};A.brute=d=>{d=Math.max(1,Math.min(BRP.length,d|0||1));if(BR[d])return BR[d];const walk=[0,1,2,3].map(f=>brute(d,f,false)),atk=[brute(d,0,true),brute(d,1,true)];return BR[d]={walk,atk,hit:brute(d,1,false,true),W:white(walk[0])};};
 A.td={mara:[0,1,2,3].map(dir=>[0,1,2,3].map(f=>topdown(maraTD,dir,f))),ch:CH.map(fn=>[0,1,2,3].map(dir=>[0,1,2,3].map(f=>topdown(fn,dir,f))))};
 A.tdW=A.td.ch.map(c=>white(c[0][0]));
 A.coin=coins();A.hp=hpPick();A.pickup=pickup;

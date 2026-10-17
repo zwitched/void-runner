@@ -677,11 +677,15 @@ const TE=[{door:12,patch:6,cnt:0.7,gap:1.25,cspd:0.85,shotT:1.6,shotV:0.8,assist
  {door:4,patch:4,cnt:1,gap:0.85,cspd:1,shotT:1.1,shotV:1,assist:0.11,need:1}];
 function tE(){return TE[diffIdx()];}
 function tStats(){const d=S.tdmg|0,c=S.tcool|0,t=S.ttwin|0;return {dm:1+0.5*d,heat:4*(1-0.17*c),cool:42*(1+0.3*c),rate:0.11,bar:1+t,spread:0.07};}
+// Breacher art: palette clamped to the 3 that exist, built up front so the big one's entrance does not stall a frame.
+// BR_FOOT puts the art's feet (bottom edge, 92px art at r=6 drawn at s=4 = 61.3 logical) on the deck line TG.gr.
+const BR_FOOT=30;function tBrute(Q){return ART.brute(Math.max(1,Math.min(3,Q.d+1)));}
+function brFrame(B,e){if(e.fl)return B.W;if(e.atk>0)return B.atk[e.atk>0.18?0:1];if(e.bt!==undefined&&e.bt<0.3)return B.atk[0];if(e.moving)return B.walk[((e.wt||0)*4|0)&3];return B.walk[0];}
 function initTurret(L,i){curLvl=i;runCr=0;FT.toasts.length=0;const d=L.d+(S.ng?1:0),k=FT.diff();
  const E=tE(),ck=FT.turCk&&FT.turCk.lvl===i&&FT.turCk.di===diffIdx()?FT.turCk:null;
  G={mode:'turret',L,d,t:0,need:Math.round((60+8*d)*E.need),rep:0,ang:-Math.PI/2,heat:0,over:false,fire:false,ft:0,bul:[],eb:[],en:[],fx:[],shake:0,dead:0,won:0,wave:0,wt:5,q:[],boss:null,bossDone:false,maxHeat:0,overN:0,
   p:{hp:14+7*d+E.door,mhp:14+7*d+E.door,inv:0,sh:0},stars:Array.from({length:50},()=>({x:Math.random()*W,y:TG.top+Math.random()*200,z:1+Math.floor(Math.random()*3)}))};
- state='turret';stT=0;emit('start',L);
+ tBrute(G);state='turret';stT=0;emit('start',L);
  if(ck){G.rep=ck.rep;G.wave=ck.wave;G.wt=3;G.ck=1;const s=sc();s.score=ck.score;s.best=ck.best;s.dmg=ck.dmg;G.t=ck.t;s.t0=0;toast('CHECKPOINT: THE BIG ONE','#ffd23a');}else toast('HOLD THE AIRLOCK','#ff9a3a');}
 function tSpawn(k,side){const H=G,d=H.d,s=FT.diff().spd;let e;
  if(k==='crawler'){const dir=side||(Math.random()<0.5?-1:1);e={k,x:dir<0?-10:W+10,y:TG.gr-5,w:16,h:8,vx:-dir*(17+3*d+Math.random()*2)*s*tE().cspd,hp:1+d,r:9};}
@@ -720,8 +724,8 @@ function updTurret(dt){const H=G,st=tStats(),p=H.p;H.t+=dt;H.shake=Math.max(0,H.
   else if(e.k==='flyer'){const tx=TG.gx,ty=TG.gy-6,a=Math.atan2(ty-e.y,tx-e.x);e.x+=Math.cos(a)*e.v*dt+Math.sin(e.t*2+e.ph)*30*dt;e.y+=Math.sin(a)*e.v*dt;e.ft-=dt;
    if(e.ft<=0&&e.y<TG.gy-60){e.ft=(5.5-0.5*H.d)*tE().shotT;const s=(58+7*H.d)*tE().shotV;H.eb.push({x:e.x,y:e.y+4,vx:Math.cos(a)*s,vy:Math.sin(a)*s});}
    if(Math.hypot(e.x-tx,e.y-ty)<16){e.dead=1;boom(e.x,e.y,10,FIRE);tHitDoor(H,1,'flyer');}}
-  else{if(e.x>TG.gx+60)e.x+=e.vx*dt;else{e.x=Math.max(TG.gx+TG.door+18,e.x+e.vx*dt);}e.ft-=dt;if(e.ft<=0){e.ft=Math.max(2.6,3.8-0.4*H.d)*tE().shotT;for(let i=0;i<1;i++){const a=Math.atan2(TG.gy-(e.y-20),TG.gx-e.x),s=(100+8*H.d)*tE().shotV;H.eb.push({x:e.x-14,y:e.y-20,vx:Math.cos(a)*s,vy:Math.sin(a)*s});}tone(150,80,.12,'sawtooth',.05);}
-   if(e.x<=TG.gx+TG.door+18.5){e.bt=(e.bt||0)-dt;if(e.bt<=0){e.bt=4.5-0.5*H.d;tHitDoor(H,1,'breacher');boom(TG.gx+TG.door,TG.gr-20,14,FIRE);}}}}
+  else{const ox=e.x;if(e.x>TG.gx+60)e.x+=e.vx*dt;else{e.x=Math.max(TG.gx+TG.door+18,e.x+e.vx*dt);}e.moving=Math.abs(e.x-ox)>1e-4;if(e.moving)e.wt=(e.wt||0)+dt*Math.abs(e.vx)/14;e.atk=Math.max(0,(e.atk||0)-dt);e.ft-=dt;if(e.ft<=0){e.ft=Math.max(2.6,3.8-0.4*H.d)*tE().shotT;for(let i=0;i<1;i++){const a=Math.atan2(TG.gy-(e.y+4),TG.gx-e.x),s=(100+8*H.d)*tE().shotV;H.eb.push({x:e.x-14,y:e.y+4,vx:Math.cos(a)*s,vy:Math.sin(a)*s});}tone(150,80,.12,'sawtooth',.05);}
+   if(e.x<=TG.gx+TG.door+18.5){e.bt=(e.bt||0)-dt;if(e.bt<=0){e.bt=4.5-0.5*H.d;e.atk=0.36;tHitDoor(H,1,'breacher');boom(TG.gx+TG.door,TG.gr-20,14,FIRE);}}}}
  for(const b of H.eb){b.x+=b.vx*dt;b.y+=b.vy*dt;if(b.y>TG.gr||b.x<-10||b.x>W+10)b.dead=1;if(!b.dead&&Math.hypot(b.x-TG.gx,b.y-(TG.gy+10))<22){b.dead=1;tHitDoor(H,1,'shot');spark(b.x,b.y,0);}}
  H.bul=H.bul.filter(u=>!u.dead&&u.l>0);H.eb=H.eb.filter(b=>!b.dead);H.en=H.en.filter(e=>!e.dead);
  if(H.rep>=100&&(!H.boss||H.bossDone)&&!H.won&&!H.dead){for(const e of H.en)tKill(H,e);H.en=[];H.eb=[];H.q=[];H.won=1.6;FT.turCk=null;runCr+=10*H.d;SFX.win();toast('FENN: DRIVE IS UP. GET IN','#9aff5a');}}
@@ -748,7 +752,7 @@ function drawTurret(dt){const Q=G,st=tStats();blit(turretBG(),0,0,W,H);ctx.save(
  if(Q.p.hp<=2&&(Q.t*8|0)%3===0)spark(TG.gx+rnd(-20,20),TG.gy+rnd(20,40),0);
  for(const e of Q.en){if(e.k==='crawler')draw(e.fl?ART.peW.crawler:ART.pe.crawler[((Q.t*10+e.x*0.1)|0)&3],e.x,e.y,2,e.vx<0);
   else if(e.k==='flyer'){glow(e.x,e.y+4,3+Math.sin(Q.t*20),'#c05aff',0.5);draw(e.fl?ART.peW.flyer:ART.pe.flyer[((Q.t*10)|0)&3],e.x,e.y,2);}
-  else{const B=ART.brute(Math.min(5,Q.d+1));glow(e.x,e.y-6,16+Math.sin(Q.t*5)*3,'#ff3a6a',0.25);draw(e.fl?B.W:B.walk[((Q.t*4)|0)&3],e.x,e.y-6,4,true);{const lx=Math.min(W-30,e.x);bar(lx-26,e.y-58,52,4,e.hp/e.mhp,'#ff3a6a');txt('BREACHER',lx,e.y-68,'#ff9ab0',7);}}}
+  else{const B=tBrute(Q),f=brFrame(B,e),dy=TG.gr-BR_FOOT;glow(e.x,dy-4,16+Math.sin(Q.t*5)*3,'#ff3a6a',0.25);draw(f,e.x,dy,4,true);{const lx=Math.min(W-30,e.x);bar(lx-26,dy-40,52,4,e.hp/e.mhp,'#ff3a6a');txt('BREACHER',lx,dy-50,'#ff9ab0',7);}}}
  for(const u of Q.bul){glow(u.x,u.y,4,'#ffd27a',0.5);ctx.fillStyle='#fff3c0';ctx.fillRect(u.x-1.5,u.y-1.5,3,3);}
  for(const b of Q.eb)drawEB(b,DANGER_FOOT,Q.t);
  // gun
@@ -783,7 +787,7 @@ PTS.breacher=4000;
 ACH.push(['dock','DOCK WORKER','Hold the airlock until Fenn finishes.'],['cool','COOL HEAD','Hold the airlock without overheating the gun.']);
 HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='turret'&&G&&G.mode==='turret'){unlockA('dock');if(!G.overN)unlockA('cool');}});
 {const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='turret'){G.rep=Math.max(G.rep,70);return;}_b();};VR.kill=()=>{if(G&&G.mode==='turret'){G.rep=100;if(G.boss)G.boss.hp=0,tKill(G,G.boss);G.bossDone=true;return;}_k();};}
-VR.tu={TE:()=>TE,ck:()=>FT.turCk,clamp:a=>tClampAng(a),TG:()=>TG,H:()=>G,stats:()=>tStats(),spawn:(k,s)=>{const e=tSpawn(k,s);return G.en.indexOf(e);},fire:n=>{const st=tStats();for(let i=0;i<n;i++)tFireP(G,st);return G.heat;}};
+VR.tu={br:()=>{const e=G&&G.en&&G.en.find(e=>e.k==='breacher');if(!e)return null;const B=tBrute(G),f=brFrame(B,e);return{x:e.x,y:e.y,dy:TG.gr-BR_FOOT,foot:TG.gr-BR_FOOT+f.height*4/f.r/2,w:f.width*4/f.r,set:B.walk.includes(f)?'walk':B.atk.includes(f)?'atk':f===B.W?'flash':f===B.hit?'hit':'none',fi:Math.max(B.walk.indexOf(f),B.atk.indexOf(f)),moving:!!e.moving,atk:e.atk||0,bt:e.bt};},TE:()=>TE,ck:()=>FT.turCk,clamp:a=>tClampAng(a),TG:()=>TG,H:()=>G,stats:()=>tStats(),spawn:(k,s)=>{const e=tSpawn(k,s);return G.en.indexOf(e);},fire:n=>{const st=tStats();for(let i=0;i<n;i++)tFireP(G,st);return G.heat;}};
 // ================= v8. CANYON CHASE: RIFT CANYON =================
 // A Hollow courier saw Mara leave the listening post and bolts down the rift canyon to warn the Spire.
 // Top-down chase: steer, boost, dodge rock pillars, gates, falling boulders. Get close and the guns fire on their own.

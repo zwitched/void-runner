@@ -32,3 +32,6 @@ at rounds 2 and 3. Tests: `python3 test_v9_duel.py` (controls, mechanics, save v
 Per-difficulty table `TE` in features.js (door hull, patch per wave, crawler count/spacing/speed, enemy shot rate/speed,
 aim assist cone, repair time) plus a checkpoint when the Breacher arrives. `python3 test_v9_turret_eased.py` runs
 good/average/sloppy/idle bots (`turret_bots.js`) on every difficulty.
+
+## Breacher fix (v9.2)
+After FENN calls "BIG ONE ON THE RIGHT" in Survey Dock, the Breacher used to hover about 15 px above the deck, keep walking in place once it reached the door, and never show a bash. Its art was also built on the spawn frame, so the screen hitched right as the callout appeared. In New Game+ it asked for a fourth brute palette that doesn't exist and threw every frame, which wiped the rest of the scene (turret, HUD). Now its feet sit on the deck, the walk cycle follows the distance it covers, it shows bash frames at the door, the art is built when the mission starts, and the palette index is clamped. `test_v9_breacher.py` covers High/Low GFX, Easy/Normal, a checkpoint retry and NG+.
