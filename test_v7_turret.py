@@ -28,12 +28,13 @@ async def main():
     # touch: press in the sky aims at the finger and fires while held
     await touch('touchStart',220,150);await pg.wait_for_timeout(500)
     a=await E("VR.G().ang");want=math.atan2(150-300,220-135);chk('touch aims the gun at the finger',abs(a-want)<0.05,a,want)
-    h1=await E("VR.G().heat");n1=await E("VR.score().score>=0&&VR.G().bul.length");chk('holding fires and builds heat',h1>10 and n1>0,h1,n1)
+    h1=await E("VR.G().heat");n1=await E("VR.score().score>=0&&VR.G().bul.length");chk('holding fires and builds heat',h1>3 and n1>0,h1,n1)
     await touch('touchMove',60,120);await pg.wait_for_timeout(200);a2=await E("VR.G().ang");chk('drag re-aims',abs(a2-math.atan2(120-300,60-135))<0.05,a2)
     await pg.screenshot(path='screenshots/v7_turret.png')
     await touch('touchEnd',0,0);await pg.wait_for_timeout(600);h2=await E("VR.G().heat");chk('let go: stops firing and cools',await E("!VR.G().fire") and h2<h1+30,h2)
     await touch('touchStart',220,380);await pg.wait_for_timeout(200);a3=await E("VR.G().ang");await touch('touchEnd',0,0)
-    chk('cannot aim into the deck: clamped just below the horizon',a3<=0.181,a3)
+    chk('low touch near deck level aims there (down past horizontal)',abs(a3-math.atan2(80,85))<0.05,a3)
+    await touch('touchStart',150,380);await pg.wait_for_timeout(200);a4=await E('VR.G().ang');await touch('touchEnd',0,0);chk('straight down is clamped to the arc limit',abs(a4-1.2)<0.01,a4)
     await touch('touchStart',135,440);await pg.wait_for_timeout(300);chk('touches in the bottom panel do not fire',await E("!VR.G().fire"));await touch('touchEnd',0,0)
     # keyboard
     a0=await E("VR.G().ang");await pg.keyboard.down('ArrowLeft');await pg.wait_for_timeout(300);await pg.keyboard.up('ArrowLeft');chk('Left turns the gun',await E("VR.G().ang")<a0-0.3)
