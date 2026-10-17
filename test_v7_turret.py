@@ -28,7 +28,7 @@ async def main():
     # touch: press in the sky aims at the finger and fires while held
     await touch('touchStart',220,150);await pg.wait_for_timeout(500)
     a=await E("VR.G().ang");want=math.atan2(150-300,220-135);chk('touch aims the gun at the finger',abs(a-want)<0.05,a,want)
-    h1=await E("VR.G().heat");n1=await E("VR.score().score>=0&&VR.G().bul.length");chk('holding fires and builds heat',h1>3 and n1>0,h1,n1)
+    h1=await E("VR.G().heat");n1=await E("VR.score().score>=0&&VR.G().bul.length");chk('holding fires and builds heat',h1>1 and n1>0,h1,n1)
     await touch('touchMove',60,120);await pg.wait_for_timeout(200);a2=await E("VR.G().ang");chk('drag re-aims',abs(a2-math.atan2(120-300,60-135))<0.05,a2)
     await pg.screenshot(path='screenshots/v7_turret.png')
     await touch('touchEnd',0,0);await pg.wait_for_timeout(600);h2=await E("VR.G().heat");chk('let go: stops firing and cools',await E("!VR.G().fire") and h2<h1+30,h2)

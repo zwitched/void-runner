@@ -36,13 +36,14 @@ async def main():
     hp=await E("VR.G().en[0].hp");await cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]})
     chk('touch on a crawler at deck level aims at it and hits it',hp<999,hp)
     # bot: aim at the threat that will reach the airlock soonest (shots, flyers, crawlers, breacher), lead it, burst-fire under the heat limit
-    BOT="""(()=>{const H=VR.G();H.p.hp=H.p.mhp;let f=0;while(f<60*400&&!H.won&&!H.dead){let best=null,bd=1e9;for(const e of H.en){const sp=Math.abs(e.vx||0)+1;const t=e.k==='crawler'?(Math.abs(e.x-TG.gx)-TG.door)/sp:e.k==='breacher'?0.8:Math.hypot(e.x-TG.gx,e.y-TG.gy)/50;if(t<bd){bd=t;best=e;}}for(const b of H.eb){const t=Math.hypot(b.x-TG.gx,b.y-TG.gy-10)/Math.hypot(b.vx,b.vy)-0.3;if(t<bd){bd=t;best=b;}}if(best)bd=Math.hypot(best.x-TG.gx,best.y-TG.gy);if(best){let vx=best.vx||0,vy=best.vy||0;if(best.k==='flyer'){const fa=Math.atan2(TG.gy-6-best.y,TG.gx-best.x);vx=Math.cos(fa)*best.v;vy=Math.sin(fa)*best.v;}let px=best.x,py=best.y;for(let k=0;k<3;k++){const lt=Math.hypot(px-TG.gx,py-TG.gy)/430;px=best.x+vx*lt;py=best.y+vy*lt;}H.ang=tClampAng(Math.atan2(py-TG.gy,px-TG.gx));}H.botHold=!!best&&H.heat<96;updTurret(1/60);f++;}return {won:H.won>0,dead:H.dead>0,rep:Math.round(H.rep),hp:H.p.hp,t:Math.round(H.t),boss:H.bossDone}})()"""
+    BOT="""(()=>{const H=VR.G();H.p.hp=H.p.mhp;let f=0;while(f<60*400&&!H.won&&!H.dead){let best=null,bd=1e9;for(const e of H.en){const sp=Math.abs(e.vx||0)+1;const t=e.k==='crawler'?(Math.abs(e.x-TG.gx)-TG.door)/sp:e.k==='breacher'?0.8:Math.hypot(e.x-TG.gx,e.y-TG.gy)/50;if(t<bd){bd=t;best=e;}}for(const b of H.eb){const t=Math.hypot(b.x-TG.gx,b.y-TG.gy-10)/Math.hypot(b.vx,b.vy)-0.3;if(t<bd){bd=t;best=b;}}if(best)bd=Math.hypot(best.x-TG.gx,best.y-TG.gy);if(best){let vx=best.vx||0,vy=best.vy||0;if(best.k==='flyer'){const fa=Math.atan2(TG.gy-6-best.y,TG.gx-best.x);vx=Math.cos(fa)*best.v;vy=Math.sin(fa)*best.v;}let px=best.x,py=best.y;for(let k=0;k<3;k++){const lt=Math.hypot(px-TG.gx,py-TG.gy)/430;px=best.x+vx*lt;py=best.y+vy*lt;}H.ang=tClampAng(Math.atan2(py-TG.gy,px-TG.gx));}H.botHold=!!best&&H.heat<96;updTurret(1/60);f++;}return {won:H.won>0,dead:H.dead>0,rep:Math.round(H.rep),hp:H.p.hp,mhp:H.p.mhp,t:Math.round(H.t),boss:H.bossDone}})()"""
     await E("VR.god=false")
-    for dfi,dn in [(1,'Normal'),(2,'Hard')]:
+    for dfi,dn in [(0,'Easy'),(1,'Normal'),(2,'Hard')]:
       await E(f"VR.setS({{diff:{dfi},tdmg:0,tcool:0,ttwin:0}});VR.start({ti})");rs=[]
       for k in range(3):
         await E(f"VR.setS({{diff:{dfi},tdmg:0,tcool:0,ttwin:0}});VR.start({ti})");rs.append(await E(BOT))
-      chk(f'{dn}: aim-at-nearest bot with a stock gun holds the airlock 3/3',all(r['won'] and not r['dead'] and r['boss'] for r in rs),rs)
+      need={0:0.9,1:0.8,2:0.4}[dfi]
+      chk(f'{dn}: bot with a stock gun holds the airlock 3/3 with >= {int(need*100)}% door left',all(r['won'] and not r['dead'] and r['boss'] and r['hp']>=need*r['mhp'] for r in rs),rs)
     await E("VR.setS({diff:1})");await b.close()
   print('BAD',bad);print('ERRORS',errs)
 asyncio.run(main())
