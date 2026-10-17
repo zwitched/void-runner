@@ -19,7 +19,7 @@ async def main():
     await E("location.reload()");await pg.wait_for_timeout(700)
     chk('remap only runs once',await E("JSON.parse(localStorage.getItem('voidrunner.save.v1')).lvl")==nm.index('COLD DRIFT'))
     idx=await E("VR.eng.idx()");names=await E("LV.map(L=>L.name)")
-    chk('two engine chapters in the campaign',[names[i] for i in idx]==['ENGINE FAILURE','COLD DRIFT'] and names[idx[0]-1]=='CINDER DRIFT' and names[idx[0]+1]=='ORUUN SURFACE' and names[idx[1]-1]=='THE SHEAR' and names[idx[1]+1]=='RIFT APPROACH',idx,names)
+    chk('two engine chapters in the campaign',[names[i] for i in idx]==['ENGINE FAILURE','COLD DRIFT'] and names[idx[0]-1]=='CINDER DRIFT' and names[idx[0]+1]=='ORUUN SURFACE' and names[idx[1]-1]=='THE SHEAR' and names[idx[1]+1] in ('RIFT APPROACH','SURVEY DOCK'),idx,names)
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(700)
     # ---- physics ----
     ys=await E("VR.eng.step(60,false)");vy=[v for _,v in ys]

@@ -27,6 +27,9 @@ async def main():
       r=await E("VR.st.sim()");chk(f'{dn}: real update loop follows the route: never seen, codes, out the hatch',r['won'] and r['got'] and r['spotted']==0 and r['maxMeter']==0,r)
     ok=await E(f"(()=>{{let n=0;for(let s=0;s<20;s++)if(VR.st.build({si},5000+s*31).plan)n++;return n}})()");chk('most random layouts are solvable as built (the game retries until one is)',ok>=10,ok)
     chk('the game rebuilds until a route exists',await E("VR.G().plan!==null"))
+    rs=await E("(()=>{const out=[];for(let dfi=0;dfi<3;dfi++){VR.setS({diff:dfi});for(let s=0;s<10;s++){const L=LV[VR.ix('LISTENING POST')];const H=sMake(L,L.d,7000+s*313);const pl=sPlan(H);if(!pl)continue;G=H;H.plan=pl;state='stealth';const r=VR.st.sim();out.push(r.won&&r.maxMeter===0&&r.spotted===0);}}state='title';VR.setS({diff:1});return out})()")
+    chk('every solvable random layout, all difficulties: the real loop walks the planned route unseen',len(rs)>=15 and all(rs),len(rs),rs.count(False))
+    tm=await E(f"(()=>{{const t=performance.now();VR.start({si});return performance.now()-t}})()");chk('building the level (with route check) is quick',tm<400,tm)
     # cones: walls block, open floor does not
     await E(f"VR.setS({{diff:1}});VR.start({si})");await pg.wait_for_timeout(200)
     r=await E("""(()=>{const H=VR.G(),g=H.g,EW=15,gd=H.guards[0];let blk=null,opn=null;
@@ -60,7 +63,7 @@ async def main():
     r=await E("""(()=>{const H=VR.G(),gd=H.guards[0];const x=Math.round(gd.x),y=Math.round(gd.y);H.guards.forEach((q,i)=>{if(i){q.path=[{x:1,y:1}];q.x=1;q.y=1;}});
       VR.st.noise(x+1,y);const a=gd.mode;return a})()""");chk('a noise in range sends the guard to look',r=='inv',r)
     await E(f"VR.start({si})");await pg.wait_for_timeout(200)
-    r=await E("""(()=>{const H=VR.G();let n=0;const _n=sNoise;sNoise=function(){n++;_n.apply(null,arguments);};H.run=false;H.p.want=null;VR.st.place(7,19);const od=EDIRS.find(d=>!H.g[(19+d[1])*15+7+d[0]]);H.p.dir=od;H.guards.forEach(q=>{q.path=[{x:1,y:1}];q.x=1;q.y=1;});for(let i=0;i<60;i++)updStealth(1/60);const walk=n;H.run=true;for(let i=0;i<60;i++)updStealth(1/60);sNoise=_n;return [walk,n-walk,H.p.spd]})()""")
+    r=await E("""(()=>{const H=VR.G();let n=0;const _n=sNoise;sNoise=function(){n++;_n.apply(null,arguments);};H.run=false;H.p.want=null;VR.st.place(7,19);const od=EDIRS.find(d=>!H.g[(19+d[1])*15+7+d[0]]);H.p.dir=od;H.guards.forEach(q=>{q.path=[{x:1,y:1}];q.x=1;q.y=1;});for(let i=0;i<60;i++)updStealth(1/60);const walk=n;H.run=true;VR.st.place(7,19);H.p.dir=od;for(let i=0;i<60;i++)updStealth(1/60);sNoise=_n;return [walk,n-walk,H.p.spd]})()""")
     chk('walking is silent, running makes noise and is faster',r[0]==0 and r[1]>=1 and r[2]>3,r)
     # investigate -> look around -> back to patrol
     r=await E("""(()=>{const H=VR.G(),gd=H.guards[0];H.p.halt=1;VR.st.place(7,19);sGo(H,gd,'inv',[Math.round(gd.x),Math.round(gd.y)]);for(let i=0;i<60*8&&gd.mode!=='pat';i++){updStealth(1/60);if(H.alarm||H.dead)break;}return [gd.mode,H.alarm]})()""")
