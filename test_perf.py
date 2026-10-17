@@ -3,7 +3,7 @@
 import asyncio,pathlib,json
 from playwright.async_api import async_playwright
 URL='file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html')
-SCENES=[('space boss',7,True),('final boss',12,True),('platformer dark',11,False),('platformer',5,False),('hack',6,False),('evasion dark',10,False)]
+SCENES=[('space boss','THE SHEAR',True),('final boss','THE VOID HEART',True),('platformer dark','HIVE SPIRE',False),('platformer','ORUUN SURFACE',False),('hack','SURVEY BEACON',False),('evasion dark','SPIRE NURSERY',False)]
 async def main():
   out={};bad=[];errs=[]
   async with async_playwright() as p:
@@ -12,7 +12,7 @@ async def main():
       ctx=await b.new_context(**p.devices['Pixel 7']);pg=await ctx.new_page();pg.on('pageerror',lambda e:errs.append(str(e)))
       await pg.goto(URL);await pg.evaluate(f"localStorage.setItem('voidrunner.save.v1',JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('voidrunner.save.v1')||'{{}}'),{{q:'{q}'}})))");await pg.reload();await pg.wait_for_timeout(600)
       for name,i,boss in SCENES:
-        await pg.evaluate(f"VR.god=true;VR.start({i})");await pg.wait_for_timeout(1200)
+        await pg.evaluate(f"VR.god=true;VR.start(VR.ix('{i}'))");await pg.wait_for_timeout(1200)
         if boss:await pg.evaluate("VR.boss()");await pg.wait_for_timeout(3500)
         await pg.keyboard.down('KeyX');await pg.evaluate("VR.perfReset()");await pg.wait_for_timeout(3000);await pg.keyboard.up('KeyX')
         r=await pg.evaluate("VR.perf()");out[(q,name)]=r

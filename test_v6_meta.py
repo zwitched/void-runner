@@ -44,11 +44,14 @@ async def main():
     chk('daily rotates over days',len(lv3)>=4,lv3)
     await E("VR.setS({diff:2})");await E("VR.god=true;VR.daily()");await pg.wait_for_timeout(300)
     chk('daily runs on Normal no matter the setting',await E("VR.diff().n")=='NORMAL')
-    r1=await E("(()=>{return [Math.random(),Math.random()]})()")
-    await E("VR.daily()");r2=await E("(()=>{return [Math.random(),Math.random()]})()")
+    r1=await E("(()=>{VR.daily();return [Math.random(),Math.random()]})()")
+    r2=await E("(()=>{VR.daily();return [Math.random(),Math.random()]})()")
     chk('daily randomness seeded by date',r1==r2,r1,r2)
     await E("VR.daily()");await pg.wait_for_timeout(300);st=await E("VR.state()")
-    await E("VR.kill()");await pg.wait_for_timeout(4500)
+    for _ in range(40):
+      if await E("VR.state()")!='space' and await E("VR.state()")!='plat':break
+      await E("VR.boss();VR.kill()");await pg.wait_for_timeout(400)
+    await pg.wait_for_timeout(4500)
     if await E("VR.state()")=='clear':
       await pg.wait_for_timeout(900);await pg.mouse.click(200,400);await pg.wait_for_timeout(800)
     st=await E("VR.state()");hs=await E("VR.hs()")

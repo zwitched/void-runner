@@ -23,8 +23,8 @@ async def main():
     def reach(rise):  # horizontal distance at the moment feet come back down to height `rise`
       d=jv*jv-2*g*rise
       return -1 if d<0 else run*(jv+math.sqrt(d))/g
-    for lvl in (2,6,13):
-      await E(f'VR.start({lvl})');await pg.wait_for_timeout(100)
+    for lvl in ('ASTER-9 STATION','ORUUN SURFACE','HIVE SPIRE'):
+      await E(f'VR.start(VR.ix("{lvl}"))');await pg.wait_for_timeout(100)
       m=await E("(()=>{const G=VR.G();return {cols:G.cols,map:Array.from(G.map),ceil:!!G.L.ceil}})()")
       C=m['cols'];M=m['map'];t=lambda x,y:M[y*C+x]
       top=[]

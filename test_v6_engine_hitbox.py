@@ -15,7 +15,7 @@ async def main():
     r=await E("VR.eng.audit(60,1800)")
     chk('every collider point lands on drawn obstacle pixels',not r['bad'] and r['pts']>100000,r['pts'],r['bad'][:3])
     chk('every crash touches visible art or the field edge',r['crashes']>=30 and r['crashOk']==r['crashes'],r['crashes'],r['crashOk'])
-    await E("VR.god=false;VR.start(9)");await pg.wait_for_timeout(300);await E("VR.eng.H().auto=1;VR.eng.kick()");await pg.wait_for_timeout(5000)
+    await E("VR.god=false;VR.start(VR.ix('COLD DRIFT'))");await pg.wait_for_timeout(300);await E("VR.eng.H().auto=1;VR.eng.kick()");await pg.wait_for_timeout(5000)
     cl=await E("VR.eng.colliders()");chk('colliders on screen line up with the gates being drawn',len(cl)>=2 and all(-30<c[0]<W for c in cl for W in [270]),cl[:2])
     await pg.keyboard.press('KeyH');await pg.wait_for_timeout(100);chk('H toggles the hitbox overlay',await E("FT.hitbox")==True)
     await pg.screenshot(path='screenshots/v6_engine_hitboxes.png')

@@ -6,9 +6,17 @@ const FT={};
 const ENG_LV=[[5,{t:'engine',d:1,name:'ENGINE FAILURE',planet:'#d06a3a',bg:['#0c0612','#2a1018'],story:["OTT: Bad news. The main drive just quit on me.","MARA: Quit how?","OTT: Coughing, smoking, the usual. I can give you short kicks on the lift jets and that's about it.","MARA: And gravity does the rest.","OTT: There's an old repair dock past the freighter wrecks. Tap for a kick, drop through the gaps, and try not to touch anything.","MARA: I never touch anything."]}],
  [9,{t:'engine',d:2,name:'COLD DRIFT',planet:'#7a5ad0',bg:['#04060f','#140a2a'],story:["OTT: The Shear knocked the drive out again. Same cough as last time.","MARA: You said the dock fixed it.","OTT: I said mostly.","FENN: There's a survey station in the strut field ahead. Its dock still answers pings.","MARA: Short kicks, then. Through a field of girders.","OTT: The gaps are smaller out here. Sorry in advance."]}]];
 for(const [i,L] of ENG_LV)LV.splice(i,0,L);
+// insert chapters for a save version step: positions are final indices after insertion; remaps saves on version ver-1
+function insertChapters(ver,list){const n0=LV.length;for(const [i,L] of list)LV.splice(i,0,L);const ins=new Set(list.map(q=>q[0])),map=[];for(let i=0;i<LV.length;i++)if(!ins.has(i))map.push(i);
+ FT.remaps=FT.remaps||{};FT.remaps[ver]=map;if((S.v|0)===ver-1){const k=S.lvl|0;S.lvl=k>0?map[k-1]+1:0;if(S.best){const nb={};for(const i in S.best)nb[map[+i]]=S.best[i];S.best=nb;}S.v=ver;save();}}
 function remapOld(i){return i<5?i:i<8?i+1:i+2;}// old chapter index -> new index
 FT.remap=remapOld;
 if((S.v|0)===3){const k=S.lvl|0;S.lvl=k>0?remapOld(k-1)+1:0;if(S.best){const nb={};for(const i in S.best)nb[remapOld(+i)]=S.best[i];S.best=nb;}S.v=4;save();}
+// ---- v7 chapters ----
+const BOARD_LV={t:'board',d:2,name:'HOLLOW CUTTER',sky:['#0a0614','#2a0a2a'],
+ inner:{name:'CUTTER INTERIOR',ceil:1,bgType:3,pal:['#4a2a3e','#22121e','#c0607a'],bg:['#08040a','#2a0a1c']},
+ story:["FENN: Something's been on your tail since Oruun. Small, fast, Hollow.","OTT: It's a cutter. They strip wrecks for parts.","MARA: Then it knows where the good wrecks are.","OTT: Shoot out its engines and I can latch on. There'll be a map of the Shear sitting in its core.","MARA: So I go inside a Hollow ship.","OTT: Briefly. Ideally."]};
+insertChapters(5,[[7,BOARD_LV]]);
 // ================= 1. SCORE, COMBO, RANK =================
 const PTS={drone:100,weaver:100,kami:120,gun:300,rock:50,crawler:150,flyer:150,turret:250,brute:3000,boss:5000,chaser:400,coin:50};
 const LINEPTS=[0,400,1000,1800,3000];
@@ -18,7 +26,7 @@ function sc(){if(!G)return null;if(!G.sc)G.sc={score:0,combo:0,best:0,ct:0,dmg:0
 function mult(c){return Math.min(4,1+Math.floor(c/4)*0.5);}
 function addPts(base,x,y,plat){const s=sc();s.combo++;s.best=Math.max(s.best,s.combo);s.ct=comboT();const m=mult(s.combo),v=Math.round(base*m*diffK().score);s.score+=v;
  if(x!==undefined&&s.pops.length<24)s.pops.push({x,y,v,t:0.8,plat});emit('score',s);}
-function parTime(L){const g=G;if(L.t==='space')return(g.waves&&g.waves.len||40)+75;if(L.t==='plat')return Math.round(g.cols*16/115*1.7+45);if(L.t==='hack')return g.target*10+20;if(L.t==='engine')return Math.round(g.goal/g.v0)+8;return 75;}
+function parTime(L){const g=G;if(L.t==='space')return(g.waves&&g.waves.len||40)+75;if(L.t==='plat')return Math.round(g.cols*16/115*1.7+45);if(L.t==='hack')return g.target*10+20;if(L.t==='engine')return Math.round(g.goal/g.v0)+8;if(L.t==='board')return 150+30*L.d;if(L.t==='stealth')return 120;if(L.t==='turret')return Math.round((g.need||70)+40);return 75;}
 function rankOf(r){const s=r.ratio>=1.5?2:r.ratio>=0.8?1:0,d=r.dmg===0?2:r.dmg<=2?1:0,t=r.time<=r.par?1:0,p=s+d+t;return p>=5?'S':p>=3?'A':p>=2?'B':'C';}
 const RCOL={S:'#ffd23a',A:'#9aff5a',B:'#5ab0ff',C:'#a08ab0'};
 HOOKS.push((n,a)=>{if(!G)return;const s=sc();
@@ -39,7 +47,7 @@ function fmtT(t){t=Math.max(0,Math.round(t));return Math.floor(t/60)+':'+String(
 // cleared screen with the rank breakdown (replaces the original panel)
 drawClear=function(dt){stT+=dt;ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);const L=LV[curLvl]||{t:'space'},r=FT.last||{score:0,best:0,dmg:0,time:0,par:0,rank:'C'};
  panel(20,110,W-40,232,'#9aff5a');
- txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':'AREA SECURED'),W/2,126,'#9aff5a',14);
+ txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':L.t==='board'?'CUTTER GUTTED':L.t==='stealth'?'IN AND OUT':L.t==='turret'?'AIRLOCK HELD':'AREA SECURED'),W/2,126,'#9aff5a',14);
  const rk=r.rank,sz=stT>0.3?34:34+(0.3-stT)*80;txt(rk,W/2+70,170,RCOL[rk],sz);txt('RANK',W/2+70,206,'#56607e',7);
  const row=(l,v,y,c='#dfe8ff')=>{txt(l,40,y,'#8aa0d0',8,'left');txt(v,150,y,c,8,'right');};
  row('SCORE',r.score,156);row('BEST CHAIN',r.best,170);row('TIME',fmtT(r.time)+' / '+fmtT(r.par),184,r.time<=r.par?'#9aff5a':'#ffa03a');row('HITS TAKEN',r.dmg,198,r.dmg?'#ffa03a':'#9aff5a');
@@ -54,7 +62,7 @@ function goChapters(){state='chapters';}
 HOOKS.push((n,dt)=>{if(n!=='draw:chapters')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,0.3);txt('CHAPTERS',W/2,14,'#5ab0ff',14);
  const open=Math.max(S.lvl,S.done?LV.length:0);panel(8,34,W-16,402,'#2a3a6a');
  LV.forEach((L,i)=>{const y=40+i*26,ok=i<=Math.min(open,LV.length-1),b=S.best&&S.best[i];
-  if(ok){btn('',14,y,W-28,24,()=>goStory(i),'#3a5a9a');txt((i+1)+'. '+L.name,22,y+4,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':'ON FOOT',22,y+14,'#56607e',7,'left');
+  if(ok){btn('',14,y,W-28,24,()=>goStory(i),'#3a5a9a');txt((i+1)+'. '+L.name,22,y+4,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':'ON FOOT',22,y+14,'#56607e',7,'left');
    if(b){txt(b.r,W-34,y+6,RCOL[b.r],12);txt(String(b.s),W-50,y+9,'#8aa0d0',7,'right');}else txt('-',W-34,y+8,'#3a4466',9);}
   else{ctx.fillStyle='#0a0d1a';ctx.fillRect(14,y,W-28,24);txt((i+1)+'. LOCKED',22,y+8,'#3a4466',8,'left');}});
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
@@ -383,3 +391,53 @@ VR.eng={H:()=>G,audit:(s,f)=>engAudit(s,f),hitbox:v=>{FT.hitbox=v===undefined?!F
  hitTest:(gx,cy,gap,y)=>{const E=engNew(1,1,1,1);E.dist=0;return engHitGate(E,{x:gx,cy,gap,amp:0},y);},idx:()=>LV.map((L,i)=>L.t==='engine'?i:-1).filter(i=>i>=0)};
 {const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='engine'){G.ready=false;G.auto=1;G.dist=Math.max(G.dist,G.goal-140);G.gates=G.gates.filter(g=>g.x<G.dist);return;}_b();};
  VR.kill=()=>{if(G&&G.mode==='engine'){G.ready=false;G.gates=[];G.dist=G.goal;return;}_k();};}
+// ================= v7-1. BOARDING =================
+// Space phase: a Hollow cutter shows up instead of a boss. Its three engine pods take damage, the hull soaks shots.
+// With all pods out the Kestrel docks on its own and the chapter carries on inside the ship, ending at the reactor core.
+const CUT=(()=>{const c=document.createElement('canvas');c.width=400;c.height=150;const x=c.getContext('2d');const P=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};
+ x.fillStyle='#1a0a1e';x.beginPath();x.moveTo(200,148);x.lineTo(150,96);x.lineTo(30,70);x.lineTo(12,40);x.lineTo(80,30);x.lineTo(150,8);x.lineTo(250,8);x.lineTo(320,30);x.lineTo(388,40);x.lineTo(370,70);x.lineTo(250,96);x.closePath();x.fill();
+ x.fillStyle='#3a1a3a';x.beginPath();x.moveTo(200,138);x.lineTo(156,92);x.lineTo(40,66);x.lineTo(26,44);x.lineTo(84,36);x.lineTo(154,16);x.lineTo(246,16);x.lineTo(316,36);x.lineTo(374,44);x.lineTo(360,66);x.lineTo(244,92);x.closePath();x.fill();
+ for(let k=0;k<9;k++){const yy=24+k*12;P('#5a2a4e',160+k*2,yy,80-k*4,3);}for(let k=0;k<6;k++){P('#24101e',60+k*24,48+k*2,14,4);P('#24101e',326-k*24,48+k*2,14,4);}
+ P('#ff3a6a',196,40,8,40);P('#ffb0c8',198,44,4,30);P('#7a2a5a',120,60,160,3);for(let k=0;k<5;k++){P('#ff5a8a',110+k*45,68,6,3);}
+ x.fillStyle='#ff3a6a';x.beginPath();x.arc(200,118,7,0,7);x.fill();return c;})();
+function cutterNew(d){const k=FT.diff().hp,hp=Math.round((16+6*d)*k);return {x:W/2,y:-70,ty:96,t:0,ft:2,hp0:hp,pods:[{dx:-84,dy:4,hp,mhp:hp},{dx:84,dy:4,hp,mhp:hp},{dx:0,dy:30,hp,mhp:hp}],state:'fight',dock:0};}
+function cutterHull(c,x,y){const lx=x-c.x,ly=y-c.y;return Math.abs(lx)<95&&ly>-35&&ly<12-Math.abs(lx)*0.15||Math.abs(lx)<26&&ly>-35&&ly<40;}
+function updCutter(dt){const c=G.cutter,p=G.p;c.t+=dt;if(c.y<c.ty)c.y=Math.min(c.ty,c.y+50*dt);c.x=W/2+Math.sin(c.t*0.5)*(c.state==='fight'?30:0);
+ const live=c.pods.filter(q=>q.hp>0);
+ if(c.state==='fight'){
+  for(const u of G.bul){if(u.dead)continue;for(const q of live){if(Math.hypot(u.x-(c.x+q.dx),u.y-(c.y+q.dy))<13){q.hp-=u.dm||1;q.fl=0.06;u.dead=1;spark(u.x,u.y,0);SFX.hit();break;}}
+   if(!u.dead&&cutterHull(c,u.x,u.y)){u.dead=1;spark(u.x,u.y,0);}}
+  for(const q of c.pods)if(q.hp<=0&&!q.down){q.down=1;boom(c.x+q.dx,c.y+q.dy,30,FIRE);SFX.big();G.shake=0.4;emit('kill',{x:c.x+q.dx,y:c.y+q.dy,k:'pod'});toast(c.pods.some(z=>z.hp>0)?'ENGINE POD DOWN':'ALL ENGINES DOWN','#ffa03a');}
+  if(c.y>=c.ty-1){c.ft-=dt;if(c.ft<=0){const n=live.length;c.ft=Math.max(0.9,2.2-0.25*G.d)*(n===1?0.7:1);aimed({x:c.x-40,y:c.y+10},n===1?3:1,110+G.d*10);aimed({x:c.x+40,y:c.y+10},1,110+G.d*10);}}
+  if(cutterHull(c,p.x,p.y)&&p.inv<=0)hurt();
+  if(!c.pods.some(q=>q.hp>0)){c.state='dock';G.eb=[];G.en=[];emit('podsdown');}}
+ else if(c.state==='dock'){c.dock+=dt;p.inv=Math.max(p.inv,0.5);const tx=c.x,ty=c.y+60,k=Math.min(1,dt*2);p.x+=(tx-p.x)*k;p.y+=(ty-p.y)*k;if(Math.random()<dt*20)G.fx.push({x:c.x+rnd(-90,90),y:c.y+rnd(-20,20),vx:rnd(-20,20),vy:rnd(-30,10),l:.6,c:'#565a6a'});
+  if(c.dock>2.4)c.go=1;}}
+function drawCutter(){const c=G.cutter;ctx.drawImage(CUT,c.x-100,c.y-56,200,75);
+ for(const q of c.pods){const x=c.x+q.dx,y=c.y+q.dy;if(q.hp>0){glow(x,y,10+Math.sin(G.t*14)*2,'#ff9a3a',0.5);ctx.fillStyle=q.fl>0?'#ffffff':'#3a1a2a';ctx.fillRect(x-9,y-7,18,14);ctx.fillStyle='#ff6a3a';ctx.fillRect(x-6,y-4,12,8);ctx.fillStyle='#ffd23a';ctx.fillRect(x-3,y-2,6,4);q.fl=Math.max(0,(q.fl||0)-1/60);bar(x-10,y-13,20,2,q.hp/q.mhp,'#ffa03a','#2a1010');}
+  else{ctx.fillStyle='#120a10';ctx.fillRect(x-9,y-7,18,14);if((G.t*8|0)%3===0)ctx.fillStyle='#ff9a3a',ctx.fillRect(x-2+rnd(-3,3),y-2,2,2);}}
+ if(c.state==='dock'){txt('ENGINES DOWN. DOCKING',W/2,200,'#9aff5a',9);const a=Math.max(0,(c.dock-1.6)/0.8);if(a>0){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,a)+')';ctx.fillRect(0,0,W,H);}}
+ else if(c.t<4)txt('SHOOT OUT ITS ENGINE PODS',W/2,200,'#ffa03a',8);}
+function boardInside(){const L=LV[curLvl],d=L.d+(S.ng?1:0),sc0=G.sc,keepCr=runCr,secT=G.secT;const IL=Object.assign({t:'plat',d:L.d},L.inner);
+ initPlat(IL);runCr=keepCr;G.sc=sc0;G.boardIn=1;G.fadeIn=1;G.L=IL;
+ const b=G.brute,A=G.arena,k=FT.diff().hp;b.k='core';b.w=34;b.h=46;b.x=A.sx-b.w/2;b.y=A.gy*TS-b.h;b.vx=0;b.hp=b.mhp=Math.round((30+18*d)*k);b.ft=1.5;
+ b.upd=(e,dt,dx,dy)=>{e.vy=0;e.vx=0;e.ft-=dt;if(Math.abs(dx)<230&&e.ft<=0){e.ft=Math.max(1.1,2.4-0.3*d);const n=8+2*d,o=e.t;for(let i=0;i<n;i++){const a=o+i/n*Math.PI*2,s=80+d*8;G.eb.push({x:e.x+e.w/2,y:e.y+14,vx:Math.cos(a)*s,vy:Math.sin(a)*s});}tone(180,90,.12,'sawtooth',.04);}};
+ b.draw=(e,cam)=>{const x=e.x-cam,y=e.y,pu=0.5+0.5*Math.sin(G.t*4);ctx.fillStyle='#2a1420';ctx.fillRect(x-4,y+e.h-8,e.w+8,8);ctx.fillStyle='#3a1a2a';ctx.fillRect(x,y,e.w,e.h-8);ctx.fillStyle='#5a2a44';ctx.fillRect(x+2,y,4,e.h-8);ctx.fillRect(x+e.w-6,y,4,e.h-8);
+  glow(x+e.w/2,y+16,14+pu*4,'#ff3a6a',0.4);ctx.fillStyle=e.fl>0?'#ffffff':'#ff3a6a';ctx.fillRect(x+9,y+6,e.w-18,20);ctx.fillStyle='#ffb0c8';ctx.fillRect(x+13,y+10+pu*3,e.w-26,8);for(let k2=0;k2<4;k2++){ctx.fillStyle='#7a2a5a';ctx.fillRect(x+4,y+30+k2*3,e.w-8,1);}
+  bar(x-3,y-8,e.w+6,3,e.hp/e.mhp,'#ff3a6a');if(!G.coreSeen&&Math.abs(G.p.x-e.x)<200){G.coreSeen=1;toast('THE CORE. BREAK IT','#ff5a8a');}};
+ toast('INSIDE THE CUTTER. FIND THE CORE','#ff5a8a');emit('boardin');}
+PTS.pod=800;PTS.core=4000;
+{const _sl=startLevel;startLevel=function(i){const L=LV[i];if(L&&L.t==='board'){curLvl=i;runCr=0;initSpace(L);G.board=1;stT=0;emit('start',L);return;}_sl(i);};}
+{const _gs=goStory;goStory=function(i){_gs(i);const L=LV[i];if(L&&L.t==='board')setTimeout(()=>{ART.boss(L.d,false);setTimeout(()=>ART.space(Math.min(5,L.d),RQ),60);},60);};}
+{const _sb=spawnBoss;spawnBoss=function(){if(G&&G.board){if(!G.cutter){G.cutter=cutterNew(G.d);toast('HOLLOW CUTTER','#ff5a8a');}return;}_sb();};}
+HOOKS.push((n,dt)=>{if(n==='drawspace'&&G&&G.cutter&&G.mode==='space'){if(dt&&state==='space')updCutter(dt);drawCutter();}
+ else if(n==='secondary'&&G&&G.cutter&&G.cutter.state==='fight'&&a_bomb()){const lv=S.secLv||0;for(const q of G.cutter.pods)if(q.hp>0){q.hp-=10+5*lv;}}
+ else if(n==='overlay'&&G&&G.cutter&&G.cutter.go&&state==='space'){G.cutter.go=0;boardInside();}
+ else if(n==='overlay'&&G&&G.fadeIn>0&&state==='plat'){ctx.fillStyle='rgba(0,0,0,'+Math.min(1,G.fadeIn)+')';ctx.fillRect(0,0,W,H);G.fadeIn-=dt*1.2;}});
+function a_bomb(){return (S.sec||'bomb')==='bomb';}
+{const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.board&&G.mode==='space'){G.t=G.waves.len+1;G.waves.list=[];G.en=[];return;}_b();};
+ VR.kill=()=>{if(G&&G.board&&G.cutter&&G.mode==='space'){for(const q of G.cutter.pods)q.hp=0;return;}_k();};}
+ACH.push(['board','UNINVITED','Board a Hollow ship and break its core.']);
+HOOKS.push((n,a)=>{if(n==='kill'&&a&&a.k==='core')unlockA('board');});
+VR.board={cut:()=>G.cutter&&{state:G.cutter.state,pods:G.cutter.pods.map(q=>q.hp),x:G.cutter.x,y:G.cutter.y},hull:(x,y)=>cutterHull(G.cutter,x,y),inside:()=>!!G.boardIn,core:()=>G.brute&&{k:G.brute.k,hp:G.brute.hp,x:G.brute.x,y:G.brute.y,dead:!!G.brute.dead}};
+VR.ix=n=>LV.findIndex(L=>L.name===n);

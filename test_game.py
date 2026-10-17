@@ -22,7 +22,7 @@ async def main():
     await pg.evaluate('VR.god=true')
     await pg.wait_for_timeout(9000); await pg.screenshot(path=OUT/'03_space.png')
     res=[]
-    for i in range(15):
+    for i in range(await pg.evaluate("LV.length")):
       await pg.evaluate(f'VR.start({i})'); await pg.wait_for_timeout(1500)
       st=await pg.evaluate('VR.state()'); 
       await pg.evaluate('VR.boss()'); await pg.wait_for_timeout(4000 if i%3!=1 else 2500)
