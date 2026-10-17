@@ -15,10 +15,10 @@ async def main():
     # remap from v6 (17 chapters): had just cleared COLD DRIFT (10), next was RIFT APPROACH (11)
     await E("localStorage.setItem('voidrunner.save.v1',JSON.stringify({v:6,lvl:11,best:{10:{r:'S',s:5},11:{r:'A',s:6},12:{r:'B',s:7}}}));location.reload()");await pg.wait_for_timeout(800)
     sv=await E("JSON.parse(localStorage.getItem('voidrunner.save.v1'))");nm=await E("LV.map(L=>L.name)")
-    chk('v6 save: next chapter is the new SURVEY DOCK',nm[sv['lvl']]=='SURVEY DOCK' and sv['v']==7,sv)
+    chk('v6 save: next chapter is the new SURVEY DOCK',nm[sv['lvl']]=='SURVEY DOCK' and sv['v']>=7,sv)
     chk('v6 save: ranks follow their chapters',{nm[int(k)]:v['r'] for k,v in sv['best'].items()}=={'COLD DRIFT':'S','RIFT APPROACH':'A','LISTENING POST':'B'},sv['best'])
     ti=await E("VR.ix('SURVEY DOCK')");chk('turret chapter sits right after COLD DRIFT',nm[ti-1]=='COLD DRIFT' and nm[ti+1]=='RIFT APPROACH' and await E(f"LV[{ti}].t")=='turret',ti)
-    chk('18 chapters in the campaign',len(nm)==18,len(nm))
+    chk('19 chapters in the campaign (v8 adds the canyon)',len(nm)==19,len(nm))
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(700)
     box=await pg.locator('canvas').bounding_box();X=lambda x:box['x']+x*box['width']/270;Y=lambda y:box['y']+y*box['height']/480
     cdp=await pg.context.new_cdp_session(pg)

@@ -26,7 +26,7 @@ function sc(){if(!G)return null;if(!G.sc)G.sc={score:0,combo:0,best:0,ct:0,dmg:0
 function mult(c){return Math.min(4,1+Math.floor(c/4)*0.5);}
 function addPts(base,x,y,plat){const s=sc();s.combo++;s.best=Math.max(s.best,s.combo);s.ct=comboT();const m=mult(s.combo),v=Math.round(base*m*diffK().score);s.score+=v;
  if(x!==undefined&&s.pops.length<24)s.pops.push({x,y,v,t:0.8,plat});emit('score',s);}
-function parTime(L){const g=G;if(L.t==='space')return(g.waves&&g.waves.len||40)+75;if(L.t==='plat')return Math.round(g.cols*16/115*1.7+45);if(L.t==='hack')return g.target*10+20;if(L.t==='engine')return Math.round(g.goal/g.v0)+8;if(L.t==='board')return 150+30*L.d;if(L.t==='stealth')return 120;if(L.t==='turret')return Math.round((g.need||70)+40);return 75;}
+function parTime(L){const g=G;if(L.t==='space')return(g.waves&&g.waves.len||40)+75;if(L.t==='plat')return Math.round(g.cols*16/115*1.7+45);if(L.t==='hack')return g.target*10+20;if(L.t==='engine')return Math.round(g.goal/g.v0)+8;if(L.t==='board')return 150+30*L.d;if(L.t==='stealth')return 120;if(L.t==='turret')return Math.round((g.need||70)+40);if(L.t==='canyon')return Math.round((g.Lc||9000)/250+6);return 75;}
 function rankOf(r){const s=r.ratio>=1.5?2:r.ratio>=0.8?1:0,d=r.dmg===0?2:r.dmg<=2?1:0,t=r.time<=r.par?1:0,p=s+d+t;return p>=5?'S':p>=3?'A':p>=2?'B':'C';}
 const RCOL={S:'#ffd23a',A:'#9aff5a',B:'#5ab0ff',C:'#a08ab0'};
 HOOKS.push((n,a)=>{if(!G)return;const s=sc();
@@ -47,7 +47,7 @@ function fmtT(t){t=Math.max(0,Math.round(t));return Math.floor(t/60)+':'+String(
 // cleared screen with the rank breakdown (replaces the original panel)
 drawClear=function(dt){stT+=dt;ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);const L=LV[curLvl]||{t:'space'},r=FT.last||{score:0,best:0,dmg:0,time:0,par:0,rank:'C'};
  panel(20,110,W-40,232,'#9aff5a');
- txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':L.t==='board'?'CUTTER GUTTED':L.t==='stealth'?'IN AND OUT':L.t==='turret'?'AIRLOCK HELD':'AREA SECURED'),W/2,126,'#9aff5a',14);
+ txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':L.t==='board'?'CUTTER GUTTED':L.t==='stealth'?'IN AND OUT':L.t==='turret'?'AIRLOCK HELD':L.t==='canyon'?'COURIER DOWN':'AREA SECURED'),W/2,126,'#9aff5a',14);
  const rk=r.rank,sz=stT>0.3?34:34+(0.3-stT)*80;txt(rk,W/2+70,170,RCOL[rk],sz);txt('RANK',W/2+70,206,'#56607e',7);
  const row=(l,v,y,c='#dfe8ff')=>{txt(l,40,y,'#8aa0d0',8,'left');txt(v,150,y,c,8,'right');};
  row('SCORE',r.score,156);row('BEST CHAIN',r.best,170);row('TIME',fmtT(r.time)+' / '+fmtT(r.par),184,r.time<=r.par?'#9aff5a':'#ffa03a');row('HITS TAKEN',r.dmg,198,r.dmg?'#ffa03a':'#9aff5a');
@@ -62,7 +62,7 @@ function goChapters(){state='chapters';}
 HOOKS.push((n,dt)=>{if(n!=='draw:chapters')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,0.3);txt('CHAPTERS',W/2,14,'#5ab0ff',14);
  const open=Math.max(S.lvl,S.done?LV.length:0);panel(8,34,W-16,402,'#2a3a6a');
  const rh=Math.min(26,Math.floor(396/LV.length)),bh=rh-2;LV.forEach((L,i)=>{const y=40+i*rh,ok=i<=Math.min(open,LV.length-1),b=S.best&&S.best[i];
-  if(ok){btn('',14,y,W-28,bh,()=>goStory(i),'#3a5a9a');txt((i+1)+'. '+L.name,22,y+3,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':'ON FOOT',22,y+bh-9,'#56607e',7,'left');
+  if(ok){btn('',14,y,W-28,bh,()=>goStory(i),'#3a5a9a');const nm=(i+1)+'. '+L.name,cmp=bh<20;txt(nm,22,cmp?y+bh/2-4:y+3,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':L.t==='canyon'?'CHASE':'ON FOOT',cmp?22+(nm.length*5+5)*fpx(8)/RQ:22,cmp?y+bh/2-3:y+bh-9,'#56607e',7,'left');
    if(b){txt(b.r,W-34,y+bh/2-6,RCOL[b.r],12);txt(String(b.s),W-50,y+bh/2-3,'#8aa0d0',7,'right');}else txt('-',W-34,y+bh/2-4,'#3a4466',9);}
   else{ctx.fillStyle='#0a0d1a';ctx.fillRect(14,y,W-28,bh);txt((i+1)+'. LOCKED',22,y+bh/2-4,'#3a4466',8,'left');}});
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
@@ -776,3 +776,158 @@ ACH.push(['dock','DOCK WORKER','Hold the airlock until Fenn finishes.'],['cool',
 HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='turret'&&G&&G.mode==='turret'){unlockA('dock');if(!G.overN)unlockA('cool');}});
 {const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='turret'){G.rep=Math.max(G.rep,70);return;}_b();};VR.kill=()=>{if(G&&G.mode==='turret'){G.rep=100;if(G.boss)G.boss.hp=0,tKill(G,G.boss);G.bossDone=true;return;}_k();};}
 VR.tu={clamp:a=>tClampAng(a),TG:()=>TG,H:()=>G,stats:()=>tStats(),spawn:(k,s)=>{const e=tSpawn(k,s);return G.en.indexOf(e);},fire:n=>{const st=tStats();for(let i=0;i<n;i++)tFireP(G,st);return G.heat;}};
+// ================= v8. CANYON CHASE: RIFT CANYON =================
+// A Hollow courier saw Mara leave the listening post and bolts down the rift canyon to warn the Spire.
+// Top-down chase: steer, boost, dodge rock pillars, gates, falling boulders. Get close and the guns fire on their own.
+const CANYON_LV={t:'canyon',d:2,name:'RIFT CANYON',
+ story:["OTT: We have the codes. We also have company. Something just left the post in a hurry.","FENN: That's a courier. If it reaches the Spire they'll change every code you just stole.","MARA: Where's it headed?","OTT: Down the canyon. It's narrow and twisty and full of rocks. You'll love it.","MARA: Stay low, stay fast.","OTT: Get close and the guns will do the rest. Boost if it pulls away."]};
+insertChapters(8,[[14,CANYON_LV]]);refreshIdx();
+const CY={sy:358,top:46,bot:396,sr:7,step:4,vb:250,boost:110,drain:36,M:14,
+ boostR:[170,408,92,60]};
+// per difficulty (Easy, Normal, Hard): courier speed, start gap, courier hull, obstacle density, boulder share, narrowest half-width, rubber band, canyon length, meter refill/s
+const CT=[{vt:248,gap0:760,thp:18,dens:0.95,boul:0,narrow:58,rub:0.85,len:10000,refill:12,surge:70},
+ {vt:258,gap0:800,thp:24,dens:1.15,boul:0.15,narrow:52,rub:0.88,len:11000,refill:9,surge:100},
+ {vt:266,gap0:820,thp:28,dens:1.45,boul:0.25,narrow:46,rub:0.92,len:12000,refill:8,surge:120}];
+function cyGen(seed,di){const T=CT[di],r=rng(seed),Lc=T.len,n=Math.ceil((Lc+800)/CY.step),C=new Float32Array(n),HW=new Float32Array(n),LN=new Float32Array(n);
+ const p=[0,0,0,0,0].map(()=>r()*6.283),nar=[];for(let s=1500;s<Lc-900;s+=1500+r()*900)nar.push(s+r()*300);
+ for(let i=0;i<n;i++){const s=i*CY.step,st=Math.min(1,Math.max(0,(s-200)/500));
+  let c=W/2+st*(46*Math.sin(s/620+p[0])+22*Math.sin(s/270+p[1]));
+  let hw=95-st*(13-16*Math.sin(s/900+p[2]));
+  for(const a of nar){const d=Math.abs(s-a);if(d<260){const k=d<130?1:0.5+0.5*Math.cos((d-130)/130*Math.PI);hw=hw+(T.narrow-hw)*k;}}
+  hw=Math.min(hw,c-6,W-6-c);C[i]=c;HW[i]=hw;LN[i]=c+Math.max(-(hw-24),Math.min(hw-24,st*(hw-24)*0.8*Math.sin(s/480+p[3])));}
+ // smooth the racing line so it never asks for a sharp sideways jerk
+ for(let pass=0;pass<3;pass++){const o=LN.slice();for(let i=0;i<n;i++){let a=0,k=0;for(let j=-12;j<=12;j++){const q=i+j;if(q>=0&&q<n){a+=o[q];k++;}}LN[i]=Math.max(C[i]-(HW[i]-22),Math.min(C[i]+(HW[i]-22),a/k));}}
+ const at=(A,s)=>{const f=Math.max(0,Math.min(n-1.001,s/CY.step)),i=f|0,t=f-i;return A[i]*(1-t)+A[i+1]*t;};
+ const H={Lc,C,HW,LN,n,obs:[],pads:[],coins:[],arches:[],nar};
+ const free=(x,s,rr)=>H.obs.every(o=>Math.hypot(o.x-x,o.s-s)>o.r+rr+6);
+ for(let s=1000;s<Lc-300;s+=1100+r()*300)H.pads.push({s,x:at(LN,s)});
+ for(let s=600;s<Lc-200;s+=420+r()*200)for(let k=0;k<4;k++){const cs=s+k*26;H.coins.push({s:cs,x:at(LN,cs)});}
+ let s=760;while(s<Lc-400){s+=(230+r()*120)/T.dens;if(H.pads.some(q=>Math.abs(q.s-s)<70))continue;
+  const c=at(C,s),hw=at(HW,s),ln=at(LN,s),roll=r();
+  if(roll<0.08){H.arches.push({s});continue;}
+  if(roll<0.26&&hw>=62){const rr=10,off=CY.sr+CY.M+6+rr;if(ln-off>c-hw+4&&ln+off<c+hw-4){H.obs.push({k:'rock',x:ln-off,s,r:rr,gate:1});H.obs.push({k:'rock',x:ln+off,s,r:rr,gate:1});}continue;}
+  const kind=roll>1-T.boul?'boulder':'rock',rr=kind==='boulder'?12:9+Math.floor(r()*6);
+  const L0=c-hw+rr+2,L1=ln-rr-CY.sr-CY.M,R0=ln+rr+CY.sr+CY.M,R1=c+hw-rr-2,sides=[];if(L1>L0)sides.push([L0,L1]);if(R1>R0)sides.push([R0,R1]);if(!sides.length)continue;
+  const [a,b]=sides[Math.floor(r()*sides.length)],x=a+r()*(b-a);if(!free(x,s,rr))continue;
+  H.obs.push({k:kind,x,s,r:rr,ft:0,trig:kind==='boulder'?320:0});}
+ H.at=at;return H;}
+// fairness: the racing line stays clear of every rock, inside the walls, and gentle enough to follow with the keys at top speed
+function cyCheck(H){const out=[];let mxSl=0,minWall=1e9;for(let i=1;i<H.n;i++){const sl=Math.abs(H.LN[i]-H.LN[i-1])/CY.step;mxSl=Math.max(mxSl,sl);const w=H.HW[i]-Math.abs(H.LN[i]-H.C[i]);minWall=Math.min(minWall,w);}
+ let minObs=1e9;for(const o of H.obs){const ln=H.at(H.LN,o.s),d=Math.abs(o.x-ln)-o.r-CY.sr;minObs=Math.min(minObs,d);if(d<10)out.push(['rock',o.s|0]);const c=H.at(H.C,o.s),hw=H.at(H.HW,o.s);if(o.x<c-hw-2||o.x>c+hw+2)out.push(['inwall',o.s|0]);}
+ if(minWall<18)out.push(['wall',minWall]);if(mxSl>0.5)out.push(['slope',mxSl]);return {bad:out,mxSl,minWall,minObs,obs:H.obs.length,pads:H.pads.length,coins:H.coins.length,arches:H.arches.length,nar:H.nar.length};}
+function initCanyon(L,i){curLvl=i;runCr=0;FT.toasts.length=0;const di=diffIdx(),T=CT[di];
+ const seed=FT.run&&FT.run.mode==='daily'?Math.floor(Math.random()*1e9):(9100+i*131+(FT.retry=(FT.retry||0)+1)*17);
+ const g=cyGen(seed,di),mh=Math.max(8,6+S.hull*2+loadout().hull)+(di===2?4:0);
+ G=Object.assign(g,{mode:'canyon',L,d:L.d+(S.ng?1:0),di,T,seed,t:0,P:{x:g.at(g.LN,0),s:0,v:CY.vb,vx:0,bk:0},p:{hp:mh,mhp:mh,inv:1,sh:0},
+  tg:{s:T.gap0,x:W/2,hp:T.thp,mhp:T.thp,fl:0,dead:0},bm:100,boosting:false,bul:[],fx:[],lines:[],shake:0,dead:0,won:0,esc:0,ft:0,wallN:0,hitN:0,padN:0,near:0,minGap:1e9});
+ state='canyon';stT=0;emit('start',L);const s=sc();s.pot=G.coins.length*PTS.coin+PTS.courier+G.pads.length*PTS.pad;toast('CATCH THE COURIER','#ff6a5a');}
+PTS.courier=3000;PTS.pad=60;PTS.near=40;
+function cyBoostZone(q){const [x,y,w,h]=CY.boostR;return q.x>=x&&q.x<=x+w&&q.y>=y&&q.y<=y+h;}
+function cyPilot(H){const P=H.P,sl=H.auto>=2,amp=H.auto===3?30:14;if(sl){H.rx=H.rx||0;if(Math.random()<0.02)H.rx=rnd(-amp,amp);}const tx=H.at(H.LN,P.s+Math.max(40,P.v*(sl?0.18:0.25)))+(sl?H.rx:0);
+ if(H.bm>=(sl?99:90))H.sb=1;if(H.bm<5)H.sb=0;const boost=!!H.sb&&H.tg.s-P.s>150;
+ return {steer:Math.max(-1,Math.min(1,(tx-P.x)/(sl?14:8))),boost};}
+function updCanyon(dt){const H=G,P=H.P,T=H.T,tg=H.tg,p=H.p;H.t+=dt;H.shake=Math.max(0,H.shake-dt);p.inv=Math.max(0,p.inv-dt);
+ for(const f of H.fx){if(f.vx!==undefined){f.x+=f.vx*dt;f.y+=f.vy*dt;}f.l-=dt;}H.fx=H.fx.filter(f=>f.l>0);
+ if(H.dead){H.dead-=dt;if(H.dead<=0){H.dead=0;failLevel();}return;}if(H.won){H.won-=dt;P.s+=P.v*dt;if(H.won<=0){H.won=0;levelClear();}return;}
+ // input: drag steers relative to where the finger went down, arrows steer at a fixed rate, BOOST button / Shift / Space boosts
+ let steer=0,tx=null,hold=keys.ShiftLeft||keys.ShiftRight||keys.Space||keys.KeyX;
+ if(keys.ArrowLeft||keys.KeyA)steer-=1;if(keys.ArrowRight||keys.KeyD)steer+=1;
+ for(const id in ptrs){const q=ptrs[id];if(q.cb)hold=true;else if(q.cs)tx=Math.max(6,Math.min(W-6,q.x0+(q.x-q.sx)*1.5));}
+ if(H.auto){const a=cyPilot(H);steer=a.steer;hold=a.boost;}
+ const ox=P.x;if(tx!==null&&!steer){const d=tx-P.x,m=300*dt;P.x+=Math.max(-m,Math.min(m,d));}else P.x+=steer*210*dt;P.vx=(P.x-ox)/Math.max(dt,1e-4);
+ // speed and boost
+ const was=H.boosting;H.boosting=hold&&H.bm>0;if(H.boosting){H.bm=Math.max(0,H.bm-CY.drain*dt);if(!was)tone(300,900,.18,'square',.04);}else H.bm=Math.min(100,H.bm+T.refill*dt);
+ const want=CY.vb+(H.boosting?CY.boost:0);P.v+=Math.max(-260*dt,Math.min(180*dt,want-P.v));P.s+=P.v*dt;
+ // courier
+ const gap0=tg.s-P.s;let vt=T.vt*(1+0.04*Math.sin(H.t*0.6));if(gap0>T.gap0+40)vt*=T.rub;tg.su=Math.max(0,(tg.su||0)-dt);if(tg.su>0)vt+=T.surge;if(tg.hp<=0)vt=0;tg.s+=vt*dt;tg.x=H.at(H.LN,tg.s)+14*Math.sin(H.t*1.7);tg.fl=Math.max(0,tg.fl-dt);
+ if(tg.s-P.s<46){P.s=tg.s-46;P.v=Math.min(P.v,vt);}
+ const gap=tg.s-P.s;H.minGap=Math.min(H.minGap,gap);
+ if(tg.s>=H.Lc&&!H.esc){H.esc=1;H.dead=1.6;toast('IT GOT AWAY','#ff3a6a');SFX.big();return;}
+ // guns fire on their own once the courier is close
+ H.ft-=dt;if(gap<270&&H.ft<=0){H.ft=0.16;const vs=700,lt=gap/vs,ax=H.at(H.LN,tg.s+vt*lt)+14*Math.sin((H.t+lt)*1.7);H.bul.push({x:P.x,s:P.s+10,vs:vs+P.v,vx:(ax-P.x)/Math.max(0.05,lt)});tone(900,400,.04,'square',.015);}
+ for(const b of H.bul){b.s+=b.vs*dt;b.x+=b.vx*dt;if(!b.dead&&b.s>=tg.s-6){b.dead=1;if(Math.abs(b.x-tg.x)<14&&tg.hp>0){tg.hp--;if(tg.hp>0&&(tg.hp===Math.ceil(tg.mhp*2/3)||tg.hp===Math.ceil(tg.mhp/3))){tg.su=1.5;toast('IT\'S RUNNING. BOOST','#ffa03a');tone(400,1200,.3,'sawtooth',.04);}tg.fl=0.07;SFX.hit();H.fx.push({x:tg.x,y:CY.sy-gap,vx:0,vy:0,l:0.1,c:'#ffffff',s:3});if(tg.hp<=0){emit('kill',{x:tg.x,y:CY.sy-gap,k:'courier'});H.won=1.8;runCr+=25;SFX.big();H.shake=0.5;toast('COURIER DOWN','#9aff5a');for(let j=0;j<30;j++){const a=rnd(0,7),v=rnd(40,200);H.fx.push({x:tg.x,y:CY.sy-gap,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:rnd(.3,.9),c:FIRE[j%FIRE.length],s:2});}return;}}}}
+ H.bul=H.bul.filter(b=>!b.dead&&b.s<P.s+500);
+ // walls
+ const c=H.at(H.C,P.s),hw=H.at(H.HW,P.s),lim=hw-CY.sr+1;
+ if(Math.abs(P.x-c)>lim){P.x=c+Math.sign(P.x-c)*(lim-2);if(p.inv<=0){H.wallN++;P.v*=0.85;hurt();noise(.2,.2,1600);for(let j=0;j<8;j++)H.fx.push({x:P.x,y:CY.sy,vx:rnd(-60,60),vy:rnd(40,160),l:rnd(.2,.4),c:'#ffb07a',s:2});}}
+ // rocks, gates and boulders
+ for(const o of H.obs){if(o.dead)continue;const ds=o.s-P.s;if(ds>520)break;
+  if(o.k==='boulder'&&ds<o.trig&&o.ft<1){const f0=o.ft;o.ft=Math.min(1,o.ft+dt/0.9);if(f0<1&&o.ft>=1){H.shake=Math.max(H.shake,0.12);noise(.25,.25,300);}}
+  const solid=o.k!=='boulder'||o.ft>=1,d=Math.hypot(P.x-o.x,ds);
+  if(solid&&Math.abs(ds)<30){o.md=Math.min(o.md===undefined?1e9:o.md,d);
+   if(d<o.r+CY.sr-1){o.dead=1;H.hitN++;P.v*=0.75;hurt();for(let j=0;j<14;j++){const a=rnd(0,7),v=rnd(40,150);H.fx.push({x:o.x,y:CY.sy-ds,vx:Math.cos(a)*v,vy:Math.sin(a)*v+P.v*0.3,l:rnd(.3,.6),c:j%2?'#8a5a5a':'#5a3a40',s:2});}continue;}}
+  if(ds<-o.r-CY.sr&&!o.passed){o.passed=1;if(solid&&o.md<o.r+CY.sr+12){H.near++;addPts(PTS.near,o.x,CY.sy-ds-10);}}}
+ for(const q of H.pads)if(!q.got&&Math.abs(q.s-P.s)<14&&Math.abs(q.x-P.x)<18){q.got=1;H.padN++;P.v=Math.max(P.v,CY.vb+170);H.bm=Math.min(100,H.bm+30);addPts(PTS.pad,q.x,CY.sy-20);tone(523,523,.06,'square',.04);tone(784,784,.06,'square',.04,.06);tone(1046,1046,.08,'square',.04,.12);H.shake=Math.max(H.shake,0.1);}
+ for(const q of H.coins)if(!q.got&&Math.abs(q.s-P.s)<11&&Math.abs(q.x-P.x)<12){q.got=1;runCr+=1;SFX.coin();emit('coin',q);}
+ // speed lines
+ if(Math.random()<dt*(P.v-200)*0.15)H.lines.push({x:rnd(10,W-10),y:CY.top,l:rnd(10,24)});for(const l of H.lines)l.y+=P.v*1.6*dt;H.lines=H.lines.filter(l=>l.y<CY.bot+30);
+ if(H.boosting)H.shake=Math.max(H.shake,0.03);}
+// ---- art ----
+const CYCOL={floor:'#150d18',floor2:'#1e1424',w:['#4a2634','#55303c','#3e2030'],rim:'#9a5a62',lip:'#c88a7a',deep:'#1a0c14'};
+function cyY(H,s){return CY.sy-(s-H.P.s);}
+function drawCanyon(dt){const H=G,P=H.P,tg=H.tg;ctx.fillStyle=CYCOL.deep;ctx.fillRect(0,0,W,480);
+ ctx.save();shakeT(H.shake);
+ // floor streaks (move 1:1) and the walls row by row; wall tops scroll faster than the floor (parallax, they are closer)
+ const st=4,hh=n=>(Math.imul((n|0)^0x5bd1e995,2654435761)>>>0)/4294967296;for(let y=CY.top-4;y<CY.bot+4;y+=st){const s=P.s+(CY.sy-y),c=H.at(H.C,s),hw=H.at(H.HW,s),j1=hh(s/8)*3|0,j2=hh(s/8+977)*3|0,xl=c-hw-j1,xr=c+hw+j2;
+  const fs=(s/40)|0;ctx.fillStyle=fs%2?CYCOL.floor:CYCOL.floor2;ctx.fillRect(xl,y,xr-xl,st);if(hh(s/4)<0.18){ctx.fillStyle='#2c1e34';ctx.fillRect(c+(hh(s/4+5)-0.5)*hw*1.8,y,2,2);}
+  const s2=s*1.3,band=((s2/26)|0),sh=hh(band)*3|0;ctx.fillStyle=CYCOL.w[sh];ctx.fillRect(0,y,xl,st);ctx.fillRect(xr,y,W-xr,st);
+  if(hh(s2/4)<0.3){ctx.fillStyle=hh(s2/4+3)<0.5?'#5e3644':'#331a28';const wx=hh(s2/4+7);ctx.fillRect(Math.max(0,xl-8-wx*40),y,4+wx*8,st);ctx.fillRect(Math.min(W,xr+6+wx*36),y,3+wx*8,st);}
+  const s3=s*1.6,b3=(s3/60)|0;if(hh(b3)<0.35){ctx.fillStyle=CYCOL.deep;const w3=10+hh(b3+1)*18;ctx.fillRect(xl-26-w3,y,w3,st);ctx.fillRect(xr+22,y,w3*0.8,st);}
+  ctx.fillStyle=CYCOL.rim;ctx.fillRect(xl-3,y,3,st);ctx.fillRect(xr,y,3,st);if(hh(s/6+11)<0.25){ctx.fillStyle=CYCOL.lip;ctx.fillRect(xl-3,y,2,2);ctx.fillRect(xr+1,y,2,2);}
+  ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(xl,y,5,st);ctx.fillRect(xr-3,y,3,st);}
+ // canyon end: the Spire gate
+ {const y=cyY(H,H.Lc);if(y>CY.top-40){ctx.fillStyle='#3a1040';ctx.fillRect(0,y-30,W,30);for(let k=0;k<W;k+=10){ctx.fillStyle=(k/10+(T*6|0))%2?'#c05aff':'#5a1a6a';ctx.fillRect(k,y-4,6,4);}txt('SPIRE',W/2,y-22,'#c05aff',8);}}
+ // pads, coins
+ for(const q of H.pads){if(q.got)continue;const y=cyY(H,q.s);if(y<CY.top-20||y>CY.bot+20)continue;ctx.fillStyle='#0e2a1a';ctx.fillRect(q.x-14,y-14,28,28);for(let k=0;k<3;k++){const yy=y+8-k*8-((T*30)%8);ctx.fillStyle=k===((T*8|0)%3)?'#9aff5a':'#3a9a4a';ctx.fillRect(q.x-8,yy,4,2);ctx.fillRect(q.x-4,yy-2,8,2);ctx.fillRect(q.x+4,yy,4,2);}ctx.strokeStyle='#5ad07a';ctx.strokeRect(q.x-13.5,y-13.5,27,27);}
+ for(const q of H.coins){if(q.got)continue;const y=cyY(H,q.s);if(y>CY.top-10&&y<CY.bot+10)drawCoin(q.x,y,H.t,q.s);}
+ // rocks and boulders (boulders fall in from above with a growing shadow)
+ for(const o of H.obs){if(o.dead)continue;const y=cyY(H,o.s);if(y<CY.top-40)break;if(y>CY.bot+30)continue;
+  const fr=ART.rock[((o.s|0)%8)],sz=o.r/9*2;
+  if(o.k==='boulder'&&o.ft<1){const k=o.ft;ctx.globalAlpha=0.25+0.45*k;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(o.x,y+2,o.r*(0.4+0.6*k),o.r*0.6*(0.4+0.6*k),0,0,7);ctx.fill();ctx.globalAlpha=1;
+   if(o.ft>0){draw(fr,o.x,y-(1-k)*120,sz*(1.3-0.3*k));}else if(y>CY.top){ctx.fillStyle=(T*6|0)%2?'#ff3a6a':'#ffd23a';ctx.fillRect(o.x-1,y-3,2,4);}continue;}
+  ctx.globalAlpha=0.35;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(o.x+3,y+4,o.r,o.r*0.7,0,0,7);ctx.fill();ctx.globalAlpha=1;draw(fr,o.x,y,sz);
+  if(o.gate){ctx.fillStyle='#ffd23a';ctx.fillRect(o.x-1,y-o.r-3,2,2);}}
+ // courier
+ {const y=cyY(H,tg.s);if(y>CY.top-30&&tg.hp>0){const fl=Math.sin(H.t*40);glow(tg.x,y+14,6+fl,'#ff3a6a',0.5);ctx.fillStyle='#ff9a3a';ctx.fillRect(tg.x-2,y+10,4,6+fl*2);ctx.save();ctx.translate(0,2*y);ctx.scale(1,-1);draw(tg.fl?ART.enW.kami:ART.en.kami[((H.t*12)|0)&3],tg.x,y,3,false);ctx.restore();
+  bar(tg.x-18,y-22,36,3,tg.hp/tg.mhp,'#ff3a6a','#2a0a14');txt('COURIER',tg.x,y-32,'#ff9ab0',7);}
+  else if(tg.hp>0&&y<=CY.top-30){ctx.fillStyle='#ff3a6a';const ax=Math.max(10,Math.min(W-10,tg.x));ctx.fillRect(ax-3,CY.top+2,6,2);ctx.fillRect(ax-1,CY.top,2,6);}}
+ // bullets
+ for(const b of H.bul){const y=cyY(H,b.s);glow(b.x,y,3,'#ffd27a',0.5);ctx.fillStyle='#fff3c0';ctx.fillRect(b.x-1,y-3,2,5);}
+ // ship
+ if(!(H.dead&&!H.esc)&&!(H.p.inv>0&&(H.t*20|0)%2)){const x=P.x,y=CY.sy,fl=Math.sin(H.t*40)*1.5,bc=H.boosting?'#7ae8ff':'#5ab0ff';glow(x-8,y+16,(H.boosting?9:6)+fl,bc,0.55);glow(x+8,y+16,(H.boosting?9:6)-fl,bc,0.55);
+  const fi=(H.t*20|0)%4,fh=H.boosting?24:15;blit(ART.flame[fi],x-12,y+13,8,fh);blit(ART.flame[(fi+2)%4],x+4,y+13,8,fh);P.bk+=(Math.max(-2,Math.min(2,P.vx/80))-P.bk)*0.25;draw(ART.ships[S.ship|0][Math.round(Math.max(-2,Math.min(2,P.bk)))+2],x,y,2);}
+ // arches pass overhead, drawn above the ship
+ for(const a of H.arches){const y=cyY(H,a.s);if(y<CY.top-30||y>CY.bot+30)continue;ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(0,y+8,W,14);ctx.fillStyle='#5a3040';ctx.fillRect(0,y-8,W,16);ctx.fillStyle=CYCOL.rim;ctx.fillRect(0,y-8,W,2);ctx.fillStyle='#3e2030';for(let k=0;k<W;k+=14)ctx.fillRect(k+((a.s|0)%7),y-2,7,4);}
+ // speed lines
+ ctx.fillStyle='rgba(220,230,255,0.35)';for(const l of H.lines)ctx.fillRect(l.x,l.y,1,l.l);
+ drawFx(H.fx);if(H.p.inv>0.8){ctx.fillStyle='rgba(255,40,70,0.15)';ctx.fillRect(0,0,W,CY.bot);}
+ ctx.restore();
+ // HUD
+ ctx.fillStyle='rgba(4,6,16,0.85)';ctx.fillRect(0,26,W,CY.top-26);
+ const gap=Math.max(0,tg.s-P.s),gf=1-Math.min(1,Math.max(0,(gap-46)/(H.T.gap0+150)));
+ hudTop('HULL',H.p.hp,H.p.mhp);txt('CR '+(S.cr+runCr),236,6,'#ffd23a',8,'right');
+ txt('GAP',8,30,'#ff9ab0',7,'left');bar(28,31,120,4,gf,gap<270?'#ff3a6a':'#ffa03a','#2a0a14');ctx.fillStyle='#ffffff';ctx.fillRect(28+120*(1-Math.min(1,(270-46)/(H.T.gap0+150)))-0.5,29,1,8);txt(Math.round(gap/10)+' M',152,30,'#ff9ab0',7,'left');
+ txt('SPIRE',W-8,30,'#c05aff',7,'right');bar(196,39,66,2,Math.min(1,tg.s/H.Lc),'#c05aff','#1a0a24');txt('COURIER TO SPIRE',W-74,37,'#56607e',6,'right');
+ if(gap<270&&tg.hp>0&&(H.t*4|0)%2)txt('IN RANGE',W/2,52,'#ff3a6a',8);
+ if(H.t<4)txt('CHAPTER '+(curLvl+1)+': '+H.L.name,W/2,120,'#fff',9);
+ if(H.dead&&!H.esc)txt('HULL BREACH',W/2,200,'#ff3a6a',10);if(H.esc)txt('IT GOT AWAY',W/2,200,'#ff3a6a',10);if(H.won)txt('COURIER DOWN',W/2,200,'#9aff5a',10);
+ // control panel: speed + boost meter on the left, a big BOOST button on the right
+ ctx.fillStyle='#070912';ctx.fillRect(0,CY.bot,W,84);ctx.fillStyle='#1a2340';ctx.fillRect(0,CY.bot,W,1);
+ txt('SPEED '+Math.round(P.v),8,CY.bot+10,'#8aa0d0',7,'left');txt('BOOST',8,CY.bot+24,H.boosting?'#7ae8ff':'#5ab0ff',7,'left');bar(8,CY.bot+34,150,5,H.bm/100,H.bm<25?'#ffa03a':'#5ad0ff','#0a1a2a');
+ txt(hasTouch?'Drag anywhere to steer':'Arrows steer. Shift boosts',8,CY.bot+50,'#56607e',7,'left');txt('Guns fire when close',8,CY.bot+62,'#56607e',7,'left');
+ {const [bx,by,bw,bh]=CY.boostR;panel(bx,by,bw,bh,H.boosting?'#7ae8ff':H.bm>0?'#5ad0ff':'#3a4466');ctx.fillStyle='rgba(90,208,255,0.18)';ctx.fillRect(bx+3,by+bh-3-(bh-6)*H.bm/100,bw-6,(bh-6)*H.bm/100);txt('BOOST',bx+bw/2,by+bh/2-4,H.bm>0?'#dff6ff':'#56607e',10);}
+ if(dt)scoreHUD(dt);pauseBtn();}
+// ---- wiring ----
+{const _sl=startLevel;startLevel=function(i){const L=LV[i];if(L&&L.t==='canyon'){initCanyon(L,i);return;}_sl(i);};}
+{const _p=pause;pause=function(){if(state==='canyon'){G.prev=state;state='pause';return;}_p();};}
+{const _dm=drawMode;drawMode=function(dt){if(G&&G.mode==='canyon'){drawCanyon(0);return;}_dm(dt);};}
+HOOKS.push((n,dt)=>{if(n==='draw:canyon'&&G&&G.mode==='canyon'){if(dt)updCanyon(Math.min(dt,1/30));drawCanyon(dt);}});
+{const _pd=ptrDown;ptrDown=function(id,e){_pd(id,e);const q=ptrs[id];if(!q||state!=='canyon'||(q.x>236&&q.y<26))return;if(cyBoostZone(q))q.cb=1;else{q.cs=1;q.x0=G.P.x;}};}
+{const _ok=onKey;onKey=function(c){if(state==='canyon'){if(c==='Escape'||c==='KeyP')pause();return;}_ok(c);};}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='canyon')pause();});
+ACH.push(['canyon','CANYON RUNNER','Catch the courier in the Rift Canyon.'],['needle','THREAD THE NEEDLE','Catch the courier without scraping a wall.']);
+HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='canyon'&&G&&G.mode==='canyon'){unlockA('canyon');if(!G.wallN)unlockA('needle');}});
+{const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='canyon'){G.tg.s=G.P.s+120;return;}_b();};VR.kill=()=>{if(G&&G.mode==='canyon'){G.tg.s=G.P.s+60;G.tg.hp=1;G.ft=0;return;}_k();};}
+VR.cy={H:()=>G,CT:()=>CT,CY:()=>CY,gen:(seed,di)=>{const H=cyGen(seed,di);return cyCheck(H);},
+ sim:(maxT,mode)=>{const H=G;H.auto=mode||1;let f=0;const lim=60*(maxT||120);while(f<lim&&!H.won&&!H.dead){updCanyon(1/60);f++;}
+  return {won:H.won>0,dead:H.dead>0,esc:!!H.esc,hp:H.p.hp,mhp:H.p.mhp,t:Math.round(H.t*10)/10,gap:Math.round(H.tg.s-H.P.s),minGap:Math.round(H.minGap),tgS:Math.round(H.tg.s),Lc:H.Lc,left:Math.round((H.Lc-H.tg.s)/H.T.vt*10)/10,wall:H.wallN,hits:H.hitN,pads:H.padN,coins:H.coins.filter(c=>c.got).length,bm:Math.round(H.bm)};}};

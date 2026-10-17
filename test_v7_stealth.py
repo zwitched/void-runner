@@ -17,7 +17,7 @@ async def main():
     sv=await E("JSON.parse(localStorage.getItem('voidrunner.save.v1'))");nm=await E("LV.map(L=>L.name)")
     chk('v5 save: next chapter is the new LISTENING POST',nm[sv['lvl']]=='LISTENING POST',sv['lvl'])
     chk('v5 save: ranks follow their chapters',{nm[int(k)]:v['r'] for k,v in sv['best'].items()}=={'RIFT APPROACH':'S','SPIRE LOCK':'A','CHART VAULT':'B'},sv['best'])
-    si=await E("VR.ix('LISTENING POST')");chk('stealth sits between RIFT APPROACH and SPIRE LOCK',nm[si-1]=='RIFT APPROACH' and nm[si+1]=='SPIRE LOCK' and await E(f"LV[{si}].t")=='stealth',si)
+    si=await E("VR.ix('LISTENING POST')");chk('stealth sits after RIFT APPROACH, followed by RIFT CANYON (v8)',nm[si-1]=='RIFT APPROACH' and nm[si+1]=='RIFT CANYON' and await E(f"LV[{si}].t")=='stealth',si)
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(700)
     # a cone-free route exists: for the shipped level on every difficulty, and the real game loop can walk it unseen
     for dfi,dn in enumerate(['Easy','Normal','Hard']):
@@ -104,12 +104,12 @@ async def main():
     await E("VR.setS({diff:1})")
     # daily pool includes it
     chk('daily challenge can pick the post',await E(f"(()=>{{for(let i=0;i<800;i++){{const d=new Date(2026,0,1+i),s=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(VR.dailyLv(s)==={si})return true}}return false}})()"))
-    # campaign flow: hangar -> launch -> story -> stealth -> clear -> hangar shows SPIRE LOCK
+    # campaign flow: hangar -> launch -> story -> stealth -> clear -> hangar shows RIFT CANYON
     await E(f"localStorage.clear();VR.S().lvl={si};VR.S().cr=0;VR.shop()");await pg.wait_for_timeout(200)
     await pg.touchscreen.tap(X(135),Y(368));await pg.wait_for_timeout(200);s1=await E('VR.state()');await pg.touchscreen.tap(X(135),Y(300));await pg.wait_for_timeout(100);await pg.touchscreen.tap(X(135),Y(300));await pg.wait_for_timeout(300)
     s2=await E('VR.state()');await E("VR.kill()");await pg.wait_for_timeout(1500);s3=await E('VR.state()');await pg.wait_for_timeout(500);await pg.touchscreen.tap(X(135),Y(300));await pg.wait_for_timeout(300)
     s4=await E('VR.state()');lv=await E('VR.S().lvl')
-    chk('campaign flow through the post',[s1,s2,s3,s4]==['story','stealth','clear','shop'] and nm[lv]=='SPIRE LOCK',[s1,s2,s3,s4,lv])
+    chk('campaign flow through the post',[s1,s2,s3,s4]==['story','stealth','clear','shop'] and nm[lv]=='RIFT CANYON',[s1,s2,s3,s4,lv])
     await b.close()
   print('BAD',bad);print('ERRORS',errs)
 asyncio.run(main())

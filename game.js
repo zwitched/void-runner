@@ -650,8 +650,8 @@ function drawTitle(dt){ctx.fillStyle='#05060f';ctx.fillRect(0,0,W,H);stars(dt,2)
  txt('Original game. Art & sound made in code.',W/2,450,'#3a4466',7);txt(hasTouch?'Best in portrait':'Keys: arrows, Space/Z jump, X fire, Up/Down aim',W/2,462,'#3a4466',7);
  defaultAct=cont?()=>{state='shop';}:newGame;}
 function drawStory(dt){const L=LV[curLvl];ctx.fillStyle='#03040a';ctx.fillRect(0,0,W,H);stars(dt,0.3);stT+=dt;
- txt('CHAPTER '+(curLvl+1),W/2,40,'#8aa0d0',8);txt(L.name,W/2,54,L.t==='space'?'#5ab0ff':L.t==='hack'?'#9aff5a':L.t==='evade'?'#c05aff':L.t==='engine'?'#ffd23a':L.t==='board'?'#ff5a8a':L.t==='stealth'?'#5ad0ff':L.t==='turret'?'#ff9a3a':'#ffa03a',12);
- txt(L.t==='space'?'[ SPACE FLIGHT ]':L.t==='hack'?'[ HACKING ]':L.t==='evade'?'[ EVASION - NO WEAPONS ]':L.t==='engine'?'[ ENGINE FAILURE ]':L.t==='board'?'[ BOARDING ACTION ]':L.t==='stealth'?'[ STEALTH ]':L.t==='turret'?'[ HOLD THE AIRLOCK ]':'[ ON FOOT ]',W/2,72,'#56607e',7);
+ txt('CHAPTER '+(curLvl+1),W/2,40,'#8aa0d0',8);txt(L.name,W/2,54,L.t==='space'?'#5ab0ff':L.t==='hack'?'#9aff5a':L.t==='evade'?'#c05aff':L.t==='engine'?'#ffd23a':L.t==='board'?'#ff5a8a':L.t==='stealth'?'#5ad0ff':L.t==='turret'?'#ff9a3a':L.t==='canyon'?'#ff6a5a':'#ffa03a',12);
+ txt(L.t==='space'?'[ SPACE FLIGHT ]':L.t==='hack'?'[ HACKING ]':L.t==='evade'?'[ EVASION - NO WEAPONS ]':L.t==='engine'?'[ ENGINE FAILURE ]':L.t==='board'?'[ BOARDING ACTION ]':L.t==='stealth'?'[ STEALTH ]':L.t==='turret'?'[ HOLD THE AIRLOCK ]':L.t==='canyon'?'[ CANYON CHASE ]':'[ ON FOOT ]',W/2,72,'#56607e',7);
  panel(8,92,W-16,338,'#2a3a6a');let chars=Math.floor(stT*45),all=true;const blocks=[];
  for(const para of L.story){if(chars<=0){all=false;break;}const m=para.match(/^([A-Z ]+?)( \([^)]*\))?: (.*)$/),who=m?m[1]+(m[2]||''):'',body=m?m[3]:para,k=m?m[1]:null,ind=k?48:0;
   const lines=[],src=wrap(body,W-46-ind,9);for(const ln of src){if(chars<=0){all=false;break;}lines.push(ln.slice(0,chars));chars-=ln.length;if(chars<0)all=false;}
