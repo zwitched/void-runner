@@ -12,7 +12,7 @@ async def main():
     await pg.goto('file://'+str(pathlib.Path(__file__).parent.resolve()/'dist/index.html'));await pg.wait_for_timeout(500)
     E=pg.evaluate
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(800)
-    n=await E("VR.ACH().length");chk('15-25 achievements',15<=n<=25,n)
+    n=await E("VR.ACH().length");chk('15-35 achievements',15<=n<=35,n)
     await pg.screenshot(path='screenshots/v6_title_menu.png')
     # buttons on title must not overlap
     ov=await E("(()=>{const B=window.__btns||[];return 0})()")

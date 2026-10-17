@@ -548,4 +548,4 @@ const BGS={};A.bg=(d,pal,bg,H,r)=>{const k=d+pal.join()+r;return BGS[k]||(BGS[k]
 const MW={};A.wall=(pal,m,v)=>{const k=pal.join()+m+'_'+v;return MW[k]||(MW[k]=mazeWall(pal,m,v));};
 let PT=null;A.portrait=k=>(PT||(PT=portraits()))[k];
 const SPS={};A.space=(d,r)=>SPS[d+'_'+r]||(SPS[d+'_'+r]=spaceSet(d,r));
-A.white=white;return A;})();
+A.white=white;A.paint=paint;A.MAT=MAT;A.el=el;return A;})();

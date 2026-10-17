@@ -441,3 +441,72 @@ ACH.push(['board','UNINVITED','Board a Hollow ship and break its core.']);
 HOOKS.push((n,a)=>{if(n==='kill'&&a&&a.k==='core')unlockA('board');});
 VR.board={cut:()=>G.cutter&&{state:G.cutter.state,pods:G.cutter.pods.map(q=>q.hp),x:G.cutter.x,y:G.cutter.y},hull:(x,y)=>cutterHull(G.cutter,x,y),inside:()=>!!G.boardIn,core:()=>G.brute&&{k:G.brute.k,hp:G.brute.hp,x:G.brute.x,y:G.brute.y,dead:!!G.brute.dead}};
 VR.ix=n=>LV.findIndex(L=>L.name===n);
+// ================= v7-2. COMPANION DRONE: OTT =================
+// Ott flies at Mara's shoulder in every on-foot level. He pulls nearby coins in, and with hangar upgrades
+// zaps the nearest enemy on a cooldown and soaks one hit on a longer cooldown. Cooldowns stretch on Hard.
+const OTTM=ART.MAT({shell:['#b8c4dc'],shell2:['#7a88a8'],dark:['#262c44'],trim:['#ffb43a'],lens:['#2ab8f0',{li:'#e8ffff'}],eye:['#f4ffff',{e:1}],jet:['#7ae8ff',{e:1}]});
+function ottFrame(f,blink){const el=ART.el;return ART.paint(28,26,(x,y)=>{const cx=14,ax=Math.abs(x-cx),ex=cx+[0,1,0,-1][f]*0.8;
+ if(y<5&&ax<0.9)return y<2.2?'trim':'dark';
+ if(el(x,y,ex,12,4.2,blink?1.2:3.8))return(Math.hypot(x-ex+1.2,y-10.8)<1.4&&!blink)?'eye':'lens';
+ if(el(x,y,cx,12,9.5,7.5))return y>16?'shell2':['shell',y<8?0.1:0];
+ if(ax>8.5&&ax<12.5&&y>9&&y<15)return(y>13)?'dark':'shell2';
+ if(ax<3.5&&y>=19&&y<21.5)return'dark';
+ if(ax<2.2&&y>=21.5&&y<22.5+[2,3.5,1.5,3][f])return['jet',-(y-21)*0.08];return 0;},OTTM,{R:4});}
+const OTTA={fr:[0,1,2,3].map(f=>ottFrame(f,0)),blink:ottFrame(0,1)};OTTA.W=ART.white(OTTA.fr[0]);
+const OTTUP=[['dmag','MAGNET','Ott pulls coins from further out',3,60],['dzap','ZAP','Ott shocks the nearest enemy',3,90],['dshd','SHIELD','Ott soaks a hit now and then',3,110]];
+SHOP.push(['DRONE',OTTUP]);
+function ottDK(){return [0.8,1,1.3][diffIdx()];}// cooldown scale per difficulty
+function ottStats(){const m=S.dmag|0,z=S.dzap|0,s=S.dshd|0,k=ottDK();return {mag:28+22*m,zap:z,zcd:z?[0,3.4,2.8,2.2][z]*k:0,zdm:z>=3?2:1,zr:110,shd:s,scd:s?[0,32,26,20][s]*k:0};}
+const OTTQ={start:["Stay close. I bruise easy.","I'll grab the coins.","Lights on. Mostly.","I'll keep an eye out. Both of them."],zap:["Zapped it.","You're welcome.","That one was rude.","Little jolt for you."],
+ block:["Got that one.","Shield's down. Careful.","Ow. That was for you."],low:["You're leaking.","Maybe stop getting hit?","Suit's looking rough."],coin:["Ooh, shiny.","Into the jar.","Mine now. Well, yours."],boss:["That's a big one.","I'll be behind you. Way behind."]};
+function ottSay(k,force){const o=G&&G.ott;if(!o)return;if(!force&&(o.qcd>0||Math.random()<0.4))return;const a=OTTQ[k];o.q=a[Math.floor(Math.random()*a.length)];o.qt=2.6;o.qcd=16+Math.random()*10;}
+function ottNew(){const p=G.p;return {x:p.x-10,y:p.y-12,t:0,zt:1.5,st:0,shRdy:(S.dshd|0)>0,q:'',qt:0,qcd:3,zaps:0,blocks:0,got:0,zx:null,face:1};}
+function ottLOS(x0,y0,x1,y1){const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/6);for(let i=1;i<n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;if(solid(Math.floor(x/TS),Math.floor(y/TS)))return false;}return true;}
+function updOtt(dt){const o=G.ott,p=G.p,st=ottStats();o.t+=dt;o.qt=Math.max(0,o.qt-dt);o.qcd=Math.max(0,o.qcd-dt);
+ const tx=p.x+p.w/2-p.face*16,ty=p.y-6+Math.sin(o.t*3)*3,k=Math.min(1,dt*5);o.x+=(tx-o.x)*k;o.y+=(ty-o.y)*k;o.face=p.face;
+ if(Math.hypot(tx-o.x,ty-o.y)>200){o.x=tx;o.y=ty;}
+ // magnet: coins in range drift to Mara, the normal pickup does the rest
+ const px=p.x+p.w/2,py=p.y+p.h/2;for(const c of G.coins){if(c.k!=='c'||(c.rm&&!c.rm.found))continue;const d=Math.hypot(c.x-o.x,c.y-o.y);if(d<st.mag||c.mg){if(!c.mg){c.mg=1;o.got++;if(o.got%12===0)ottSay('coin');}const a=Math.atan2(py-c.y,px-c.x),v=260*dt;c.x+=Math.cos(a)*v;c.y+=Math.sin(a)*v;}}
+ // zap
+ if(st.zap){o.zt-=dt;if(o.zt<=0&&!G.dead){let best=null,bd=st.zr;for(const e of G.ens){if(e.dead||e.hp<=0)continue;const ex=e.x+e.w/2,ey=e.y+e.h/2,d=Math.hypot(ex-o.x,ey-o.y);if(d<bd&&ottLOS(o.x,o.y,ex,ey)){bd=d;best=e;}}
+  if(best){o.zt=st.zcd;o.zaps++;const ex=best.x+best.w/2,ey=best.y+best.h/2;o.zx={x:ex,y:ey,t:0.15};G.bul.push({x:ex,y:ey,vx:0,vy:0,dm:st.zdm,l:0.05,hits:[],c:'#9ae8ff',zap:1,mf:1});tone(1400,500,.06,'square',.03);noise(.05,.04,5000);emit('ottzap',best.k);if(o.zaps===1||Math.random()<0.15)ottSay('zap');}else o.zt=0.2;}}
+ if(o.zx){o.zx.t-=dt;if(o.zx.t<=0)o.zx=null;}
+ // shield recharge
+ if(st.shd&&!o.shRdy){o.st-=dt;if(o.st<=0){o.shRdy=true;tone(600,1200,.1,'triangle',.04);}}
+ if(p.hp===1&&!o.lowSaid){o.lowSaid=1;ottSay('low',true);}if(p.hp>1)o.lowSaid=0;
+ if(G.brute&&!o.bossSaid&&G.brute.act){o.bossSaid=1;ottSay('boss');}}
+function drawOtt(){const o=G.ott,cam=Math.round(G.cam),x=o.x-cam,y=o.y,st=ottStats();
+ if(o.zx){ctx.strokeStyle='#e8ffff';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y);const n=6,zx=o.zx.x-cam,zy=o.zx.y;for(let i=1;i<n;i++)ctx.lineTo(x+(zx-x)*i/n+rnd(-4,4),y+(zy-y)*i/n+rnd(-4,4));ctx.lineTo(zx,zy);ctx.stroke();ctx.strokeStyle='#5ad0ff';ctx.lineWidth=1;ctx.stroke();glow(zx,zy,6,'#5ad0ff',0.6);}
+ glow(x,y+6,4+Math.sin(G.t*20),'#7ae8ff',0.35);
+ const bl=((o.t*0.7)%3)<0.08;draw(bl?OTTA.blink:OTTA.fr[(o.t*10|0)&3],x,y,2,o.face<0);
+ if(o.shRdy){ctx.strokeStyle='rgba(90,208,255,'+(0.35+0.15*Math.sin(G.t*5))+')';ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.stroke();}
+ if(o.qt>0){const s='OTT: '+o.q,w=Math.min(W-8,(s.length*5)+8),bx=Math.max(4,Math.min(W-4-w,x-w/2)),by=Math.max(24,y-30);ctx.globalAlpha=Math.min(1,o.qt*3);ctx.fillStyle='rgba(6,10,24,0.85)';ctx.fillRect(bx,by,w,13);ctx.strokeStyle='#5ad0ff';ctx.strokeRect(bx+.5,by+.5,w-1,12);txt(s,bx+w/2,by+3,'#bfe8ff',7);ctx.globalAlpha=1;}
+ // HUD pips under the credits
+ let hx=236;if(st.shd){ctx.fillStyle=o.shRdy?'#5ad0ff':'#1a2a44';ctx.fillRect(hx-8,16,8,5);if(!o.shRdy){ctx.fillStyle='#5ad0ff';ctx.fillRect(hx-8,20,8*(1-o.st/st.scd),1);}hx-=12;}
+ if(st.zap){const r=1-Math.max(0,o.zt)/st.zcd;ctx.fillStyle=r>=1?'#e8ffff':'#1a2a44';ctx.fillRect(hx-8,16,8,5);ctx.fillStyle='#e8ffff';ctx.fillRect(hx-8,20,8*Math.min(1,r),1);hx-=12;}
+ txt('OTT',hx,15,'#7ae8ff',7,'right');}
+{const _h=hurt;hurt=function(){if(G&&G.mode==='plat'&&G.ott&&G.ott.shRdy&&G.p&&G.p.inv<=0&&!god()&&!G.dead&&G.p.y<=PH){const o=G.ott;o.shRdy=false;o.st=ottStats().scd;o.blocks++;G.p.inv=1;G.shake=0.15;tone(900,300,.12,'triangle',.05);
+  G.fx.push({x:G.p.x+G.p.w/2,y:G.p.y+G.p.h/2,ring:1,l:0.35,R:30});emit('ottblock');ottSay('block',o.blocks===1);return;}_h();};}
+HOOKS.push((n,dt)=>{if(n==='start'&&G&&G.mode==='plat'){G.ott=ottNew();ottSay('start',true);}
+ else if(n==='boardin'&&G){G.ott=ottNew();}
+ else if(n==='overlay'&&G&&G.mode==='plat'&&G.ott&&(state==='plat'||state==='pause'||state==='clear'||state==='over')){if(state==='plat'&&dt)updOtt(dt);drawOtt();}
+ else if(n==='ottblock'){unlockA('ott');}
+ else if(n==='ottzap'){if(stat('ottz')>=25)unlockA('ottz');}});
+ACH.push(['ott','BEST FRIEND','Let Ott take a hit for you.'],['ottz','SPARKY','Ott zaps 25 enemies.']);
+// ---- hangar with two tabs: SHIP + SUIT, and GEAR (hack rig, drone, later the turret) ----
+FT.shopTab=0;
+const SHOPSEC={SHIP:['-- SHIP SYSTEMS --','#5ab0ff'],SUIT:['-- EXO-SUIT --','#ffa03a'],HACK:['-- HACK RIG --','#9aff5a'],DRONE:['-- OTT, DRONE --','#7ae8ff'],TURRET:['-- AIRLOCK GUN --','#ff9a3a']};
+drawShop=function(dt){ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);ctx.fillStyle='#0c1228';for(let y=0;y<H;y+=8)ctx.fillRect(0,y,W,1);
+ const tab=FT.shopTab,secs=SHOP.filter(s=>(s[0]==='SHIP'||s[0]==='SUIT')===(tab===0));let hgt=4;for(const s of secs)hgt+=18+30*s[1].length;
+ panel(4,50,W-8,hgt,'#2a4a8a');txt('HANGAR',W/2,12,'#5ab0ff',16);txt('CREDITS: '+S.cr,W/2,34,'#ffd23a',9);
+ let y=54;for(const [sec,items] of secs){const hd=SHOPSEC[sec]||['-- '+sec+' --','#9aff5a'];txt(hd[0],W/2,y,hd[1],8);y+=14;
+  for(const it of items){const lv=S[it[0]]|0,mx=it[3],max=lv>=mx,c=it[4]*(lv+1);
+   txt(it[1],12,y+2,'#fff',8,'left');txt(it[2],12,y+13,'#6a7494',7,'left');
+   for(let i=0;i<mx;i++){ctx.fillStyle=i<lv?'#9aff5a':'#262c44';ctx.fillRect(112+i*8,y+5,6,6);}
+   btn(max?'MAX':c+' CR',190,y,72,24,()=>{if(S.cr>=c&&(S[it[0]]|0)<mx){S.cr-=c;S[it[0]]=(S[it[0]]|0)+1;save();SFX.buy();emit('buy',it[0]);}},'#ffd23a',max||S.cr<c);y+=30;}y+=4;}
+ y=Math.max(y,348);// launch stays where it always was
+ const nxt=Math.min(S.lvl,LV.length-1);btn('LAUNCH: CH '+(nxt+1)+' '+LV[nxt].name,10,y+6,250,30,()=>goStory(nxt),'#9aff5a');
+ btn('TITLE',10,y+42,80,22,()=>{state='title';},'#8aa0d0');btn('LOADOUT: '+loadout().n,96,y+42,164,22,()=>{state='loadout';},'#ffa03a');
+ btn(tab===0?'GEAR: '+SHOP.filter(q=>q[0]!=='SHIP'&&q[0]!=='SUIT').map(q=>({HACK:'HACK RIG',DRONE:'OTT',TURRET:'GUN'})[q[0]]||q[0]).join(', ')+'  >':'<  SHIP AND SUIT',10,y+70,250,22,()=>{FT.shopTab=1-FT.shopTab;},'#7ae8ff');
+ defaultAct=()=>goStory(nxt);};
+VR.ott={o:()=>G&&G.ott&&{x:G.ott.x,y:G.ott.y,shRdy:G.ott.shRdy,st:G.ott.st,zt:G.ott.zt,zaps:G.ott.zaps,blocks:G.ott.blocks,q:G.ott.q,qt:G.ott.qt,got:G.ott.got},stats:()=>ottStats(),say:k=>ottSay(k,true),tab:i=>{FT.shopTab=i;}};
