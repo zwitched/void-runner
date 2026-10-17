@@ -49,7 +49,7 @@ async def main():
     chk('daily randomness seeded by date',r1==r2,r1,r2)
     await E("VR.daily()");await pg.wait_for_timeout(300);st=await E("VR.state()")
     for _ in range(40):
-      if await E("VR.state()")!='space' and await E("VR.state()")!='plat':break
+      if await E("VR.state()") not in ('space','plat','engine','hack','evade','stealth','turret'):break
       await E("VR.boss();VR.kill()");await pg.wait_for_timeout(400)
     await pg.wait_for_timeout(4500)
     if await E("VR.state()")=='clear':

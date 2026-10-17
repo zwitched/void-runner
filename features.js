@@ -61,10 +61,10 @@ let chScroll=0;
 function goChapters(){state='chapters';}
 HOOKS.push((n,dt)=>{if(n!=='draw:chapters')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,0.3);txt('CHAPTERS',W/2,14,'#5ab0ff',14);
  const open=Math.max(S.lvl,S.done?LV.length:0);panel(8,34,W-16,402,'#2a3a6a');
- LV.forEach((L,i)=>{const y=40+i*26,ok=i<=Math.min(open,LV.length-1),b=S.best&&S.best[i];
-  if(ok){btn('',14,y,W-28,24,()=>goStory(i),'#3a5a9a');txt((i+1)+'. '+L.name,22,y+4,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':'ON FOOT',22,y+14,'#56607e',7,'left');
-   if(b){txt(b.r,W-34,y+6,RCOL[b.r],12);txt(String(b.s),W-50,y+9,'#8aa0d0',7,'right');}else txt('-',W-34,y+8,'#3a4466',9);}
-  else{ctx.fillStyle='#0a0d1a';ctx.fillRect(14,y,W-28,24);txt((i+1)+'. LOCKED',22,y+8,'#3a4466',8,'left');}});
+ const rh=Math.min(26,Math.floor(396/LV.length)),bh=rh-2;LV.forEach((L,i)=>{const y=40+i*rh,ok=i<=Math.min(open,LV.length-1),b=S.best&&S.best[i];
+  if(ok){btn('',14,y,W-28,bh,()=>goStory(i),'#3a5a9a');txt((i+1)+'. '+L.name,22,y+3,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':'ON FOOT',22,y+bh-9,'#56607e',7,'left');
+   if(b){txt(b.r,W-34,y+bh/2-6,RCOL[b.r],12);txt(String(b.s),W-50,y+bh/2-3,'#8aa0d0',7,'right');}else txt('-',W-34,y+bh/2-4,'#3a4466',9);}
+  else{ctx.fillStyle='#0a0d1a';ctx.fillRect(14,y,W-28,bh);txt((i+1)+'. LOCKED',22,y+bh/2-4,'#3a4466',8,'left');}});
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
 FT.menu=[];// extra title buttons registered by later features: [label,fn,col,visible()]
 drawTitle=function(dt){ctx.fillStyle='#05060f';ctx.fillRect(0,0,W,H);stars(dt,2);
@@ -510,3 +510,153 @@ drawShop=function(dt){ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);ctx.fillStyl
  btn(tab===0?'GEAR: '+SHOP.filter(q=>q[0]!=='SHIP'&&q[0]!=='SUIT').map(q=>({HACK:'HACK RIG',DRONE:'OTT',TURRET:'GUN'})[q[0]]||q[0]).join(', ')+'  >':'<  SHIP AND SUIT',10,y+70,250,22,()=>{FT.shopTab=1-FT.shopTab;},'#7ae8ff');
  defaultAct=()=>goStory(nxt);};
 VR.ott={o:()=>G&&G.ott&&{x:G.ott.x,y:G.ott.y,shRdy:G.ott.shRdy,st:G.ott.st,zt:G.ott.zt,zaps:G.ott.zaps,blocks:G.ott.blocks,q:G.ott.q,qt:G.ott.qt,got:G.ott.got},stats:()=>ottStats(),say:k=>ottSay(k,true),tab:i=>{FT.shopTab=i;}};
+// ================= v7-3. STEALTH: LISTENING POST =================
+// Built on the maze grid. Hollow sentries walk fixed patrols with vision cones that walls block. Dark corners hide
+// Mara if she keeps still. Running is quick but loud. Seen too long and the alarm goes up and they all come for her.
+// Goal: stand at the data terminal until the codes download, then leave by the top hatch.
+const STL={walk:3,run:4.6,R:4.5,half:0.62,gv:1.5,inv:2.3,chase:3.3,dl:2,noise:4,alarmT:9,catchR:0.6};
+const STEALTH_LV={t:'stealth',d:2,name:'LISTENING POST',pal:['#2a3a4a','#162230','#6a9ab0'],
+ story:["FENN: There's a Hollow listening post on the rim of the rift. It talks to the Spire every few minutes.","OTT: So it has the dock codes. So you want them.","MARA: So I go in shooting.","OTT: You go in quiet. One shot and the whole Spire hears about it.","FENN: Keep to the dark corners. Walk. They can hear boots.","MARA: Tiptoe through a Hollow base. Fine.","OTT: The terminal is deep inside. Stand at it while I pull the codes, then out the top hatch."]};
+insertChapters(6,[[12,STEALTH_LV]]);
+function refreshIdx(){SPACE_LV.length=0;LV.forEach((L,i)=>{if(L.t==='space')SPACE_LV.push(i);});}refreshIdx();// boss rush list after insertions
+function sDK(){return [0.75,1,1.35][diffIdx()];}
+function sSpd(){return FT.diff().spd;}
+function sPath(H,a,b){const D=ebfs(H,b[0],b[1],false);if(D[a[1]*EW+a[0]]<0)return null;const out=[{x:a[0],y:a[1]}];let x=a[0],y=a[1],g=0;
+ while((x!==b[0]||y!==b[1])&&g++<400){for(const [dx,dy] of EDIRS){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=EW||Y>=EH)continue;const v=D[Y*EW+X];if(v>=0&&v===D[y*EW+x]-1){x=X;y=Y;break;}}out.push({x,y});}return out;}
+function sMake(L,d,seed){const g=genMaze(seed),r=rng(seed^0x5151);
+ for(let i=0;i<30;i++){const x=1+Math.floor(r()*(EW-2)),y=1+Math.floor(r()*(EH-2));g[y*EW+x]=0;}
+ const H={mode:'stealth',L,d,seed,t:0,g,unlocked:false,fx:[],shake:0,dead:0,won:0,msg:'',meter:0,alarm:0,spotted:0,dl:0,got:0,nT:0,run:false,
+  p:{tx:ESTART[0],ty:ESTART[1],nx:ESTART[0],ny:ESTART[1],p:0,moving:false,dir:null,want:null,spd:STL.walk,face:0,inv:0},guards:[],coins:[],shadow:new Uint8Array(EW*EH)};
+ const dist=ebfs(H,ESTART[0],ESTART[1],false);const open=[];for(let y=1;y<EH-1;y++)for(let x=1;x<EW-1;x++)if(!g[y*EW+x]&&dist[y*EW+x]>=0)open.push([x,y]);
+ // terminal: the furthest reachable tile in the upper two thirds
+ let term=null,bd=-1;for(const [x,y] of open)if(y>=2&&y<=13&&dist[y*EW+x]>bd){bd=dist[y*EW+x];term=[x,y];}H.term=term;
+ // guards: one near the terminal, the rest spread out, none starting close to Mara
+ const n=Math.min(5,2+d),dT=ebfs(H,term[0],term[1],false);
+ for(let i=0;i<n;i++){let a=null;for(let k=0;k<200&&!a;k++){const c=open[Math.floor(r()*open.length)],[x,y]=c;if(dist[y*EW+x]<7||Math.hypot(x-ESTART[0],y-ESTART[1])<5)continue;if(i===0&&(dT[y*EW+x]<2||dT[y*EW+x]>4))continue;if(H.guards.some(q=>Math.abs(q.path[0].x-x)+Math.abs(q.path[0].y-y)<4))continue;a=c;}
+  if(!a)continue;const dA=ebfs(H,a[0],a[1],false),ends=open.filter(([x,y])=>dA[y*EW+x]>=4&&dA[y*EW+x]<=8&&dist[y*EW+x]>=5);const b=ends.length?ends[Math.floor(r()*ends.length)]:a;
+  const path=sPath(H,a,b)||[{x:a[0],y:a[1]}];const v=STL.gv*sSpd();H.guards.push({k:i%4,path,v,ph:r()*Math.max(1,2*(path.length-1)),sw:r()*6,mode:'pat',x:a[0],y:a[1],ang:0,look:0,m:null});}
+ // shadows: small dark pockets, never on the terminal or start
+ for(let i=0;i<9;i++){const [x,y]=open[Math.floor(r()*open.length)];for(const [dx,dy] of [[0,0],[1,0],[0,1]]){const X=x+dx,Y=y+dy;if(Y>0&&X>0&&X<EW-1&&Y<EH-1&&!g[Y*EW+X]&&!(X===term[0]&&Y===term[1])&&!(X===ESTART[0]&&Y===ESTART[1]))H.shadow[Y*EW+X]=1;}}
+ for(let i=0;i<10;i++){const [x,y]=open[Math.floor(r()*open.length)];if(!(x===term[0]&&y===term[1])&&!H.coins.some(c=>c.x===x&&c.y===y)&&dist[y*EW+x]>2)H.coins.push({x,y});}
+ for(const gd of H.guards)sPose(gd,0);return H;}
+function sPose(gd,t){const P=gd.path,n=P.length;if(n<2){gd.x=P[0].x;gd.y=P[0].y;gd.ang=(gd.ang0||0)+0.9*Math.sin(t*0.9+gd.sw);gd.fd=2;return;}
+ const L2=2*(n-1),s=(((t*gd.v+gd.ph)%L2)+L2)%L2;let a,b,f;if(s<=n-1){const i=Math.min(Math.floor(s),n-2);f=s-i;a=P[i];b=P[i+1];}else{const s2=s-(n-1),i=Math.min(Math.floor(s2),n-2);f=s2-i;a=P[n-1-i];b=P[n-2-i];}
+ gd.x=a.x+(b.x-a.x)*f;gd.y=a.y+(b.y-a.y)*f;const dx=b.x-a.x,dy=b.y-a.y;gd.ang=Math.atan2(dy,dx)+0.35*Math.sin(t*1.3+gd.sw);gd.fd=Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0);}
+function sWall(H,x,y){const X=Math.round(x),Y=Math.round(y);if(X<0||Y<0||X>=EW||Y>=EH)return true;return !!H.g[Y*EW+X];}
+function sLOS(H,x0,y0,x1,y1){const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/0.2);for(let i=1;i<n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;if(sWall(H,x,y))return false;}return true;}
+// can this guard see the point (tile units)? extra widens the cone for the planner's safety margin
+function sSees(H,gd,px,py,ex){ex=ex||0;const dx=px-gd.x,dy=py-gd.y,dd=Math.hypot(dx,dy);if(dd<0.75+ex)return dd;const R=(gd.mode==='chase'?STL.R+1:STL.R)+ex;if(dd>R)return 0;
+ let da=Math.atan2(dy,dx)-gd.ang;da=Math.atan2(Math.sin(da),Math.cos(da));if(Math.abs(da)>STL.half+ex*0.25)return 0;return sLOS(H,gd.x,gd.y,px,py)?dd:0;}
+// time-expanded search: one step = one tile at walking pace. Finds a route that never enters any cone (with margin)
+// from the start, waits out the download on the terminal, and reaches the hatch. Guards follow their patrols.
+function sPlan(H,opt){opt=opt||{};const tick=1/STL.walk,K=opt.K||700,ND=Math.ceil(STL.dl/tick)+1,ex=opt.ex===undefined?0.5:opt.ex,NS=EW*EH*(ND+1);
+ const ghosts=H.guards.map(q=>Object.assign({},q,{mode:'pat'}));const unsafe=[];
+ const U=k2=>{if(unsafe[k2])return unsafe[k2];const t=k2*tick/2,u=new Uint8Array(EW*EH);for(const q of ghosts){sPose(q,t);const x0=Math.max(0,Math.floor(q.x-STL.R-1)),x1=Math.min(EW-1,Math.ceil(q.x+STL.R+1)),y0=Math.max(0,Math.floor(q.y-STL.R-1)),y1=Math.min(EH-1,Math.ceil(q.y+STL.R+1));
+   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(!H.g[y*EW+x]&&!u[y*EW+x]&&sSees(H,q,x,y,ex))u[y*EW+x]=1;}return unsafe[k2]=u;};
+ const [sx,sy]=ESTART,[tx,ty]=H.term,ex1=EDOOR[0],ey1=EDOOR[1]+1;
+ if(U(0)[sy*EW+sx])return null;
+ let front=[sy*EW+sx],layers=[{st:Int32Array.from(front),par:Int32Array.from([-1]),act:Int8Array.from([-1])}];
+ for(let k=0;k<K;k++){const seen=new Uint8Array(NS),nst=[],npar=[],nact=[],Ua=U(2*k+1),Ub=U(2*k+2),cur=layers[k];
+  for(let i=0;i<cur.st.length;i++){const s=cur.st[i],ph=Math.floor(s/(EW*EH)),c=s%(EW*EH),x=c%EW,y=Math.floor(c/EW);
+   if(ph===ND&&x===ex1&&y===ey1){// done: rebuild the actions
+    const acts=[];let kk=k,ii=i;while(kk>0){acts.push(layers[kk].act[ii]);ii=layers[kk].par[ii];kk--;}acts.reverse();acts.push(0);return {acts,ticks:k+1,tick};}
+   if(Ua[c])continue;
+   const opts=[[-1,x,y]];for(let a=0;a<4;a++){const X=x+EDIRS[a][0],Y=y+EDIRS[a][1];if(X<1||Y<1||X>=EW-1||Y>=EH-1||H.g[Y*EW+X])continue;opts.push([a,X,Y]);}
+   for(const [a,X,Y] of opts){const c2=Y*EW+X;if(Ua[c2]||Ub[c2])continue;let p2=ph;if(ph<ND&&a<0&&X===tx&&Y===ty)p2=ph+1;else if(ph<ND&&!(X===tx&&Y===ty))p2=0;
+    const s2=p2*EW*EH+c2;if(seen[s2])continue;seen[s2]=1;nst.push(s2);npar.push(i);nact.push(a);}}
+  if(!nst.length)return null;layers.push({st:Int32Array.from(nst),par:Int32Array.from(npar),act:Int8Array.from(nact)});}
+ return null;}
+function sBuild(L,i){const d=L.d+(S.ng?1:0),base=FT.run&&FT.run.mode==='daily'?Math.floor(Math.random()*1e6):13000+i*101;
+ for(let k=0;k<30;k++){const H=sMake(L,d,base+k*7919);const pl=sPlan(H);if(pl){H.plan=pl;H.tries=k;return H;}}const H=sMake(L,d,base);H.plan=null;return H;}
+function initStealth(L,i){curLvl=i;runCr=0;FT.toasts.length=0;G=sBuild(L,i);state='stealth';stT=0;emit('start',L);const s=sc();s.pot=G.coins.length*PTS.coin+PTS.term+PTS.ghost;}
+PTS.term=1500;PTS.ghost=2000;
+function sChooseP(m){const H=G;if(H.auto){const A=H.auto;if(H.t+1e-9<A.wu)return null;const a=A.acts[A.i];if(a===undefined)return null;A.i++;if(a<0){A.wu=A.i*H.plan.tick;return null;}return EDIRS[a];}
+ if(m.halt){m.halt=0;m.dir=null;m.want=null;return null;}return pchoose(m);}
+function sGrid(gd){return gd.m?etile(gd.m):[Math.round(gd.x),Math.round(gd.y)];}
+function sGo(H,gd,mode,tgt){const [x,y]=sGrid(gd);if(!gd.m||gd.mode==='pat')gd.m={tx:x,ty:y,nx:x,ny:y,p:0,moving:false,dir:null};gd.mode=mode;gd.tgt=tgt;gd.D=ebfs(H,tgt[0],tgt[1],false);gd.look=0;}
+function sChooseG(H,gd){return m=>{const D=gd.D,c=D[m.ty*EW+m.tx];if(c<=0)return null;for(const d of EDIRS){const X=m.tx+d[0],Y=m.ty+d[1];if(X<0||Y<0||X>=EW||Y>=EH||(X===EDOOR[0]&&Y===EDOOR[1]))continue;const v=D[Y*EW+X];if(v>=0&&v<c)return d;}return null;};}
+function sNoise(H,x,y){H.fx.push({x:EOX+x*ETS+8,y:EOY+y*ETS+8,ring:1,l:0.4,R:STL.noise*ETS*1.4});for(const gd of H.guards){if(gd.mode==='chase')continue;if(Math.hypot(gd.x-x,gd.y-y)<=STL.noise){if(gd.mode!=='inv')tone(500,700,.08,'square',.03);sGo(H,gd,'inv',[x,y]);}}emit('noise');}
+function sAlarm(H){if(H.alarm>0)return;H.alarm=STL.alarmT;H.spotted++;H.meter=1;emit('hurt');emit('alarm');H.shake=0.3;SFX.hurt();for(let i=0;i<3;i++)tone(880,440,.15,'square',.06,i*.2);const [px,py]=etile(H.p);for(const gd of H.guards)sGo(H,gd,'chase',[px,py]);toast('ALARM! THEY SAW YOU','#ff3a6a');}
+function updStealth(dt){const H=G,p=H.p;H.t+=dt;H.shake=Math.max(0,H.shake-dt);for(const f of H.fx){f.x+=f.vx*dt||0;f.y+=f.vy*dt||0;f.l-=dt;}H.fx=H.fx.filter(f=>f.l>0);
+ if(H.dead){H.dead-=dt;if(H.dead<=0){H.dead=0;failLevel();}return;}if(H.won){H.won-=dt;if(H.won<=0){H.won=0;levelClear();}return;}
+ const running=!H.auto&&(H.run||keys.ShiftLeft||keys.ShiftRight);p.spd=running?STL.run:STL.walk;
+ emove(H,p,dt,p.spd,sChooseP);if(p.dir)p.face=EDIRS.findIndex(d=>d[0]===p.dir[0]&&d[1]===p.dir[1]);
+ const [ptx,pty]=etile(p),[ppx,ppy]=epos(p),fx=(ppx-EOX-ETS/2)/ETS,fy=(ppy-EOY-ETS/2)/ETS;
+ for(const c of H.coins)if(!c.got&&c.x===ptx&&c.y===pty){c.got=1;runCr+=1;SFX.coin();emit('coin',c);}
+ if(!H.got&&ptx===H.term[0]&&pty===H.term[1]&&!p.moving){H.dl=Math.min(1,H.dl+dt/STL.dl);if(H.dl>=1){H.got=1;H.unlocked=true;addPts(PTS.term,EOX+ptx*ETS+8,EOY+pty*ETS);SFX.win();toast('CODES IN. GET TO THE HATCH','#9aff5a');emit('codes');}}
+ if(H.unlocked&&ptx===EDOOR[0]&&pty===EDOOR[1]){if(!H.spotted){addPts(PTS.ghost);toast('GHOST BONUS','#5ad0ff');}H.won=0.8;runCr+=10*H.d;return;}
+ if(running&&p.moving){H.nT-=dt;if(H.nT<=0){H.nT=0.35;sNoise(H,ptx,pty);}}else H.nT=0;
+ // guards
+ for(const gd of H.guards){if(gd.mode==='pat'){sPose(gd,H.t);continue;}
+  const spd=gd.mode==='chase'?STL.chase:STL.inv;if(gd.mode==='chase'&&!gd.m.moving){const [a,b]=etile(p);if(gd.tgt[0]!==a||gd.tgt[1]!==b){gd.tgt=[a,b];gd.D=ebfs(H,a,b,false);}}
+  emove(H,gd.m,dt,spd,sChooseG(H,gd));const [x,y]=epos(gd.m);gd.x=(x-EOX-ETS/2)/ETS;gd.y=(y-EOY-ETS/2)/ETS;
+  if(gd.m.dir){gd.ang=Math.atan2(gd.m.dir[1],gd.m.dir[0]);gd.fd=EDIRS.indexOf(gd.m.dir);}
+  if(!gd.m.moving&&gd.D[gd.m.ty*EW+gd.m.tx]===0){
+   if(gd.mode==='inv'){gd.look+=dt;gd.ang+=dt*2.4;if(gd.look>2.4){let bj=0,bd=1e9;gd.path.forEach((q,j)=>{const dd=Math.abs(q.x-gd.m.tx)+Math.abs(q.y-gd.m.ty);if(dd<bd){bd=dd;bj=j;}});gd.rj=bj;sGo(H,gd,'ret',[gd.path[bj].x,gd.path[bj].y]);gd.mode='ret';}}
+   else if(gd.mode==='ret'){const n=gd.path.length,L2=Math.max(1,2*(n-1));gd.ph=((gd.rj-H.t*gd.v)%L2+L2)%L2;gd.mode='pat';gd.m=null;sPose(gd,H.t);}}}
+ // detection
+ const hid=H.shadow[pty*EW+ptx]&&!p.moving;let seen=0,cl=99;for(const gd of H.guards){const d=sSees(H,gd,fx,fy);if(d){seen=1;cl=Math.min(cl,d);}}
+ H.hid=hid;H.seen=seen&&!hid;
+ if(H.seen&&!H.alarm){const rate=(1.3+2.2*Math.max(0,1-cl/STL.R))*sDK()*(H.shadow[pty*EW+ptx]?0.35:1);H.meter=Math.min(1,H.meter+rate*dt);if(H.meter>=1)sAlarm(H);if(!H.god&&(H.t*6|0)%2&&!H._tk){H._tk=1;tone(1300,1300,.02,'square',.02);}else H._tk=0;}
+ else if(!H.alarm)H.meter=Math.max(0,H.meter-0.4*dt);
+ H.maxMeter=Math.max(H.maxMeter||0,H.meter);
+ if(H.alarm>0){if(!H.seen)H.alarm-=dt;if(H.alarm<=0){H.alarm=0;H.meter=0.5;for(const gd of H.guards)if(gd.mode==='chase'){let bj=0,bd=1e9;gd.path.forEach((q,j)=>{const dd=Math.abs(q.x-gd.x)+Math.abs(q.y-gd.y);if(dd<bd){bd=dd;bj=j;}});gd.rj=bj;sGo(H,gd,'ret',[gd.path[bj].x,gd.path[bj].y]);}toast('THEY LOST YOU','#ffd23a');}}
+ for(const gd of H.guards)if(Math.hypot(gd.x-fx,gd.y-fy)<STL.catchR&&!god()){if(H.alarm>0||gd.mode==='chase'){H.dead=1.2;H.msg='CAUGHT';SFX.big();boomE(ppx,ppy,'#ff3a6a');emit('caught');return;}else sAlarm(H);}}
+// ---- drawing ----
+function sCone(H,gd,col){const R=(gd.mode==='chase'?STL.R+1:STL.R),n=18,cx=EOX+gd.x*ETS+8,cy=EOY+gd.y*ETS+8;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(cx,cy);
+ for(let i=0;i<=n;i++){const a=gd.ang-STL.half+2*STL.half*i/n;let r=0.3;while(r<R&&!sWall(H,gd.x+Math.cos(a)*r,gd.y+Math.sin(a)*r))r+=0.12;ctx.lineTo(cx+Math.cos(a)*r*ETS,cy+Math.sin(a)*r*ETS);}ctx.closePath();ctx.fill();}
+const SB={STOP:[6,396,50,34],RUN:[214,396,50,34]};
+function drawStealth(dt){const H=G,L=H.L;ctx.fillStyle='#04060c';ctx.fillRect(0,0,W,HEIGHT_);ctx.save();shakeT(H.shake);
+ ctx.fillStyle='#0b0d1c';ctx.fillRect(EOX,EOY,EW*ETS,EH*ETS);
+ for(let y=0;y<EH;y++)for(let x=0;x<EW;x++){const sx=EOX+x*ETS,sy=EOY+y*ETS;if(x===EDOOR[0]&&y===EDOOR[1]){const op=H.unlocked;ctx.fillStyle='#10141f';ctx.fillRect(sx,sy,ETS,ETS);ctx.fillStyle=op?'#9aff5a':'#ff3a6a';if(op){ctx.globalAlpha=0.5+0.3*Math.sin(H.t*6);ctx.fillRect(sx+2,sy+2,ETS-4,ETS-4);ctx.globalAlpha=1;}else for(let i=2;i<ETS;i+=4)ctx.fillRect(sx+i,sy+1,2,ETS-2);continue;}
+  if(H.g[y*EW+x]){const wl=(i,j)=>i<0||j<0||i>=EW||j>=EH||!!H.g[j*EW+i],m=(wl(x,y-1)?1:0)|(wl(x+1,y)?2:0)|(wl(x,y+1)?4:0)|(wl(x-1,y)?8:0),hv=((x*7349)^(y*1931))%7;blit(ART.wall(L.pal,m,hv<4?2:hv<6?0:1),sx,sy,ETS,ETS);}
+  else{ctx.fillStyle=((x+y)%2)?'#0e1420':'#101826';ctx.fillRect(sx,sy,ETS,ETS);ctx.fillStyle='#16202e';ctx.fillRect(sx,sy+ETS-1,ETS,1);}}
+ // shadows: dark pockets with a crate or locker to hide behind
+ for(let i=0;i<EW*EH;i++)if(H.shadow[i]){const x=EOX+(i%EW)*ETS,y=EOY+Math.floor(i/EW)*ETS;ctx.fillStyle='rgba(0,0,0,0.62)';ctx.fillRect(x,y,ETS,ETS);ctx.fillStyle='rgba(60,80,120,0.25)';for(let k=0;k<ETS;k+=4)ctx.fillRect(x+k,y,1,ETS);if(i%3===0){ctx.fillStyle='#2a2418';ctx.fillRect(x+2,y+2,6,6);ctx.fillStyle='#4a3e26';ctx.fillRect(x+2,y+2,6,1);ctx.fillRect(x+4,y+2,1,6);}}
+ // terminal
+ {const [tx,ty]=H.term,x=EOX+tx*ETS,y=EOY+ty*ETS,c=H.got?'#9aff5a':'#5ad0ff';glow(x+8,y+8,9+Math.sin(H.t*4)*2,c,0.35);ctx.fillStyle='#1a2230';ctx.fillRect(x+2,y+1,12,11);ctx.fillStyle=c;ctx.fillRect(x+4,y+3,8,6);ctx.fillStyle='#e8ffff';ctx.fillRect(x+5,y+4+((H.t*6|0)%4),5,1);ctx.fillStyle='#3a4a5a';ctx.fillRect(x+6,y+12,4,3);
+  if(H.dl>0&&!H.got){ctx.strokeStyle='#9aff5a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x+8,y+8,10,-Math.PI/2,-Math.PI/2+H.dl*Math.PI*2);ctx.stroke();ctx.lineWidth=1;}}
+ for(const c of H.coins)if(!c.got)drawCoin(EOX+c.x*ETS+8,EOY+c.y*ETS+8,H.t,c.x+c.y);
+ // cones under the bodies
+ ctx.globalCompositeOperation='lighter';for(const gd of H.guards)sCone(H,gd,gd.mode==='chase'?'rgba(255,40,70,0.22)':gd.mode==='inv'?'rgba(255,150,40,0.2)':'rgba(255,220,110,0.13)');ctx.globalCompositeOperation='source-over';
+ for(const gd of H.guards){const x=EOX+gd.x*ETS+8,y=EOY+gd.y*ETS+8,mv=gd.mode!=='pat'||gd.path.length>1;ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(x-5,y+6,10,2);draw(ART.td.ch[gd.k][gd.fd||0][mv?((H.t*7+gd.k)|0)&3:0],x,y,1);
+  glow(x+Math.cos(gd.ang)*5,y+Math.sin(gd.ang)*5,3,gd.mode==='chase'?'#ff3a6a':'#ffd27a',0.6);
+  if(gd.mode==='inv'||gd.mode==='chase')txt(gd.mode==='inv'?'?':'!',x,y-17,gd.mode==='inv'?'#ffa03a':'#ff3a6a',9);}
+ const p=H.p,[px,py]=epos(p);if(!H.dead){ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(px-5,py+6,10,2);if(H.hid)ctx.globalAlpha=0.45;draw(ART.td.mara[p.face||0][p.moving?((H.t*(p.spd>3.5?14:9))|0)&3:0],px,py,1);ctx.globalAlpha=1;if(H.hid){ctx.strokeStyle='rgba(90,208,255,0.5)';ctx.strokeRect(px-8.5,py-8.5,17,17);}}
+ drawFx(H.fx);
+ if(H.alarm>0){ctx.fillStyle='rgba(255,30,60,'+(0.08+0.06*Math.sin(H.t*12))+')';ctx.fillRect(EOX,EOY,EW*ETS,EH*ETS);}
+ ctx.restore();
+ // HUD
+ const g=ctx.createLinearGradient(0,0,0,20);g.addColorStop(0,'rgba(4,6,16,0.85)');g.addColorStop(1,'rgba(4,6,16,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,20);
+ txt('CR '+(S.cr+runCr),236,6,'#ffd23a',8,'right');
+ txt(H.alarm>0?'ALARM':'DETECTION',8,30,H.alarm>0&&(H.t*4|0)%2?'#ffffff':'#ff9ab0',7,'left');bar(70,31,140,4,H.meter,H.alarm>0?'#ff3a6a':H.meter>0.6?'#ffa03a':'#ffd23a','#2a0a14');
+ txt(H.got?'GET OUT THE TOP HATCH':H.dl>0?'DOWNLOADING '+Math.round(H.dl*100)+'%':'REACH THE TERMINAL',W/2,18,H.got?'#9aff5a':'#5ad0ff',8);
+ if(H.hid)txt('HIDDEN',W-8,30,'#5ad0ff',7,'right');else if(H.run||keys.ShiftLeft||keys.ShiftRight)txt('RUNNING. LOUD',W-8,30,'#ffa03a',7,'right');
+ if(H.t<4)txt('CHAPTER '+(curLvl+1)+': '+L.name,W/2,200,'#fff',9);
+ if(H.dead)txt(H.msg,W/2,220,'#ff3a6a',10);if(H.won)txt('OUT CLEAN',W/2,220,'#9aff5a',10);
+ ctx.fillStyle='#070912';ctx.fillRect(0,384,W,HEIGHT_-384);const lab={U:'^',L:'<',R:'>',D:'v'};for(const k in EB){const b=EB[k];blit(uiArt(b[2],b[3],'#5ab0ff','btn',0),b[0],b[1],b[2],b[3]);txt(lab[k],b[0]+b[2]/2,b[1]+b[3]/2-4,'#bfe8ff',9);}
+ {const b=SB.STOP;blit(uiArt(b[2],b[3],'#8aa0d0','btn',0),b[0],b[1],b[2],b[3]);txt('STOP',b[0]+b[2]/2,b[1]+b[3]/2-4,'#dfe8ff',8);}
+ {const b=SB.RUN;blit(uiArt(b[2],b[3],'#ffa03a','btn',H.run),b[0],b[1],b[2],b[3]);txt('RUN',b[0]+b[2]/2,b[1]+b[3]/2-8,H.run?'#ffd23a':'#ffcf9a',8);txt(H.run?'ON':'OFF',b[0]+b[2]/2,b[1]+b[3]/2+2,H.run?'#ffd23a':'#56607e',7);}
+ txt(hasTouch?'SWIPE: MOVE':'ARROWS: MOVE',8,438,'#56607e',7,'left');txt(hasTouch?'TAP: STOP':'SPACE: STOP',8,448,'#56607e',7,'left');txt(hasTouch?'RUN = LOUD':'SHIFT: RUN',W-8,438,'#56607e',7,'right');
+ if(dt)scoreHUD(dt);pauseBtn();}
+// ---- wiring ----
+{const _sl=startLevel;startLevel=function(i){const L=LV[i];if(L&&L.t==='stealth'){initStealth(L,i);return;}_sl(i);};}
+{const _p=pause;pause=function(){if(state==='stealth'){G.prev=state;state='pause';return;}_p();};}
+{const _dm=drawMode;drawMode=function(dt){if(G&&G.mode==='stealth'){drawStealth(0);return;}_dm(dt);};}
+HOOKS.push((n,dt)=>{if(n==='draw:stealth'&&G&&G.mode==='stealth'){if(dt)updStealth(dt);drawStealth(dt);}});
+function sHit(q,b){return q.x>=b[0]-3&&q.x<=b[0]+b[2]+3&&q.y>=b[1]-3&&q.y<=b[1]+b[3]+3;}
+{const _pd=ptrDown;ptrDown=function(id,e){_pd(id,e);const q=ptrs[id];if(!q||state!=='stealth'||(q.x>236&&q.y<26))return;
+  if(sHit(q,SB.STOP)){G.p.halt=1;q.ea=null;return;}if(sHit(q,SB.RUN)){G.run=!G.run;q.ea=null;tone(G.run?700:400,G.run?900:300,.05,'square',.03);return;}evDown(q);};}
+{const _pm=ptrMove;ptrMove=function(id,e){_pm(id,e);const q=ptrs[id];if(q&&state==='stealth')evMove(q);};}
+{const _pu=ptrUp;ptrUp=function(id,c){const q=ptrs[id];if(q&&state==='stealth'&&q.ea&&!c&&q.y<384&&Math.hypot(q.x-q.sx,q.y-q.sy)<10)G.p.halt=1;_pu(id,c);};}
+{const _ok=onKey;onKey=function(c){if(state==='stealth'){if(c==='Escape'||c==='KeyP'){pause();return;}if(c==='Space'||c==='KeyX'){G.p.halt=1;return;}if(c==='KeyR'){G.run=!G.run;return;}evKey(c);return;}_ok(c);};}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state==='stealth'||state==='engine'))pause();});
+ACH.push(['ghost','GHOST','Get through the listening post without an alarm.']);
+HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='stealth'&&G&&G.mode==='stealth'&&!G.spotted)unlockA('ghost');});
+{const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='stealth'){G.got=1;G.dl=1;G.unlocked=true;return;}_b();};VR.kill=()=>{if(G&&G.mode==='stealth'){G.won=0.8;return;}_k();};}
+VR.st={H:()=>G,plan:(o)=>{const p=sPlan(G,o);return p&&{n:p.acts.length,ticks:p.ticks,acts:Array.from(p.acts)};},auto:()=>{if(!G.plan)return false;G.auto={acts:G.plan.acts,i:0,wu:0};G.t=0;return true;},
+ sees:(i,x,y)=>sSees(G,G.guards[i],x,y),los:(a,b,c,d)=>sLOS(G,a,b,c,d),noise:(x,y)=>sNoise(G,x,y),alarm:()=>sAlarm(G),place:(x,y)=>{const p=G.p;p.tx=p.nx=x;p.ty=p.ny=y;p.p=0;p.moving=false;p.dir=null;p.want=null;},
+ build:(i,seed)=>{const H=sMake(LV[i],LV[i].d,seed);return {plan:!!sPlan(H)};},
+ sim:()=>{// run the real update with the plan at a fixed 60 Hz, all in one go
+  const H=G;H.auto={acts:H.plan.acts,i:0,wu:0};H.t=0;const st0=state;let f=0,mx=0;while(f<60*240&&!H.won&&!H.dead&&!H.spotted){updStealth(1/60);mx=Math.max(mx,H.meter);f++;}
+  return {won:!!H.won,dead:!!H.dead,spotted:H.spotted,maxMeter:mx,t:H.t,got:H.got,f};}};
