@@ -18,7 +18,7 @@ async def main():
     chk('v6 save: next chapter is the new SURVEY DOCK',nm[sv['lvl']]=='SURVEY DOCK' and sv['v']>=7,sv)
     chk('v6 save: ranks follow their chapters',{nm[int(k)]:v['r'] for k,v in sv['best'].items()}=={'COLD DRIFT':'S','RIFT APPROACH':'A','LISTENING POST':'B'},sv['best'])
     ti=await E("VR.ix('SURVEY DOCK')");chk('turret chapter sits right after COLD DRIFT',nm[ti-1]=='COLD DRIFT' and nm[ti+1]=='RIFT APPROACH' and await E(f"LV[{ti}].t")=='turret',ti)
-    chk('19 chapters in the campaign (v8 adds the canyon)',len(nm)==19,len(nm))
+    chk('20 chapters in the campaign (v8 adds the canyon, v9 the duel)',len(nm)==20,len(nm))
     await E("localStorage.clear();location.reload()");await pg.wait_for_timeout(700)
     box=await pg.locator('canvas').bounding_box();X=lambda x:box['x']+x*box['width']/270;Y=lambda y:box['y']+y*box['height']/480
     cdp=await pg.context.new_cdp_session(pg)

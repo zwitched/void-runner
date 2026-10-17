@@ -161,11 +161,16 @@ const AIMS=[-Math.PI/2,-Math.PI/4,0,Math.PI/4];
 function leg(hx,hy,a,b){const kx=hx+Math.sin(a)*9,ky=hy+Math.cos(a)*9,fx=kx+Math.sin(a-b)*9,fy=ky+Math.cos(a-b)*9;return[kx,ky,fx,fy];}
 function maraPose(P){const hip=[19+P.lean*2,35+P.dy],sh=[20+P.lean*4,24+P.dy],head=[21+P.lean*5,14+P.dy+(P.headDy||0)];
  const L1=leg(hip[0],hip[1],P.l1[0],P.l1[1]),L2=leg(hip[0],hip[1],P.l2[0],P.l2[1]);const aim=P.aim,dx=Math.cos(aim),dy=Math.sin(aim);
- const hand=[sh[0]+dx*8,sh[1]+dy*8],tip=[hand[0]+dx*11,hand[1]+dy*11];const rot=P.rot||0,piv=[20,55];
+ const hand=[sh[0]+dx*8,sh[1]+dy*8],tip=[hand[0]+dx*11,hand[1]+dy*11];const rot=P.rot||0,piv=P.piv||[20,55];
+ const ba=P.bat===undefined?aim:P.bat,bx=Math.cos(ba),by=Math.sin(ba),bt=[hand[0]+bx*15,hand[1]+by*15];
  const fn=(X,Y)=>{let x=X,y=Y;if(rot){const c=Math.cos(-rot),s=Math.sin(-rot),ux=X-piv[0],uy=Y-piv[1];x=piv[0]+ux*c-uy*s;y=piv[1]+ux*s+uy*c;}
   // front: gun + front arm
-  if(cap(x,y,hand[0]-dx*2,hand[1]-dy*2,tip[0],tip[1],1.7)){return sd(x,y,tip[0]-dx*2,tip[1]-dy*2,tip[0],tip[1])<1.6?'gunl':'gun';}
-  if(cap(x,y,hand[0]+dx*3+dy*2,hand[1]+dy*3-dx*2,hand[0]+dx*3+dy*3.5,hand[1]+dy*3-dx*3.5,1.3))return'gun';
+  if(P.baton){// shock baton: glove over the grip, guard ring, dark shaft, glowing tip with coil bands
+   if(Math.hypot(x-hand[0],y-hand[1])<2.3)return'boot';
+   if(cap(x,y,hand[0]+bx*1.6-by*2.4,hand[1]+by*1.6+bx*2.4,hand[0]+bx*1.6+by*2.4,hand[1]+by*1.6-bx*2.4,0.9))return'belt';
+   if(cap(x,y,hand[0]-bx*3,hand[1]-by*3,bt[0],bt[1],1.25)){const u=(x-hand[0])*bx+(y-hand[1])*by;if(u>10.5)return(u>13.6?'gunl':(Math.floor(u*1.2)%2?'gunl':'gun'));if(u<-1.5)return'belt';return Math.abs((x-hand[0])*-by+(y-hand[1])*bx)<0.35?['gun',0.25]:'gun';}}
+  else{if(cap(x,y,hand[0]-dx*2,hand[1]-dy*2,tip[0],tip[1],1.7)){return sd(x,y,tip[0]-dx*2,tip[1]-dy*2,tip[0],tip[1])<1.6?'gunl':'gun';}
+  if(cap(x,y,hand[0]+dx*3+dy*2,hand[1]+dy*3-dx*2,hand[0]+dx*3+dy*3.5,hand[1]+dy*3-dx*3.5,1.3))return'gun';}
   if(cap(x,y,sh[0],sh[1],hand[0],hand[1],2.8))return sd(x,y,hand[0],hand[1],hand[0],hand[1])<2.2?'boot':(sd(x,y,sh[0],sh[1],sh[0],sh[1])<3.3?'arm':'suit');
   // head
   const hd=eld(x,y,head[0],head[1],7,7);if(hd<1){if(el(x,y,head[0]+3.2,head[1]+0.6,4.6,3.1))return x<head[0]+2.5&&y<head[1]?['vis',0.35]:'vis';if(Math.abs(x-head[0]+1.5)<1.1&&y<head[1]-1)return'suit';if(hd>0.82&&y>head[1]+2)return'suit2';return'helm';}
@@ -180,7 +185,7 @@ function maraPose(P){const hip=[19+P.lean*2,35+P.dy],sh=[20+P.lean*4,24+P.dy],he
   let v=lg(L1,false);if(v)return v;
   if(rr(x,y,sh[0]-10+P.lean*2,sh[1]-1,sh[0]-4,sh[1]+11,1.5))return y>sh[1]+8?'belt':'pack';
   v=lg(L2,true);if(v)return v;return 0;};
- const K=MK,det=(X,Y)=>{const x=X/K,y=Y/K;let ux=x,uy=y;if(rot){const c=Math.cos(-rot),s2=Math.sin(-rot),vx=x-piv[0],vy=y-piv[1];ux=piv[0]+vx*c-vy*s2;uy=piv[1]+vx*s2+vy*c;}
+ const K=P.K||MK,pad=P.pad||0,padT=P.padT||0,det=(X,Y)=>{const x=X/K-pad,y=Y/K-padT;let ux=x,uy=y;if(rot){const c=Math.cos(-rot),s2=Math.sin(-rot),vx=x-piv[0],vy=y-piv[1];ux=piv[0]+vx*c-vy*s2;uy=piv[1]+vx*s2+vy*c;}
   const v=fn(x,y);if(!v)return 0;const m=Array.isArray(v)?v[0]:v;
   // extra detail at the larger size: helmet antenna light, knee pads, glove cuffs, belt pouch, boot soles, suit seams
   if(m==='helm'&&Math.abs(ux-(head[0]-4.2))<0.5&&uy<head[1]-3)return'gunl';
@@ -189,7 +194,7 @@ function maraPose(P){const hip=[19+P.lean*2,35+P.dy],sh=[20+P.lean*4,24+P.dy],he
   if(m==='boot'&&(uy>54.3||Math.abs(uy-(L1[3]+1.6))<0.25))return'belt';
   if((m==='suit'||m==='suit2')&&(Math.hypot(ux-L1[0],uy-L1[1])<2.1||Math.hypot(ux-L2[0],uy-L2[1])<2.1))return m==='suit'?'arm':['arm',-0.25];
   return v;};
- return{c:paint(Math.round(40*K),Math.round(56*K),det,MM,{R:4,rim:'#a8e8ff'}),tip:[(tip[0]-20)*K/2,(tip[1]-56)*K/2]};}
+ return{c:paint(Math.round((40+2*pad)*K),Math.round((56+padT)*K),det,MM,{R:4,rim:'#a8e8ff'}),tip:[(tip[0]-20)*K/2,(tip[1]-56)*K/2]};}
 const MK=1.65;
 function maraSet(){const S={idle:[],run:[],rise:[],fall:[],land:[],hit:null,death:[],tips:[]};
  for(let a=0;a<4;a++){const aim=AIMS[a];S.idle.push([]);S.run.push([]);
@@ -529,6 +534,109 @@ function hackBlock(col,k){const base=hx(col),c=mk(24,24,2),x=c.getContext('2d'),
   const i=(y*24+X)*4;d[i]=cc[0];d[i+1]=cc[1];d[i+2]=cc[2];d[i+3]=255;}
  x.putImageData(im,0,0);return c;}
 
+// ================= v9 DUEL: Mara with the shock baton (larger, 2.2 art px per unit), the Hollow champion, the core chamber =================
+const DK=2.2,DST={l1:[0.45,0.32],l2:[-0.38,0.22]};
+function dMara(o){return maraPose(Object.assign({lean:0,dy:0,l1:DST.l1,l2:DST.l2,aim:0.35,bat:-0.9,scarf:0,baton:1,K:DK,pad:12,padT:8},o)).c;}
+function maraDuelSet(){const S={idle:[],walk:[],wind:[],swing:[],roll:[],death:[]};
+ for(let f=0;f<4;f++){const br=[0,0.5,1,0.5][f];S.idle.push(dMara({dy:br*0.6+1,headDy:br*0.3,scarf:f*1.6,bat:-0.9+br*0.06}));}
+ for(let f=0;f<8;f++){const p=f/8*Math.PI*2,lg=q=>[0.1+Math.sin(q)*0.5,0.3+0.6*Math.max(0,Math.cos(q+0.6))];S.walk.push(dMara({lean:0.15,dy:1-Math.abs(Math.sin(p))*0.8,l1:lg(p),l2:lg(p+Math.PI),scarf:p}));}
+ S.wind.push(dMara({lean:-0.2,dy:1,aim:-2.05,bat:-2.55,l1:[0.55,0.4],l2:[-0.45,0.25],scarf:2}));
+ S.wind.push(dMara({lean:-0.1,dy:2,aim:2.35,bat:2.85,l1:[0.5,0.45],l2:[-0.5,0.3],scarf:3}));
+ S.swing.push(dMara({lean:0.5,dy:2,aim:0.45,bat:0.85,l1:[0.75,0.6],l2:[-0.55,0.25],scarf:4}));
+ S.swing.push(dMara({lean:0.4,dy:1.5,aim:-0.3,bat:-0.65,l1:[0.7,0.55],l2:[-0.5,0.25],scarf:5}));
+ S.heavyWind=dMara({lean:-0.35,dy:2.5,aim:-1.95,bat:-1.62,l1:[0.6,0.6],l2:[-0.5,0.35],scarf:1});
+ S.heavy=dMara({lean:0.75,dy:5,aim:0.85,bat:1.15,l1:[1.0,1.0],l2:[-0.75,0.2],scarf:5});
+ S.block=dMara({lean:-0.12,dy:2,aim:-0.55,bat:-1.45,l1:[0.55,0.45],l2:[-0.5,0.3],scarf:2});
+ S.parry=dMara({lean:0.3,dy:1.5,aim:-0.15,bat:-1.0,l1:[0.7,0.5],l2:[-0.5,0.25],scarf:3});
+ for(let f=0;f<4;f++)S.roll.push(dMara({lean:0.6,dy:13,headDy:2,l1:[1.6,0.6],l2:[1.0,2.4],aim:1.1,bat:1.9,rot:-f*Math.PI/2,piv:[20,43],scarf:f}));
+ S.hit=dMara({lean:-0.7,dy:1,headDy:1,l1:[0.5,0.6],l2:[-0.4,0.4],aim:-2.4,bat:-2.0,scarf:3});
+ for(let f=0;f<4;f++)S.death.push(dMara({lean:-0.4,dy:f*1.2,l1:[0.3+f*0.2,0.9],l2:[-0.2,0.7],aim:-2.5+f*0.2,bat:-2.2+f*0.4,rot:-f*0.45,scarf:f}));
+ S.win=dMara({lean:0,dy:0,aim:-1.35,bat:-1.5,l1:[0.2,0.1],l2:[-0.2,0.1],scarf:2});
+ S.W=white(S.idle[0]);return S;}
+// Hollow champion: 64x84 units at 2 art px each. Faces right; the game flips it.
+const CHM=MAT({a:['#6a2a8a'],b:['#3e1a5a'],c:['#d0405e'],ey:['#ffe07a',{e:1,li:'#ffffff'}],bl:['#c8c4e4',{li:'#ffffff'}],be:['#ff9aff',{e:1,li:'#ffffff'}],m:['#7a8090'],cl:['#7a1a34'],dk:['#22122e']});
+function cleg(hx,hy,a,b,L){const kx=hx+Math.sin(a)*L,ky=hy+Math.cos(a)*L,ax=kx+Math.sin(a-b)*L,ay=ky+Math.cos(a-b)*L;return[kx,ky,ax,ay];}
+function champPose(P){P=Object.assign({lean:0,dy:0,a1:1.2,a2:0.5,a3:-0.15,b1:1.4,b2:0.9,l1:[0.5,1.2],l2:[-0.25,1.1],hd:0,cape:0},P);
+ const S=[36+P.lean*5,31+P.dy],B=[27+P.lean*5,32+P.dy],H=[39+P.lean*7,17+P.dy+P.hd],hip=[31+P.lean*1.5,55+P.dy],tc=[32+P.lean*3,41+P.dy];
+ const E=[S[0]+Math.cos(P.a1)*11,S[1]+Math.sin(P.a1)*11],Hd=[E[0]+Math.cos(P.a2)*10,E[1]+Math.sin(P.a2)*10];
+ const bd=[Math.cos(P.a3),Math.sin(P.a3)],bn=[-bd[1],bd[0]],BL=[];for(let k=0;k<=6;k++){const t=k/6;BL.push([Hd[0]+bd[0]*t*37+bn[0]*t*t*6,Hd[1]+bd[1]*t*37+bn[1]*t*t*6,3.3-2.5*t]);}
+ const E2=[B[0]+Math.cos(P.b1)*10,B[1]+Math.sin(P.b1)*10],H2=[E2[0]+Math.cos(P.b2)*9,E2[1]+Math.sin(P.b2)*9];
+ const L1=cleg(hip[0],hip[1],P.l1[0],P.l1[1],14),L2=cleg(hip[0],hip[1],P.l2[0],P.l2[1],14);
+ const fn=(x,y)=>{
+  // blade (curved, tapered) with a glowing edge on the cutting side
+  for(let k=0;k<6;k++){const a=BL[k],b=BL[k+1],d=sd(x,y,a[0],a[1],b[0],b[1]);const w=(a[2]+b[2])/2;if(d<w){const side=(x-a[0])*bn[0]+(y-a[1])*bn[1];return side>w*0.35?'be':(k===0&&d<w*0.5?'m':'bl');}}
+  if(Math.hypot(x-Hd[0],y-Hd[1])<3)return'dk';
+  if(cap(x,y,Hd[0]-bn[0]*3.5,Hd[1]-bn[1]*3.5,Hd[0]+bn[0]*3.5,Hd[1]+bn[1]*3.5,1.2))return'm';
+  // blade arm
+  if(cap(x,y,E[0],E[1],Hd[0],Hd[1],2.8))return Math.abs(sd(x,y,E[0],E[1],Hd[0],Hd[1])-1.2)<0.4?'b':'a';
+  if(cap(x,y,S[0],S[1],E[0],E[1],3.3))return 'a';if(Math.hypot(x-E[0],y-E[1])<3.2)return'c';
+  // front leg (digitigrade: thigh, shin, hoof spur)
+  const lg=(L,dk)=>{if(cap(x,y,L[2],L[3],L[2]+6,L[3]+1.5,2))return'dk';if(cap(x,y,L[2],L[3],L[2]-3,L[3]+1,1.5))return'dk';
+   if(cap(x,y,L[0],L[1],L[2],L[3],2.6))return dk?'b':(sd(x,y,L[0],L[1],L[2],L[3])>1.6?'b':'a');if(Math.hypot(x-L[0],y-L[1])<3.2)return dk?'b':'c';if(cap(x,y,hip[0],hip[1],L[0],L[1],3.8))return dk?'b':'a';return 0;};
+  let v=lg(L1,false);if(v)return v;
+  // head: long insect skull, two eye slits, crest swept back
+  const hd=eld(x,y,H[0],H[1],5.5,6.5);if(hd<1){if(el(x,y,H[0]+2.8,H[1]-0.6,1.7,0.9)||el(x,y,H[0]+2.3,H[1]+2.2,1.3,0.7))return'ey';if(y>H[1]+3.2&&x>H[0])return'b';if(Math.abs(x-H[0]+0.5)<0.5&&y<H[1]-1)return'b';return hd>0.8?['a',-0.1]:'a';}
+  if(poly(x,y,[[H[0]-3,H[1]-4],[H[0]-17,H[1]-11],[H[0]-6,H[1]-1]]))return y<H[1]-6?'c':'b';
+  if(poly(x,y,[[H[0]-2,H[1]+1],[H[0]-13,H[1]-2],[H[0]-4,H[1]+3]]))return'b';
+  if(cap(x,y,H[0]-1,H[1]+4,S[0]-3,S[1],2.6))return'b';
+  // pauldron
+  const pd=eld(x,y,S[0]-0.5,S[1]-1,6.5,4.6);if(pd<1){if(pd>0.78)return'dk';if(y<S[1]-2.5)return['c',0.15];return'c';}
+  // torso carapace with ribs and a glowing core seam
+  const td=eld(x,y,tc[0],tc[1],9.5,13);if(td<1){if(Math.abs(x-tc[0]-2)<0.6&&Math.abs(y-tc[1])<6)return'be';const rib=(y-tc[1]+13)%4.5;if(rib<0.7&&td<0.92)return'b';if(td>0.86)return'b';return y<tc[1]-6?['a',0.1]:'a';}
+  if(el(x,y,hip[0],hip[1]-1,7,4.2))return Math.abs(y-hip[1]+1)<0.6?'dk':'b';
+  v=lg(L2,true);if(v)return v;
+  // back claw arm
+  if(cap(x,y,E2[0],E2[1],H2[0],H2[1],2.2)||cap(x,y,B[0],B[1],E2[0],E2[1],2.8))return['b',-0.1];
+  if(cap(x,y,H2[0],H2[1],H2[0]+3,H2[1]+3,1)||cap(x,y,H2[0],H2[1],H2[0]+4,H2[1]+0.5,1))return'dk';
+  // tattered cape behind
+  const cx0=B[0]-3,sw=P.cape;if(y>B[1]-3&&y<70+P.dy*0.5){const t=(y-(B[1]-3))/(70+P.dy*0.5-B[1]+3),xl=cx0-3-t*(9+sw*2),xr=cx0+5-t*(1-sw);if(x>xl&&x<xr){const tear=hash(Math.floor(x*0.8),0,9)*6;if(y<70+P.dy*0.5-tear)return Math.floor(x*0.9)%3===0?['cl',-0.15]:'cl';}}
+  return 0;};
+ return paint(Math.round(120*CK),Math.round(88*CK),(X,Y)=>fn(X/CK-28,Y/CK-4),CHM,{R:6,rim:'#ffc0e8'});}
+const CK=2.4;
+function tint(c,col,a){const o=mk(c.width,c.height,c.r),x=o.getContext('2d');x.drawImage(c,0,0);x.globalCompositeOperation='source-atop';x.globalAlpha=a===undefined?1:a;x.fillStyle=col;x.fillRect(0,0,o.width,o.height);return o;}
+function champSet(){const C={idle:[],walk:[],stun:[]};
+ for(let f=0;f<4;f++){const b=Math.sin(f/4*Math.PI*2);C.idle.push(champPose({dy:1+b*0.6,hd:b*0.3,cape:b*0.5,a1:1.15+b*0.04}));}
+ for(let f=0;f<4;f++){const p=f/4*Math.PI*2;C.walk.push(champPose({lean:0.15,dy:Math.abs(Math.sin(p))*-0.8,l1:[0.3+Math.sin(p)*0.45,1.2],l2:[0.1-Math.sin(p)*0.45,1.15],cape:Math.sin(p)}));}
+ C.windHi=champPose({lean:-0.45,dy:2,a1:-2.0,a2:-2.45,a3:-2.85,l1:[0.6,1.3],l2:[-0.45,1.0],cape:1.2});
+ C.slash=champPose({lean:0.65,dy:4,a1:0.25,a2:0.35,a3:0.4,l1:[0.85,1.5],l2:[-0.55,0.9],cape:-1});
+ C.windLo=champPose({lean:-0.2,dy:4,a1:2.3,a2:2.7,a3:2.9,l1:[0.6,1.4],l2:[-0.5,1.0],cape:0.8});
+ C.up=champPose({lean:0.5,dy:1,a1:-0.45,a2:-0.6,a3:-0.75,l1:[0.8,1.4],l2:[-0.5,0.9],cape:-0.8});
+ C.windTh=champPose({lean:-0.35,dy:4,a1:2.5,a2:0.05,a3:0,l1:[0.55,1.5],l2:[-0.55,1.1],cape:1});
+ C.thrust=champPose({lean:0.95,dy:5,a1:0.05,a2:0.0,a3:-0.02,l1:[1.1,1.6],l2:[-0.75,0.8],cape:-1.2});
+ C.windRed=champPose({lean:-0.25,dy:0,a1:-1.45,a2:-1.6,a3:-1.72,b1:-1.2,b2:-1.6,l1:[0.45,1.1],l2:[-0.45,1.0],hd:-1,cape:1.5});
+ C.red=champPose({lean:0.85,dy:8,a1:0.7,a2:1.0,a3:0.25,l1:[1.1,1.8],l2:[-0.7,1.0],cape:-1.5});
+ C.feint=champPose({lean:0.1,dy:2,a1:-0.9,a2:-1.2,a3:-1.6,l1:[0.6,1.3],l2:[-0.45,1.0],cape:0.4});
+ C.recover=champPose({lean:0.35,dy:4,a1:1.35,a2:1.45,a3:0.95,l1:[0.7,1.4],l2:[-0.5,1.0],hd:1.5,cape:-0.3});
+ C.stag=champPose({lean:-0.85,dy:2,a1:-2.5,a2:-2.85,a3:-2.3,b1:-2.4,b2:-2.8,l1:[0.2,0.9],l2:[-0.8,1.2],hd:-1.5,cape:1.6});
+ for(let f=0;f<2;f++)C.stun.push(champPose({lean:0.55,dy:15+f*0.6,a1:1.5,a2:1.4,a3:0.55,b1:1.6,b2:1.5,l1:[1.3,2.7],l2:[-0.3,2.4],hd:3+f*0.5,cape:-0.2}));
+ C.roar=champPose({lean:-0.3,dy:0,a1:-0.6,a2:-1.0,a3:-1.3,b1:-2.4,b2:-2.6,l1:[0.55,1.2],l2:[-0.5,1.1],hd:-2.5,cape:2});
+ C.W=white(C.idle[0]);
+ const tl=k=>{const o={};for(const n in C){const v=C[n];if(Array.isArray(v))o[n]=v.map(c=>tint(c,k,0.85));else if(v&&v.getContext)o[n]=tint(v,k,0.85);}return o;};C.Y=tl('#ffe23a');C.R=tl('#ff1a3a');return C;}
+// core chamber background: 270x352 units (W x arena), ribs, the core behind a cage, hex floor
+function duelBg(r){const w=270,h=352,c=mk(w*r,h*r,r),x=c.getContext('2d'),im=x.createImageData(w*r,h*r),d=im.data;
+ const FY=318,cx=135,cy=150,CR=44,base=hx('#0c0614'),wall=hx('#2a1240'),wall2=hx('#3e1a5a'),rim=hx('#a07ad8'),hot=hx('#ff5a8a'),core=hx('#ff3a6a'),core2=hx('#ffd0e0'),fl=hx('#1e1430'),fl2=hx('#2e1e48');
+ for(let py=0;py<h*r;py++)for(let px=0;px<w*r;px++){const X=(px+0.5)/r,Y=(py+0.5)/r,dt=BY[(py&3)*4+(px&3)]/16-0.5;let col;
+  if(Y<FY){// back wall: vertical organic ribs, darker toward the edges and top
+   const rib=Math.sin(X*0.22+vnoise(X*0.05,Y*0.02,3)*4),n=vnoise(X*0.08,Y*0.08,5),edge=Math.min(1,Math.min(X,w-X)/90),v=0.25+0.35*(rib*0.5+0.5)+0.25*n+dt*0.12;
+   col=mix(base,mix(wall,wall2,cl(v,0,1)),cl(0.35+0.65*edge*(0.4+0.6*Y/FY),0,1));
+   if(Math.abs(rib)<0.05&&n>0.6)col=mix(col,rim,0.18);
+   // veins that run toward the core
+   const ang=Math.atan2(Y-cy,X-cx),rd=Math.hypot(X-cx,Y-cy),vein=Math.abs(Math.sin(ang*7+vnoise(rd*0.03,ang,8)*3));if(rd>CR+6&&rd<170&&vein<0.05+0.04*(1-rd/170))col=mix(col,hot,0.55*(1-rd/170)+0.15);
+   // the core and its cage
+   if(rd<CR+14){const g=1-rd/(CR+14);col=mix(col,core,g*0.6);}
+   if(rd<CR){const q=rd/CR,sw=vnoise(X*0.12,Y*0.12,11);col=mix(core2,core,cl(q*0.9+sw*0.35+dt*0.2,0,1));if(sw>0.72&&q>0.3)col=mix(col,hx('#5a0a2a'),0.6);}
+   const cage=Math.abs(rd-CR-4)<1.6||(rd<CR+5&&rd>CR-2&&Math.abs(Math.sin(ang*4))<0.12);if(cage)col=mix(hx('#5a3a6a'),rim,cl(0.4+0.5*-Math.sin(ang)+dt*0.3,0,1));
+   // two pillars framing the room
+   for(const pxl of [14,256]){const dx=Math.abs(X-pxl);if(dx<11){const s2=dx/11;col=mix(mix(hx('#4a2a62'),hx('#1a0c28'),s2*s2),rim,(X<pxl===(pxl<135))?0:0.12);if(Math.floor(Y/22)%2===0&&Math.abs(Y%22-11)<1)col=mix(col,hot,0.4);}}
+   if(Y>FY-8)col=mix(col,base,0.6*(Y-FY+8)/8);}
+  else{// hex-ish plate floor with perspective
+   const t=(Y-FY)/(h-FY),sc=1+t*1.8,u=(X-cx)/sc,row=Math.floor((Y-FY)/(5+t*7)),off=row%2?9:0,cell=((u+off+999)%18);
+   col=mix(fl2,fl,cl(t*0.8+dt*0.15,0,1));if(cell<0.9*sc||((Y-FY)%(5+t*7))<0.8)col=mix(col,hx('#0a0612'),0.7);
+   if(Y<FY+1.2)col=rim;else if(Y<FY+3)col=mix(rim,col,0.6);
+   const rg=Math.max(0,1-Math.abs(X-cx)/120)*(1-t);col=mix(col,core,rg*0.22);}
+  const i=(py*w*r+px)*4;d[i]=col[0];d[i+1]=col[1];d[i+2]=col[2];d[i+3]=255;}
+ x.putImageData(im,0,0);return c;}
+
 // ================= build all (bosses lazily) =================
 const A={};
 A.ship=[-2,-1,0,1,2].map(shipFrame);A.ships=[A.ship,[-2,-1,0,1,2].map(wispFrame),[-2,-1,0,1,2].map(bulwarkFrame)];A.shipW=white(A.ship[2]);A.flame=[0,1,2,3].map(flame);
@@ -548,4 +656,5 @@ const BGS={};A.bg=(d,pal,bg,H,r)=>{const k=d+pal.join()+r;return BGS[k]||(BGS[k]
 const MW={};A.wall=(pal,m,v)=>{const k=pal.join()+m+'_'+v;return MW[k]||(MW[k]=mazeWall(pal,m,v));};
 let PT=null;A.portrait=k=>(PT||(PT=portraits()))[k];
 const SPS={};A.space=(d,r)=>SPS[d+'_'+r]||(SPS[d+'_'+r]=spaceSet(d,r));
+let DU_A=null;A.duel=()=>DU_A||(DU_A={mara:maraDuelSet(),ch:champSet()});const DBG={};A.duelBg=r=>DBG[r]||(DBG[r]=duelBg(r));A.tint=tint;
 A.white=white;A.paint=paint;A.MAT=MAT;A.el=el;return A;})();

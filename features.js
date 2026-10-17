@@ -47,7 +47,7 @@ function fmtT(t){t=Math.max(0,Math.round(t));return Math.floor(t/60)+':'+String(
 // cleared screen with the rank breakdown (replaces the original panel)
 drawClear=function(dt){stT+=dt;ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,W,H);const L=LV[curLvl]||{t:'space'},r=FT.last||{score:0,best:0,dmg:0,time:0,par:0,rank:'C'};
  panel(20,110,W-40,232,'#9aff5a');
- txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':L.t==='board'?'CUTTER GUTTED':L.t==='stealth'?'IN AND OUT':L.t==='turret'?'AIRLOCK HELD':L.t==='canyon'?'COURIER DOWN':'AREA SECURED'),W/2,126,'#9aff5a',14);
+ txt(FT.title||(L.t==='space'?'SECTOR CLEARED':L.t==='hack'?'LOCK CRACKED':L.t==='evade'?'ESCAPED':L.t==='engine'?'DOCKED':L.t==='board'?'CUTTER GUTTED':L.t==='stealth'?'IN AND OUT':L.t==='turret'?'AIRLOCK HELD':L.t==='canyon'?'COURIER DOWN':L.t==='duel'?'CHAMPION DOWN':'AREA SECURED'),W/2,126,'#9aff5a',14);
  const rk=r.rank,sz=stT>0.3?34:34+(0.3-stT)*80;txt(rk,W/2+70,170,RCOL[rk],sz);txt('RANK',W/2+70,206,'#56607e',7);
  const row=(l,v,y,c='#dfe8ff')=>{txt(l,40,y,'#8aa0d0',8,'left');txt(v,150,y,c,8,'right');};
  row('SCORE',r.score,156);row('BEST CHAIN',r.best,170);row('TIME',fmtT(r.time)+' / '+fmtT(r.par),184,r.time<=r.par?'#9aff5a':'#ffa03a');row('HITS TAKEN',r.dmg,198,r.dmg?'#ffa03a':'#9aff5a');
@@ -62,7 +62,7 @@ function goChapters(){state='chapters';}
 HOOKS.push((n,dt)=>{if(n!=='draw:chapters')return;ctx.fillStyle='#060814';ctx.fillRect(0,0,W,H);stars(dt,0.3);txt('CHAPTERS',W/2,14,'#5ab0ff',14);
  const open=Math.max(S.lvl,S.done?LV.length:0);panel(8,34,W-16,402,'#2a3a6a');
  const rh=Math.min(26,Math.floor(396/LV.length)),bh=rh-2;LV.forEach((L,i)=>{const y=40+i*rh,ok=i<=Math.min(open,LV.length-1),b=S.best&&S.best[i];
-  if(ok){btn('',14,y,W-28,bh,()=>goStory(i),'#3a5a9a');const nm=(i+1)+'. '+L.name,cmp=bh<20;txt(nm,22,cmp?y+bh/2-4:y+3,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':L.t==='canyon'?'CHASE':'ON FOOT',cmp?22+(nm.length*5+5)*fpx(8)/RQ:22,cmp?y+bh/2-3:y+bh-9,'#56607e',7,'left');
+  if(ok){btn('',14,y,W-28,bh,()=>goStory(i),'#3a5a9a');const nm=(i+1)+'. '+L.name,cmp=bh<20;txt(nm,22,cmp?y+bh/2-4:y+3,'#dfe8ff',8,'left');txt(L.t==='space'?'FLIGHT':L.t==='hack'?'HACK':L.t==='evade'?'EVADE':L.t==='engine'?'ENGINE':L.t==='board'?'BOARDING':L.t==='stealth'?'STEALTH':L.t==='turret'?'DEFENSE':L.t==='canyon'?'CHASE':L.t==='duel'?'DUEL':'ON FOOT',cmp?22+(nm.length*5+5)*fpx(8)/RQ:22,cmp?y+bh/2-3:y+bh-9,'#56607e',7,'left');
    if(b){txt(b.r,W-34,y+bh/2-6,RCOL[b.r],12);txt(String(b.s),W-50,y+bh/2-3,'#8aa0d0',7,'right');}else txt('-',W-34,y+bh/2-4,'#3a4466',9);}
   else{ctx.fillStyle='#0a0d1a';ctx.fillRect(14,y,W-28,bh);txt((i+1)+'. LOCKED',22,y+bh/2-4,'#3a4466',8,'left');}});
  btn('BACK',10,440,80,26,()=>{state='title';},'#8aa0d0');defaultAct=()=>{state='title';};});
@@ -931,3 +931,229 @@ HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='canyon'&&G&&G.mode==='canyon'){unlo
 VR.cy={H:()=>G,CT:()=>CT,CY:()=>CY,gen:(seed,di)=>{const H=cyGen(seed,di);return cyCheck(H);},
  sim:(maxT,mode)=>{const H=G;H.auto=mode||1;let f=0;const lim=60*(maxT||120);while(f<lim&&!H.won&&!H.dead){updCanyon(1/60);f++;}
   return {won:H.won>0,dead:H.dead>0,esc:!!H.esc,hp:H.p.hp,mhp:H.p.mhp,t:Math.round(H.t*10)/10,gap:Math.round(H.tg.s-H.P.s),minGap:Math.round(H.minGap),tgS:Math.round(H.tg.s),Lc:H.Lc,left:Math.round((H.Lc-H.tg.s)/H.T.vt*10)/10,wall:H.wallN,hits:H.hitN,pads:H.padN,coins:H.coins.filter(c=>c.got).length,bm:Math.round(H.bm)};}};
+// ================= v9. MELEE DUEL: SPIRE CORE =================
+// A damping field around the Spire core kills every gun, so Mara goes in with a shock baton and meets the Hollow champion.
+// Side view, one on one. The champion winds up with a flash before every swing. Tap PARRY as it lands to stagger it and
+// open a punish window (ATTACK then lands a heavy finisher). Hold PARRY to block. Red flashes can't be blocked: dodge them.
+// Its poise bar breaks into a long stun. Three rounds; a checkpoint is saved at the start of rounds 2 and 3.
+const DUEL_LV={t:'duel',d:3,name:'SPIRE CORE',
+ story:["OTT: Core's right through that door. There's one problem.","MARA: There's always one problem.","OTT: The room is full of a damping field. Your gun won't even warm up in there.","FENN: The old survey crews carried shock batons for the cargo bots. Check your kit.","MARA: Found it. It's mostly tape.","VOICE: ...little pilot. Come and meet my champion...","OTT: Watch its shoulders. It always winds up before it swings. Red means get out of the way.","MARA: Block, wait, hit back. Got it."]};
+insertChapters(9,[[18,DUEL_LV]]);refreshIdx();
+const DU={fy:318,x0:24,x1:246,ph:352,walk:74,reach:42,hreach:50,sep:34,
+ B:{L:[6,392,58,58],R:[70,392,58,58],A:[144,392,56,58],P:[206,392,58,58],D:[206,356,58,32]},
+ light:{wind:0.09,act:0.08,tot:0.3,dmg:1,poise:4},heavy:{wind:0.17,act:0.1,tot:0.52,dmg:3.5,poise:30},
+ dodge:{t:0.38,dist:74,cd:0.12}};
+// per difficulty (Easy, Normal, Hard): parry window (s), tell length factor, champion hp, idle gap between attacks, punish window
+// after a parry, dodge i-frames, stun length, poise damage factor, champion speed, whiff cooldown, guard chance factor
+const DT=[{n:'EASY',parry:0.32,tell:1.4,hp:48,gap:1.4,punish:1.6,ifr:0.38,stun:2.4,poiseK:1.4,spd:0.85,pcd:0.12,guard:0.6},
+ {n:'NORMAL',parry:0.22,tell:1.0,hp:66,gap:1.0,punish:1.2,ifr:0.32,stun:2.0,poiseK:1.0,spd:1,pcd:0.22,guard:1},
+ {n:'HARD',parry:0.15,tell:0.78,hp:80,gap:0.7,punish:0.9,ifr:0.26,stun:1.7,poiseK:0.8,spd:1.12,pcd:0.3,guard:1.2}];
+// attack shapes. tell = wind-up flash before each strike (scaled by DT.tell, never under 0.3 s), rng = reach from the champion's centre
+const MV={slash:{w:3,rng:66},thrust:{w:2,rng:62,lunge:44},combo:{w:2,rng:64},feint:{w:2,rng:66},red:{w:1,rng:98}};
+const PHASES=[{moves:{slash:4,thrust:2,combo:2},combo:2,gap:1,guard:0.3},{moves:{slash:2,thrust:2,combo:3,feint:2,red:1},combo:3,gap:0.85,guard:0.42},{moves:{slash:1,thrust:2,combo:3,feint:2,red:2},combo:4,gap:0.72,guard:0.5}];
+PTS.dhit=60;PTS.heavy=400;PTS.parry=250;PTS.pdodge=150;PTS.brk=600;PTS.champ=5000;
+function duTell(b){const k=G.T.tell;return Math.max(0.3,b*k);}
+function duMakeMove(name){const T=G.T,ph=PHASES[G.C.ph],m={name,rng:MV[name].rng,t:0,strikes:[],fakes:[],end:0};let t=0;
+ const st=(tell,o)=>{const tl=duTell(tell);m.strikes.push(Object.assign({tellAt:t,at:t+tl,done:0},o));t+=tl;};
+ if(name==='slash'){st(0.62,{pose:'hi'});t+=0.62;}
+ else if(name==='thrust'){st(0.7,{pose:'th',lunge:MV.thrust.lunge});t+=0.68;}
+ else if(name==='combo'){const n=ph.combo;for(let i=0;i<n;i++){if(i)t+=0.14;st(i?0.48:0.58,{pose:i%2?'lo':'hi',ci:i});}t+=0.72;}
+ else if(name==='feint'){const tl=duTell(0.6);m.fakes.push({tellAt:0,at:tl,done:0});t=tl+0.36;st(0.46,{pose:'hi',afterFeint:1});t+=0.6;}
+ else if(name==='red'){st(0.95,{pose:'red',red:1});t+=0.95;}
+ m.end=t;return m;}
+function duPick(){const ph=PHASES[G.C.ph],dist=Math.abs(G.P.x-G.C.x),opts=[];for(const k in ph.moves){if(k===G.C.lastMv&&k==='red')continue;for(let i=0;i<ph.moves[k];i++)opts.push(k);}
+ let k=opts[Math.floor(Math.random()*opts.length)];if(dist>MV[k].rng-6&&k!=='red')k=dist<MV.thrust.rng+MV.thrust.lunge-8?'thrust':k;return k;}
+function initDuel(L,i){curLvl=i;runCr=0;FT.toasts.length=0;const di=diffIdx(),T=DT[di];
+ const ck=FT.duelCk&&FT.duelCk.lvl===i&&FT.duelCk.di===di?FT.duelCk:null;
+ const mh=Math.max(8,7+(S.hull|0)+(loadout().hull|0))+(di===2?2:0),hp=T.hp*(S.ng?1.25:1);
+ G={mode:'duel',L,d:L.d+(S.ng?1:0),di,T,t:0,fx:[],pops:[],shake:0,dead:0,won:0,q:[],slowT:0,flash:0,
+  P:{x:78,face:1,st:'idle',t:0,ci:0,next:0,pAt:-9,pOK:0,pcd:0,dcd:0,dir:1,ifr:0,hold:0,kb:0},p:{hp:mh,mhp:mh,inv:0,sh:0},
+  C:{x:196,face:-1,st:'idle',t:0,hp,mhp:hp,poise:100,pt:0,ph:0,gapT:1.4,mv:null,fl:0,lastMv:'',lean:0},
+  parN:0,blkN:0,hitN:0,pdN:0,brkN:0,heavyN:0,ck:ck?ck.ph:0};
+ if(ck){const C=G.C;C.ph=ck.ph;C.hp=hp*(ck.ph===1?2/3:1/3);G.p.hp=Math.max(G.p.hp-1,Math.ceil(mh*0.75));}
+ state='duel';stT=0;emit('start',L);const s=sc();s.pot=PTS.champ+Math.round(hp*420);
+ if(ck){s.score=ck.score;s.best=ck.best;s.dmg=ck.dmg;G.t=ck.t;s.t0=0;G.parN=ck.parN;toast('CHECKPOINT: ROUND '+(ck.ph+1),'#ffd23a');}else toast('ROUND 1','#ffd23a');}
+// ---- input: presses are stamped when the event arrives, so a tap between frames still counts with its real timing
+function duPress(k){if(!G||G.mode!=='duel')return;G.q.push({k,t:G.t,tr:now()});}
+function duZone(q){if(q.sy<DU.ph-24)return null;const B=DU.B,inb=(b,x,y)=>x>=b[0]-3&&x<=b[0]+b[2]+3&&y>=b[1]-3&&y<=b[1]+b[3]+3;
+ if(inb(B.D,q.sx,q.sy))return'D';if(inb(B.P,q.sx,q.sy))return'P';if(inb(B.A,q.sx,q.sy))return'A';if(q.sx<137&&q.sy>=DU.ph)return'M';return null;}
+function duHeldMove(){let m=0;if(keys.ArrowLeft||keys.KeyA)m-=1;if(keys.ArrowRight||keys.KeyD)m+=1;for(const id in ptrs){const q=ptrs[id];if(q.dz==='M')m+=q.x<67?-1:1;}return Math.max(-1,Math.min(1,m));}
+function duHeldParry(){if(keys.KeyK||keys.KeyX||keys.ArrowDown||keys.KeyS)return true;for(const id in ptrs)if(ptrs[id].dz==='P')return true;return false;}
+// ---- the fight
+function duFx(x,y,n,cols,sp){for(let j=0;j<n;j++){const a=rnd(0,7),v=rnd(30,sp||160);G.fx.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-30,l:rnd(.2,.5),c:cols[j%cols.length],s:2});}}
+function duPop(x,y,t,c){G.pops.push({x,y,t,c,l:0.9});}
+function duDamage(dm,poise,heavy){const C=G.C,T=G.T;if(C.st==='roar'||C.st==='dead')return;const stun=C.st==='stun',arm=C.st==='atk'&&!heavy;const d=dm*(stun?1.25:arm?0.5:1);if(arm)poise=0;C.hp=Math.max(0,C.hp-d);C.fl=0.08;C.pt=0;
+ C.poise-=poise*T.poiseK;addPts(heavy?PTS.heavy:PTS.dhit,C.x+C.face*-18,DU.fy-50);SFX.hit();duFx(C.x-C.face*-6,DU.fy-48,heavy?18:7,heavy?['#ffffff','#7ae8ff','#5ab0ff']:['#ffffff','#7ae8ff']);if(heavy){G.shake=0.3;HS=0.08;tone(200,60,.3,'sawtooth',.08);G.heavyN++;}
+ if(C.hp<=0){C.st='dead';C.t=0;G.won=2.4;C.mv=null;emit('kill',{x:C.x,y:DU.fy-60,k:'champ'});runCr+=60;SFX.big();G.shake=0.6;toast('CHAMPION DOWN','#9aff5a');duFx(C.x,DU.fy-50,40,FIRE,220);return;}
+ const nph=C.hp<=C.mhp/3?2:C.hp<=C.mhp*2/3?1:0;if(nph>C.ph){C.ph=nph;C.st='roar';C.t=0;C.mv=null;C.poise=100;G.shake=0.4;toast('ROUND '+(nph+1),'#ffd23a');noise(.6,.3,300);tone(90,40,.9,'sawtooth',.1);
+  const s=sc();FT.duelCk={lvl:curLvl,di:G.di,ph:nph,score:s.score,best:s.best,dmg:s.dmg,t:G.t,parN:G.parN};return;}
+ if(C.poise<=0&&C.st!=='stun'){C.st='stun';C.t=0;C.mv=null;C.poise=0;G.brkN++;addPts(PTS.brk,C.x,DU.fy-104);duPop(C.x,DU.fy-122,'POISE BROKEN','#ffd23a');tone(600,150,.4,'square',.06);G.shake=0.3;}}
+function duStrike(sk){const P=G.P,C=G.C,T=G.T,p=G.p,dist=Math.abs(P.x-C.x);sk.done=1;
+ const reach=sk.red?MV.red.rng:G.C.mv.rng;if(dist>reach||(P.x-C.x)*C.face<-6)return 'miss';if(p.inv>0&&!god()&&P.st!=='dodge')return 'inv';
+ if(P.st==='dodge'&&P.t<T.ifr){G.pdN++;addPts(PTS.pdodge,P.x,DU.fy-70);duPop(P.x,DU.fy-80,'DODGED','#7ae8ff');if(sk.red){C.mv.end=Math.max(C.mv.end,C.mv.t+0.25);C.vuln=1;}tone(1200,600,.1,'square',.03);return 'dodge';}
+ if(sk.red){const h0=p.hp;hurt();if(p.hp<h0&&p.hp>1&&G.di>0)p.hp-=1;P.st='hurt';P.t=0;P.kbv=170*(P.x<C.x?-1:1);G.hitN++;return 'hit';}
+ const pd=G.t-(C.mv.t-sk.at)-P.pAt;// how long before the blow the parry was pressed
+ if(P.pOK&&pd>=-0.02&&pd<=T.parry){P.pOK=0;P.pcd=0;G.parN++;C.st='stag';C.t=0;C.mv=null;C.poise-=25*T.poiseK;addPts(PTS.parry,(P.x+C.x)/2,DU.fy-70);duPop((P.x+C.x)/2,DU.fy-86,'PARRY','#ffffff');
+  HS=0.09;G.slowT=0.22;G.flash=0.18;G.shake=0.2;tone(1500,700,.12,'square',.06);tone(2200,1800,.18,'triangle',.05,.03);duFx((P.x+C.x)/2,DU.fy-46,16,['#ffffff','#fff3a0','#7ae8ff'],200);emit('parry',G.parN);
+  if(C.poise<=0){C.st='stun';C.t=0;C.poise=0;G.brkN++;addPts(PTS.brk,C.x,DU.fy-104);duPop(C.x,DU.fy-122,'POISE BROKEN','#ffd23a');}return 'parry';}
+ if(P.st==='block'||(duBlocking()&&P.st!=='atk'&&P.st!=='heavy'&&P.st!=='dodge'&&P.st!=='hurt')){G.blkN++;P.kbv=110*(P.x<C.x?-1:1);C.poise-=3*T.poiseK;tone(500,300,.06,'square',.04);duFx(P.x+P.face*10,DU.fy-44,6,['#dfe8ff','#7ae8ff'],120);P.blkFl=0.12;return 'block';}
+ hurt();P.st='hurt';P.t=0;P.kbv=150*(P.x<C.x?-1:1);G.hitN++;return 'hit';}
+function duBlocking(){return G.inp.block;}
+function updDuel(rdt){const H=G,P=H.P,C=H.C,T=H.T,p=H.p;H.slowT=Math.max(0,H.slowT-rdt);const dt=rdt*(H.slowT>0?0.35:1);H.t+=dt;H.shake=Math.max(0,H.shake-dt);H.flash=Math.max(0,H.flash-rdt);p.inv=Math.max(0,p.inv-dt);
+ for(const f of H.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=300*dt;f.l-=dt;}H.fx=H.fx.filter(f=>f.l>0);for(const q of H.pops){q.l-=dt;q.y-=20*dt;}H.pops=H.pops.filter(q=>q.l>0);
+ if(H.dead){H.dead-=dt;P.st='dead';P.t+=dt;if(H.dead<=0){H.dead=0;failLevel();}return;}
+ if(H.won){H.won-=dt;C.t+=dt;P.st='win';P.t+=dt;if(H.won<=0){H.won=0;FT.duelCk=null;levelClear();}return;}
+ // ---- input gather (bot or player)
+ if(H.auto)duBot(H,dt);
+ const inp=H.inp=H.auto?H.binp:{mx:duHeldMove(),block:duHeldParry()};
+ const nw=now();for(const e of H.q)if(e.tr){e.t=H.t-Math.min(0.1,Math.max(0,nw-e.tr))*(H.slowT>0?0.35:1);e.tr=0;}H.q=H.q.filter(e=>H.t-e.t<0.2);
+ const take=k=>{const i=H.q.findIndex(e=>e.k===k);if(i<0)return null;return H.q.splice(i,1)[0];};
+ // ---- Mara
+ P.t+=dt;P.pcd=Math.max(0,P.pcd-dt);P.dcd=Math.max(0,P.dcd-dt);P.blkFl=Math.max(0,(P.blkFl||0)-dt);
+ if(P.pOK&&H.t-P.pAt>T.parry){P.pOK=0;P.pcd=T.pcd;}
+ const busy=P.st==='atk'||P.st==='heavy'||P.st==='dodge'||P.st==='hurt';
+ // parry: allowed from idle/walk/block and to cancel the wind-up or tail of a light swing
+ const pe=H.q.find(e=>e.k==='P');if(pe&&(!busy||(P.st==='atk'&&(P.t<DU.light.wind||P.t>DU.light.wind+DU.light.act)))){take('P');if(P.pcd<=0&&!P.pOK){P.pAt=pe.t;P.pOK=1;P.st='block';P.t=0;}else if(P.st==='atk'){P.st='block';P.t=0;}}
+ const de=H.q.find(e=>e.k==='D');if(de&&P.dcd<=0&&(!busy||(P.st==='atk'&&P.t>DU.light.wind+DU.light.act))){take('D');const m=inp.mx;P.dir=m?m:(P.x<C.x?-1:1);if((P.dir<0&&P.x<DU.x0+20)||(P.dir>0&&P.x>DU.x1-20))P.dir=-P.dir;P.st='dodge';P.t=0;P.pOK=0;tone(400,200,.08,'triangle',.04);}
+ const ae=H.q.find(e=>e.k==='A');
+ if(ae){const vul=C.st==='stag'||C.st==='stun';
+  if(!busy||P.st==='block'){take('A');if(vul&&C.st==='stag'&&Math.abs(P.x-C.x)<DU.hreach+16){P.st='heavy';P.t=0;P.hd=0;}else{P.st='atk';P.t=0;P.ci=0;P.hd=0;}P.pOK=0;}
+  else if(P.st==='atk'&&P.t>DU.light.wind+DU.light.act*0.5){take('A');P.next=1;}}
+ if(P.st==='idle'||P.st==='walk'||P.st==='block'){
+  if(inp.block||P.pOK){P.st='block';}else P.st=inp.mx?'walk':'idle';
+  if(P.st==='walk'){P.x+=inp.mx*DU.walk*dt;}
+  P.face=P.x<C.x?1:-1;}
+ else if(P.st==='atk'){const L=DU.light;if(!P.hd&&P.t>=L.wind){P.hd=1;P.x+=P.face*4;if(Math.abs(P.x-C.x)<=DU.reach+(P.ci===2?6:0)&&(C.x-P.x)*P.face>0&&C.st!=='dead'){duMaraHit(P.ci===2?1.5:L.dmg,P.ci===2?L.poise*2:L.poise,false);}}
+  if(P.t>=L.tot){if(P.next&&P.ci<2){P.ci++;P.t=0;P.hd=0;P.next=0;}else{P.st='idle';P.next=0;P.ci=0;}}}
+ else if(P.st==='heavy'){const L=DU.heavy;if(!P.hd&&P.t>=L.wind){P.hd=1;P.x+=P.face*8;if(Math.abs(P.x-C.x)<=DU.hreach&&(C.x-P.x)*P.face>0&&C.st!=='dead'){if(C.st==='stag'){C.st='recover';C.t=0;C.recT=0.5;}duDamage(L.dmg,L.poise,true);}}if(P.t>=L.tot)P.st='idle';}
+ else if(P.st==='dodge'){const D=DU.dodge,k=Math.min(1,P.t/D.t),v=D.dist/D.t*1.6*(1-k);P.x+=P.dir*v*dt;if(P.t>=D.t){P.st='idle';P.dcd=D.cd;}}
+ else if(P.st==='hurt'){if(P.t>=0.36)P.st='idle';}
+ if(P.kbv){P.x+=P.kbv*dt;P.kbv*=Math.pow(0.0005,dt);if(Math.abs(P.kbv)<5)P.kbv=0;}
+ P.x=Math.max(DU.x0,Math.min(DU.x1,P.x));
+ // ---- champion
+ C.t+=dt;C.fl=Math.max(0,C.fl-dt);C.pt+=dt;
+ const dist=Math.abs(P.x-C.x);
+ if(C.st!=='atk'&&C.st!=='roar'&&C.st!=='dead')C.face=P.x<C.x?-1:1;
+ if(C.st==='idle'||C.st==='walk'){const ph=PHASES[C.ph];if(C.pt>2&&C.poise<100)C.poise=Math.min(100,C.poise+12*dt);
+  C.gapT-=dt;let want=0;if(dist>74)want=1;else if(dist<36)want=-0.6;
+  if(C.gapT<=0){const k=duPick();if(dist<=MV[k].rng-4||k==='red'&&dist<=MV.red.rng-10){C.st='atk';C.t=0;C.mv=duMakeMove(k);C.lastMv=k;C.vuln=0;want=0;}else want=1;}
+  if(want){C.x+=want*C.face*58*T.spd*dt;C.st='walk';}else if(C.st==='walk')C.st='idle';}
+ else if(C.st==='atk'){const m=C.mv;m.t+=dt;
+  for(const f of m.fakes)if(!f.done&&m.t>=f.at){f.done=1;tone(300,500,.05,'square',.02);}
+  for(const sk of m.strikes){if(sk.done)continue;if(sk.lunge&&m.t>=sk.at-0.12&&m.t<sk.at){const room=dist-DU.sep;C.x+=C.face*Math.max(0,Math.min(sk.lunge/0.12*dt,room));}
+   if(m.t>=sk.at){const r=duStrike(sk);sk.res=r;if(C.st!=='atk')break;}}
+  if(C.st==='atk'&&m.t>=m.end){C.st='recover';C.t=0;C.recT=C.vuln?0.9:0.35;C.mv=null;}}
+ else if(C.st==='recover'){if(C.t>=C.recT){C.st='idle';C.gapT=T.gap*PHASES[C.ph].gap*rnd(0.75,1.25);C.vuln=0;}}
+ else if(C.st==='stag'){if(C.t>=T.punish){C.st='idle';C.gapT=0.45;}}
+ else if(C.st==='stun'){C.poise=Math.min(100,C.t/T.stun*100);if(C.t>=T.stun){C.st='idle';C.poise=100;C.gapT=0.5;}}
+ else if(C.st==='roar'){if(C.t<0.3&&dist<100){P.kbv=260*(P.x<C.x?-1:1);}if(C.t>=1.6){C.st='idle';C.gapT=0.8;}}
+ // keep bodies apart
+ if(Math.abs(P.x-C.x)<DU.sep&&C.st!=='dead'){const s=P.x<C.x?-1:1,ov=DU.sep-Math.abs(P.x-C.x);if(P.st==='dodge'){/* rolling through is allowed */}else{P.x+=s*ov*0.6;C.x-=s*ov*0.4;}}
+ C.x=Math.max(DU.x0+10,Math.min(DU.x1-10,C.x));P.x=Math.max(DU.x0,Math.min(DU.x1,P.x));}
+function duMaraHit(dm,poise){const C=G.C,T=G.T,ph=PHASES[C.ph];
+ const open=C.st==='stag'||C.st==='stun'||C.st==='recover'||(C.st==='atk');
+ if(!open&&(C.st==='idle'||C.st==='walk')&&Math.random()<ph.guard*T.guard){// it blocks and answers quickly
+  tone(700,500,.05,'square',.04);duFx(C.x+C.face*12,DU.fy-50,6,['#ffd0f0','#c05aff'],120);duPop(C.x,DU.fy-122,'GUARD','#c05aff');G.P.kbv=120*(G.P.x<C.x?-1:1);G.P.st='hurt';G.P.t=0.18;C.gapT=Math.min(C.gapT,0.35);C.poise-=2*T.poiseK;C.pt=0;return;}
+ duDamage(dm,poise,false);}
+// ---- tell state (also used by the bot): which strike is winding up and what kind it is
+function duTellNow(){const C=G.C;if(C.st!=='atk'||!C.mv)return null;const m=C.mv;for(const f of m.fakes)if(!f.done&&m.t>=f.tellAt)return{fake:1,left:f.at-m.t,k:'y'};
+ for(const sk of m.strikes)if(!sk.done&&m.t>=sk.tellAt)return{left:sk.at-m.t,k:sk.red?'r':'y',sk};return null;}
+// ---- autopilot for tests: reacts to each tell after `rt` seconds, presses with timing error `jit` (s, std dev),
+// falls for a feint with chance `fool`, holds the button a moment after each press (so a mistimed parry still blocks)
+function gauss(){return Math.sqrt(-2*Math.log(Math.random()+1e-9))*Math.cos(6.283*Math.random());}
+function duBot(H,dt){const P=H.P,C=H.C,T=H.T,B=H.bot,dist=Math.abs(P.x-C.x);const inp=H.binp={mx:0,block:false};
+ const m=C.st==='atk'?C.mv:null;
+ if(m&&m!==B.mv){B.mv=m;B.plan=[];}
+ if(m){// plan a response for each strike (and each feint fake we fall for) once we have "seen" its tell
+  const ev=[...m.fakes.map(f=>({f,at:f.at,tellAt:f.tellAt,fake:1})),...m.strikes.map(s=>({f:s,at:s.at,tellAt:s.tellAt,red:s.red}))];
+  for(const e of ev){if(e.f._seen||m.t<e.tellAt+B.rt)continue;e.f._seen=1;if(e.fake&&Math.random()>=B.fool)continue;
+   const tgt=e.red?e.at-T.ifr*0.45:e.at-T.parry*0.5,pt=Math.max(m.t,tgt+gauss()*B.jit);B.plan.push({t:H.t+(pt-m.t),k:e.red?'D':'P'});}}
+ B.plan=(B.plan||[]).filter(q=>{if(H.t>=q.t){H.q.push({k:q.k,t:H.t});if(q.k==='P')B.holdT=H.t+B.hold;return false;}return true;});
+ if(H.t<(B.holdT||0)){inp.block=true;return;}
+ if(m)return;
+ if(C.st==='stag'||C.st==='stun'||C.st==='recover'){if(dist>DU.reach-4)inp.mx=P.x<C.x?1:-1;else if(H.t-(B.at||0)>0.14){H.q.push({k:'A',t:H.t});B.at=H.t;}return;}
+ // neutral: stay just outside its reach, poke now and then
+ const want=B.aggr&&Math.random()<dt*B.aggr?DU.reach-6:58;if(dist>want+6)inp.mx=P.x<C.x?1:-1;else if(dist<want-6&&P.x>DU.x0+30&&P.x<DU.x1-30)inp.mx=P.x<C.x?-1:1;
+ if(dist<DU.reach&&B.aggr&&Math.random()<dt*B.aggr&&P.st!=='atk')H.q.push({k:'A',t:H.t});}
+// ---- art ----
+function drawDuel(dt){const H=G,P=H.P,C=H.C,A=ART.duel(),M=A.mara,CH=A.ch;
+ ctx.save();shakeT(H.shake);blit(ART.duelBg(RQ),0,0,W,DU.ph);
+ // the core breathes; brighter when the champion is hurt
+ const pl=0.5+0.5*Math.sin(H.t*2.2),hk=1-C.hp/C.mhp;glow(135,150,52+pl*6,'#ff3a6a',0.18+0.12*pl+0.15*hk);
+ // damping field shimmer lines
+ ctx.fillStyle='rgba(192,90,255,0.07)';for(let k=0;k<6;k++){const y=((H.t*18+k*61)%300)+10;ctx.fillRect(0,y,W,1);}
+ // shadows
+ ctx.globalAlpha=0.4;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(C.x,DU.fy+2,26,4,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(P.x,DU.fy+2,15,3,0,0,7);ctx.fill();ctx.globalAlpha=1;
+ // champion
+ const tn=duTellNow();let cf,set=CH;
+ if(C.st==='dead'){cf=CH.stun[1];ctx.globalAlpha=Math.max(0,Math.min(1,H.won/1.2));}
+ else if(C.st==='stun')cf=CH.stun[(H.t*2|0)%2];else if(C.st==='stag')cf=CH.stag;else if(C.st==='roar')cf=CH.roar;else if(C.st==='recover')cf=CH.recover;
+ else if(C.st==='atk'){const m=C.mv;let last=null;for(const sk of m.strikes)if(sk.done)last=sk;
+  if(tn&&tn.fake)cf=CH.windHi;else if(tn){const k=tn.sk.pose;cf=k==='hi'?(tn.sk.afterFeint?CH.windHi:CH.windHi):k==='lo'?CH.windLo:k==='th'?CH.windTh:CH.windRed;}
+  else if(m.fakes.length&&m.fakes[0].done&&!m.strikes[0].done)cf=CH.feint;
+  else if(last&&m.t-last.at<0.22)cf=last.pose==='hi'?CH.slash:last.pose==='lo'?CH.up:last.pose==='th'?CH.thrust:CH.red;else cf=CH.recover;}
+ else if(C.st==='walk')cf=CH.walk[(H.t*6|0)%4];else cf=CH.idle[(H.t*3|0)%4];
+ draw(C.fl>0?CH.W:cf,C.x,DU.fy-50,2,C.face<0);
+ if(tn&&C.st==='atk'&&H.ctlFlash!==0){const r=tn.k==='r',a=0.3+0.4*Math.abs(Math.sin(H.t*(r?26:18)));ctx.globalAlpha=a*(tn.fake?0.9:1);const ov=(r?CH.R:CH.Y);const key=Object.keys(CH).find(n=>CH[n]===cf||(Array.isArray(CH[n])&&CH[n].includes(cf)));let img=null;if(key){const v=ov[key];img=Array.isArray(v)?v[CH[key].indexOf(cf)]:v;}if(img)draw(img,C.x,DU.fy-50,2,C.face<0);ctx.globalAlpha=1;
+  // the glint: a star on the blade at the start of every tell, plus a mark over its head
+  const age=(tn.sk?C.mv.t-tn.sk.tellAt:C.mv.t);if(age<0.2){const s=(0.2-age)*60;ctx.fillStyle=r?'#ff5a6a':'#fff7c0';ctx.fillRect(C.x-C.face*14-s/2,DU.fy-82,s,2);ctx.fillRect(C.x-C.face*14-1,DU.fy-81-s/2,2,s);}
+  txt(r?'!!':'!',C.x,DU.fy-112,r?'#ff3a6a':'#ffe07a',r?12:11);if(r&&H.di<2)txt('DODGE',C.x,DU.fy-124,'#ff8a9a',7);}
+ if(C.st==='stun'){for(let k=0;k<3;k++){const a=H.t*4+k*2.1;ctx.fillStyle='#ffd23a';ctx.fillRect(C.x+Math.cos(a)*12-1,DU.fy-78+Math.sin(a)*3,3,3);}}
+ if(C.st==='stag'&&(H.t*8|0)%2)txt('OPEN',C.x,DU.fy-112,'#9aff5a',8);
+ ctx.globalAlpha=1;
+ // Mara
+ let mf;const Lw=DU.light;
+ if(P.st==='dead')mf=M.death[Math.min(3,Math.floor(P.t*5))];else if(P.st==='win')mf=M.win;else if(P.st==='hurt')mf=M.hit;
+ else if(P.st==='dodge')mf=M.roll[Math.min(3,Math.floor(P.t/DU.dodge.t*4))];
+ else if(P.st==='atk')mf=P.t<Lw.wind?M.wind[P.ci%2]:M.swing[P.ci%2];else if(P.st==='heavy')mf=P.t<DU.heavy.wind?M.heavyWind:M.heavy;
+ else if(P.st==='block')mf=P.pOK?M.parry:M.block;else if(P.st==='walk')mf=M.walk[((H.t*10|0)%8+8)%8];else mf=M.idle[(H.t*3|0)%4];
+ const fl=P.st==='dodge'?P.dir<0:P.face<0;if(!(H.p.inv>0&&H.p.inv<0.9&&(H.t*20|0)%2)||P.st==='dead')draw(mf,P.x,DU.fy-34,2,fl);
+ if(P.pOK){glow(P.x+P.face*10,DU.fy-50,8,'#ffffff',0.35);}
+ if(P.blkFl>0){ctx.strokeStyle='rgba(122,232,255,'+(P.blkFl*6)+')';ctx.beginPath();ctx.arc(P.x+P.face*8,DU.fy-40,16,-1.3,1.3);ctx.stroke();}
+ // baton arc on the swing frame
+ if((P.st==='atk'&&P.t>=Lw.wind&&P.t<Lw.wind+0.1)||(P.st==='heavy'&&P.t>=DU.heavy.wind&&P.t<DU.heavy.wind+0.14)){const hv=P.st==='heavy',a0=hv?-1.6:P.ci%2?1.2:-1.3,a1=hv?1.1:P.ci%2?-0.7:0.9;ctx.strokeStyle=hv?'rgba(122,232,255,0.8)':'rgba(170,240,255,0.6)';ctx.lineWidth=hv?3:2;ctx.beginPath();for(let k=0;k<=8;k++){const a=a0+(a1-a0)*k/8,x=P.x+P.face*(6+Math.cos(a)*24),y=DU.fy-44+Math.sin(a)*24;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();ctx.lineWidth=1;}
+ drawFx(H.fx);
+ for(const q of H.pops){ctx.globalAlpha=Math.min(1,q.l*2);txt(q.t,q.x,q.y,q.c,q.t==='PARRY'?11:8);ctx.globalAlpha=1;}
+ if(H.flash>0){ctx.fillStyle='rgba(255,255,255,'+(H.flash*2)+')';ctx.fillRect(0,0,W,DU.ph);}
+ if(H.p.inv>0.85&&!H.dead){ctx.fillStyle='rgba(255,40,70,0.15)';ctx.fillRect(0,0,W,DU.ph);}
+ ctx.restore();
+ // HUD: Mara's suit, the champion's hull and poise, round pips
+ hudTop('SUIT',H.p.hp,H.p.mhp);txt('CR '+(S.cr+runCr),236,6,'#ffd23a',8,'right');
+ ctx.fillStyle='rgba(4,6,16,0.8)';ctx.fillRect(0,26,W,30);txt('HOLLOW CHAMPION',8,29,'#ff9ab0',7,'left');
+ for(let k=0;k<3;k++){ctx.fillStyle=k<C.ph?'#3a1a2a':k===C.ph?'#ff3a6a':'#7a2a3a';ctx.fillRect(W-40+k*11,29,8,6);}txt('ROUND',W-46,29,'#56607e',6,'right');
+ bar(8,39,W-16,5,C.hp/C.mhp,'#ff3a6a','#2a0a14');ctx.fillStyle='#000';ctx.fillRect(8+(W-16)/3|0,39,1,5);ctx.fillRect(8+(W-16)*2/3|0,39,1,5);
+ txt('POISE',8,47,'#ffd23a',6,'left');bar(36,48,120,3,C.poise/100,C.st==='stun'?'#7a6a2a':'#ffd23a','#2a240a');
+ if(H.t<4&&!H.ck)txt('CHAPTER '+(curLvl+1)+': '+H.L.name,W/2,80,'#fff',9);
+ if(H.dead)txt('SUIT BREACH',W/2,140,'#ff3a6a',10);
+ // touch panel: < > on the left, ATTACK / PARRY / DODGE on the right (same spots as FIRE / JUMP / DASH on foot)
+ ctx.fillStyle='#070912';ctx.fillRect(0,DU.ph,W,H_-DU.ph);ctx.fillStyle='#1a2340';ctx.fillRect(0,DU.ph,W,1);
+ const hz={};for(const id in ptrs){const q=ptrs[id];if(q.dz==='M')hz[q.x<67?'L':'R']=1;else if(q.dz)hz[q.dz]=1;}
+ const pb=(k,lab,col,sz)=>{const b=DU.B[k];blit(uiArt(b[2],b[3],col,'btn',hz[k]?1:0),b[0],b[1],b[2],b[3]);txt(lab,b[0]+b[2]/2,b[1]+b[3]/2-5,'#dff4ff',sz||10);};
+ pb('L','<','#5ab0ff');pb('R','>','#5ab0ff');pb('A','ATTACK','#7ae8ff',8);pb('P','PARRY','#ffd23a',8);pb('D','DODGE','#9ad8ff',8);
+ {const b=DU.B.P;txt('HOLD=BLOCK',b[0]+b[2]/2,b[1]+b[3]-12,'#8a7a40',6);}
+ {const b=DU.B.D;if(P.dcd>0||P.st==='dodge'){ctx.fillStyle='#9ad8ff';ctx.fillRect(b[0]+4,b[1]+b[3]-5,(b[2]-8)*(1-(P.st==='dodge'?1:P.dcd/DU.dodge.cd)),2);}}
+ const tip=H.t<7?(hasTouch?'Tap PARRY right as it swings':'K: tap to parry, hold to block'):H.t<14?(hasTouch?'Red flash? DODGE it':'Red flash? L or Shift to dodge'):H.t<21?'After a parry, ATTACK hits hard':(hasTouch?'Break its poise to stun it':'J attack  K parry  L dodge');
+ wrap(tip,132,7).slice(0,2).forEach((l,k)=>txt(l,8,DU.ph+8+k*10,'#56607e',7,'left'));
+ if(dt)scoreHUD(dt);pauseBtn();}
+const CKD=2.4,H_=480;
+// ---- wiring ----
+{const _pt=parTime;parTime=function(L){return L.t==='duel'?Math.round(G.T.hp*0.9+30):_pt(L);};}
+{const _sl=startLevel;startLevel=function(i){const L=LV[i];if(L&&L.t==='duel'){initDuel(L,i);return;}_sl(i);};}
+{const _gs=goStory;goStory=function(i){FT.duelCk=null;_gs(i);const L=LV[i];if(L&&L.t==='duel')setTimeout(()=>{ART.duel();ART.duelBg(RQ);},60);};}
+{const _p=pause;pause=function(){if(state==='duel'){G.prev=state;state='pause';return;}_p();};}
+{const _dm=drawMode;drawMode=function(dt){if(G&&G.mode==='duel'){drawDuel(0);return;}_dm(dt);};}
+HOOKS.push((n,dt)=>{if(n==='draw:duel'&&G&&G.mode==='duel'){if(dt)updDuel(Math.min(dt,1/30));drawDuel(dt);}});
+{const _pd=ptrDown;ptrDown=function(id,e){_pd(id,e);const q=ptrs[id];if(!q||state!=='duel'||(q.x>236&&q.y<26))return;q.dz=duZone(q);if(q.dz&&q.dz!=='M')duPress(q.dz,0);};}
+{const _ok=onKey;onKey=function(c){if(state==='duel'){if(c==='Escape'||c==='KeyP'){pause();return;}
+  if(c==='KeyJ'||c==='KeyZ'||c==='Space'||c==='Enter')duPress('A');else if(c==='KeyK'||c==='KeyX'||c==='ArrowDown'||c==='KeyS')duPress('P');else if(c==='KeyL'||c==='KeyC'||c==='ShiftLeft'||c==='ShiftRight'||c==='ArrowUp'||c==='KeyW')duPress('D');return;}_ok(c);};}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='duel')pause();});
+{const _ct=comboT;comboT=function(){return G&&G.mode==='duel'?6:_ct();};}
+{const _ov=drawOver;drawOver=function(dt){_ov(dt);if(G&&G.mode==='duel'&&FT.duelCk&&FT.duelCk.lvl===curLvl)txt('RETRY STARTS AT ROUND '+(FT.duelCk.ph+1),W/2,214,'#ffd23a',7);};}
+{const _sd=FT.startDaily;FT.startDaily=function(){FT.duelCk=null;_sd();};}
+ACH.push(['duel','BATON BEATS BLADE','Beat the Hollow champion.'],['parry10','IRON WRIST','Parry 10 attacks in one duel.'],['duelclean','FLAWLESS','Beat the champion without taking a hit.']);
+HOOKS.push((n,a)=>{if(n==='clear'&&a&&a.t==='duel'&&G&&G.mode==='duel'){unlockA('duel');if(!sc().dmg)unlockA('duelclean');}if(n==='parry'&&a>=10)unlockA('parry10');});
+{const _b=VR.boss,_k=VR.kill;VR.boss=()=>{if(G&&G.mode==='duel'){G.C.hp=G.C.mhp/3+0.5;G.C.ph=1;return;}_b();};VR.kill=()=>{if(G&&G.mode==='duel'){G.C.hp=0.5;G.C.ph=2;G.C.st='stag';G.C.t=0;G.P.x=G.C.x-36;G.q.push({k:'A',t:G.t});return;}_k();};}
+VR.du={H:()=>G,DT:()=>DT,DU:()=>DU,press:k=>duPress(k,0),tell:()=>duTellNow(),move:k=>{G.C.st='atk';G.C.t=0;G.C.mv=duMakeMove(k);return JSON.parse(JSON.stringify(G.C.mv));},ck:()=>FT.duelCk,
+ step:(n,dt)=>{for(let i=0;i<(n||1);i++)updDuel(dt||1/60);},
+ sim:(maxT,bot)=>{const H=G;H.auto=1;H.bot=Object.assign({rt:0.3,jit:0.04,fool:0.5,hold:0.35,aggr:0.6},bot||{});H.binp={mx:0,block:false};let f=0;const lim=60*(maxT||240);while(f<lim&&!H.won&&!H.dead&&state==='duel'){updDuel(1/60);f++;}
+  return {won:H.won>0||state==='clear',dead:H.dead>0||state==='over',t:Math.round(H.t*10)/10,hp:H.p.hp,mhp:H.p.mhp,chp:Math.round(H.C.hp*10)/10,ph:H.C.ph,par:H.parN,blk:H.blkN,hits:H.hitN,pd:H.pdN,brk:H.brkN,heavy:H.heavyN};}};

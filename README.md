@@ -20,3 +20,10 @@ Renders at 2x the 270x480 logical resolution (GFX: HIGH), or 1x on GFX: LOW (tit
 authored at 2 art pixels per logical pixel as small geometry functions, shaded at load with 6-step material
 ramps, dither, seams, rim light and outlines. Hitboxes are unchanged and independent of art size.
 `screenshots/v3_sprites.png` is a contact sheet of every frame.
+
+## Melee duel (v9)
+Chapter 19, SPIRE CORE: a side-view baton duel with the Hollow champion (the core's damping field kills guns).
+Touch: `<` `>` move, ATTACK, PARRY (tap = parry, hold = block), DODGE. Keys: arrows/A D move, J/Z attack,
+K/X/Down parry (hold to block), L/C/Shift/Up dodge. Yellow flash = parry it, red flash = dodge it. A parry staggers
+the champion (ATTACK then lands a heavy finisher); its poise bar breaks into a stun. Three rounds with a checkpoint
+at rounds 2 and 3. Tests: `python3 test_v9_duel.py` (controls, mechanics, save v8->v9 remap, autopilot fairness).

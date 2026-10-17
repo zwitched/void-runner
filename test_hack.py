@@ -19,7 +19,7 @@ async def main():
     async def fresh(i=1,k='T'):
       await E(f"VR.start({i})");await pg.wait_for_timeout(100);await E(f"(()=>{{const G=VR.hk.H();G.b=G.b.map(()=>0);G.trace=999;VR.hk.spawn('{k}');G.gT=-999;}})()")
     # campaign order
-    order=await E("(()=>{const o=[];for(let i=0;i<LV.length;i++){VR.start(i);o.push(VR.G().mode)}return o})()");exp=await E("LV.map(L=>({space:'space',board:'space',hack:'hack',plat:'plat',evade:'evade',engine:'engine',stealth:'stealth',turret:'turret',canyon:'canyon'})[L.t])")
+    order=await E("(()=>{const o=[];for(let i=0;i<LV.length;i++){VR.start(i);o.push(VR.G().mode)}return o})()");exp=await E("LV.map(L=>({space:'space',board:'space',hack:'hack',plat:'plat',evade:'evade',engine:'engine',stealth:'stealth',turret:'turret',canyon:'canyon',duel:'duel'})[L.t])")
     chk('chapter types',order==exp and order.count('hack')==3,order)
     # 1) rotation: 4 CW rotations return to start; CW then CCW returns
     await fresh();c0=await E('VR.hk.cells()')
