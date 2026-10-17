@@ -27,3 +27,8 @@ Touch: `<` `>` move, ATTACK, PARRY (tap = parry, hold = block), DODGE. Keys: arr
 K/X/Down parry (hold to block), L/C/Shift/Up dodge. Yellow flash = parry it, red flash = dodge it. A parry staggers
 the champion (ATTACK then lands a heavy finisher); its poise bar breaks into a stun. Three rounds with a checkpoint
 at rounds 2 and 3. Tests: `python3 test_v9_duel.py` (controls, mechanics, save v8->v9 remap, autopilot fairness).
+
+## Survey Dock easing (v9.1)
+Per-difficulty table `TE` in features.js (door hull, patch per wave, crawler count/spacing/speed, enemy shot rate/speed,
+aim assist cone, repair time) plus a checkpoint when the Breacher arrives. `python3 test_v9_turret_eased.py` runs
+good/average/sloppy/idle bots (`turret_bots.js`) on every difficulty.
